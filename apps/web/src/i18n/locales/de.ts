@@ -344,6 +344,7 @@ export const de: Messages = {
     viewSaved: 'In meinem Konto ansehen',
     expiredTitle: 'Dieser Link ist nicht mehr gültig',
     expiredBody: 'Geteilte Links laufen ab oder können zurückgezogen werden. Fragen Sie {name} nach einem neuen.',
+    viewOnlyHint: 'Dies ist eine für Sie vorbereitete Vorschau, nur zum Ansehen. Bei Fragen oder Änderungswünschen wenden Sie sich an {name}.',
     contact: '{name} kontaktieren',
   },
   auth: {

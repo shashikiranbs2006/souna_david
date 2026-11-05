@@ -340,6 +340,7 @@ export const it: Messages = {
     viewSaved: 'Vedi nel mio account',
     expiredTitle: 'Questo link non è più valido',
     expiredBody: 'I link condivisi scadono o possono essere ritirati. Ne chieda uno nuovo a {name}.',
+    viewOnlyHint: 'Questa è un’anteprima preparata per te, solo in visualizzazione. Per domande o modifiche contatta {name}.',
     contact: 'Contatta {name}',
   },
   auth: {
