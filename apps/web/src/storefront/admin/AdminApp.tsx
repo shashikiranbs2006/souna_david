@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router';
-import { BarChart3, Boxes, Contact, FileText, Inbox, Receipt, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
+import { BarChart3, Boxes, Contact, FileText, Inbox, Receipt, SlidersHorizontal, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
 import { useTenantData } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { Icon } from '../../design/components/Icon.tsx';
@@ -56,6 +56,7 @@ export default function AdminApp() {
             { to: '/admin', label: t('admin.nav.dashboard'), icon: LayoutDashboard, end: true },
             { to: '/admin/requests', label: t('admin.nav.requests'), icon: Inbox },
             { to: '/admin/contacts', label: t('admin.nav.contacts'), icon: Contact },
+            { to: '/admin/configurations', label: t('admin.nav.configurations'), icon: SlidersHorizontal },
             { to: '/admin/quotes', label: t('admin.nav.quotes'), icon: FileText },
             { to: '/admin/invoices', label: t('admin.nav.invoices'), icon: Receipt },
             { to: '/admin/reports', label: t('admin.nav.reports'), icon: BarChart3 },
