@@ -387,3 +387,71 @@ directly.
 19. **Clean-up:** may I remove the two committed Python cache files
     (`tools/blender/__pycache__/*.pyc`) in David's repo? They look accidental. (Fixing it in
     saunaKlar too is Aniket's call.)
+
+---
+
+## 14. Answers from David's website (read 2026-11-05)
+
+You confirmed the plan on 2026-11-05 and pointed to David's site for the answers. Everything
+below was read from these pages; nothing is guessed. Where the site does not answer, the
+question stays open in section 15.
+
+Sources: [product page](https://www.holzsauna.ch/designsauna-zirbe-massivholz-swissmade-6-eck-glasfront-schieferplatten),
+[home](https://www.holzsauna.ch/), [Impressum](https://www.holzsauna.ch/Impressum),
+[Versandinformationen](https://www.holzsauna.ch/Versandinformationen),
+[Zahlungsmöglichkeiten](https://www.holzsauna.ch/Zahlungsmoeglichkeiten).
+
+| Question | Answer from the site |
+|---|---|
+| 3. Business | **Holzbau Boscheri GmbH**, Geschäftsführer **David Boscheri**, shop name **Holzsauna** ("Saunabau by Holzsauna"), Hauptstrasse 40, CH-8507 Hörhausen TG, info@holzsauna.ch, Mon–Fri 9:00–18:00. VAT number CHE-329.191.810 MWST. |
+| 3. Currency, VAT | **CHF only.** Prices are shown **including 8.1% MwSt**, shipping extra ("inkl. 8,1% MwSt., zzgl. Versand"). |
+| 3. Languages | **German** (main) and **English** (language switcher DE / EN). |
+| 4. Prices | David sets his own prices: the 6-Eck page is "ab CHF 19'990,00". |
+| 5. Models | The home page lists 14 saunas, mostly Zirbe (stone pine) Swissmade made-to-measure cabins from CHF 15'990 to 35'990, plus a few bought-in models (Sentiotec Arktis Infra+, Huum Saunafass 280). |
+| 5. Options of the 6-Eck model | Width 150–250 cm and depth 150–250 cm in 10 cm steps, each with its own surcharge (width 160 cm +127 up to 250 cm +1'459; depth 160 cm +96 up to 250 cm +1'156). Heater sets: none (0), Harvia Virta 9 kW + Huum UKU Glass Wifi (+2'425), Harvia Virta Combi 9 kW (+3'115), EOS Mythos S35 black 9 kW + EmoStyle Hi (shown as CHF 0,00), EOS Mythos Vapro S35 black 9 kW (shown as CHF 0,00). Accessories: Saunaset Nova (+229), LED band warm white 5 m (+299). Construction: 40 mm Zirbe walls and ceiling, slate outside, knot-free aspen benches (alder optional, price not shown), 8 mm clear glass front, glass door about 67 × 187.5 cm. |
+| 8. Branding | Logo `https://www.holzsauna.ch/bilder/intern/shoplogo/Holzsauna-Logo.gif`. No brand colour is defined on the site (theme colour #FFFFFF). |
+| 11. Extra lines | Delivery to the kerb anywhere in Switzerland: **CHF 100** within 150 road km of Frauenfeld, **CHF 200** beyond. Abroad on request. Installation price is not shown. |
+| 16. Payment (phase 2) | **Prepayment by invoice before delivery**, or **cash on delivery**. No card payment. So phase 2 needs invoices, not a card provider. |
+
+**What this changes in the plan:**
+
+1. **Currency and tax.** David's shop runs in CHF, and the database already supports CHF.
+   Quotes show prices including 8.1% VAT, with the VAT amount listed on the PDF.
+2. **Languages.** German first, English second. Both already exist in the app.
+3. **Catalogue.** David's real products replace the demo saunas. The first one is the 6-Eck
+   Glasfront Schiefer model, with his sizes, heaters and accessories at his prices.
+4. **The six-sided model.** It is David's flagship product, so it goes in (question 17). The
+   parked renderer in `apps/web/src/three/reference/` is built for 2400–3600 mm, while David
+   sells 1500–2500 mm. It needs re-checking at his sizes before it goes live. Until then the
+   6-Eck model uses the kit's `hex` form.
+5. **Extra lines.** Quotes get a delivery line (CHF 100 or 200), an installation line, and free
+   lines.
+6. **Phase 2.** Invoices with prepayment are the main need. Online card payment is not needed.
+
+**Defaults I am using where the site has no answer** (each can be changed later without
+rework):
+
+- Question 9, quote versions: an open link keeps showing the version it was created for.
+  A new version gets a new link.
+- Question 10, "clean image": every download carries the watermark.
+- Question 12, staff: David is the owner and can invite staff (this already exists).
+- Question 13, sending: David copies the link (WhatsApp, e-mail, anything). Sending e-mail from
+  the app comes later.
+- Question 18, syncing: saunaKlar changes come over only on request, starting with fixes.
+- Question 19: the `.pyc` files are removed in the CI fix PR.
+
+## 15. Still open (the site does not answer these)
+
+1. **Phone number:** the header says +41 52 552 43 23, the Impressum says 0041 52 552 43 21.
+   Which one goes on quotes and the share page?
+2. **EOS heater sets** show CHF 0,00 on the site. Is that their real price (included), or a
+   site error?
+3. **Alder benches:** the site says alder costs extra but shows no price.
+4. **Installation:** price, or "on request"?
+5. **Which of the 14 saunas** go into the app first (all of them, or the Zirbe Swissmade range)?
+6. **Brand colour** for the app (the site has none; the logo GIF is the only brand asset).
+7. **Watermark text:** "Holzsauna", the logo, and should the quote number be included?
+8. **Domain** for the app and the customer links, and who has DNS access.
+9. **Hosting:** the same AWS setup, who pays, and whether David gets the repo or only the app
+   (questions 2 and 6).
+10. **Privacy notice and tracking retention** (question 14), and the store device (question 15).
