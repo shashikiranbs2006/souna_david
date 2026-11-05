@@ -89,4 +89,24 @@ describe('contacts and quotes', () => {
     expect(t.body.score.reasons.map((r: { code: string }) => r.code)).toEqual(['OPENED', 'INSIDE_VIEW', 'LONG_VISIT', 'OPENED_QUICKLY']);
     expect(t.body.score).toMatchObject({ points: 50, level: 'MEDIUM' });
   });
+
+  it('serves a watermarked PDF and image, and only for the shop\'s own quotes', async () => {
+    const c = await staff('alpha.localhost', 'owner@alpha.test');
+    const contact = await c.post('/api/admin/contacts', { personName: 'Pdf Person' });
+    const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'Pdf cfg' });
+    const offer = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id, quantity: 2, lines: [{ label: 'Delivery', amountMinor: 1000 }] });
+    const res = await c.req('GET', `/api/admin/offers/${offer.body.id}/pdf`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/pdf');
+    expect(res.headers.get('content-disposition')).toContain('Q-');
+    const beta = await staff('beta.localhost', 'owner@beta.test');
+    expect((await beta.req('GET', `/api/admin/offers/${offer.body.id}/pdf`)).status).toBe(404);
+
+    const jpeg = (await import('sharp')).default({ create: { width: 320, height: 200, channels: 3, background: '#445566' } }).jpeg().toBuffer();
+    const img = await c.post('/api/admin/watermark-image', { image: (await jpeg).toString('base64'), label: 'Pdf cfg' });
+    expect(img.status, JSON.stringify(img.body).slice(0, 200)).toBe(200);
+    expect(img.body.contentType).toBe('image/png');
+    expect(Buffer.from(img.body.dataBase64, 'base64').subarray(1, 4).toString()).toBe('PNG');
+    expect((await c.post('/api/admin/watermark-image', { image: 'x'.repeat(200) })).status).toBe(422);
+  });
 });

@@ -1,9 +1,9 @@
 import { useSubmitRequest } from '../configurator/useSubmitRequest.ts';
 import { errorText } from '../../i18n/errorText.ts';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Armchair, ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon } from 'lucide-react';
+import { Armchair, ArrowLeft, Check, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon } from 'lucide-react';
 import { calculatePrice } from '@saunaklar/pricing';
 import { availability, validate } from '@saunaklar/rules';
 import { api, isApiError } from '../../api/client.ts';
@@ -252,6 +252,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   );
   const [details, setDetails] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  const capture = useRef<(() => Promise<Blob | null>) | null>(null);
   const [message, setMessage] = useState('');
   const currency = tenant.currency;
   const rules = useMemo(() => rulesOf(sauna), [sauna]);
@@ -331,6 +332,28 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     onSuccess: c => setParams({ id: c.id }, { replace: true }),
   });
 
+  // Staff: a picture of the current 3D view, stamped by the server before it is downloaded.
+  const downloadImage = useMutation({
+    mutationFn: async () => {
+      const blob = await capture.current?.();
+      if (!blob) throw new Error('no picture');
+      const image = await new Promise<string>((done, fail) => {
+        const r = new FileReader();
+        r.onload = () => done(String(r.result));
+        r.onerror = () => fail(r.error);
+        r.readAsDataURL(blob);
+      });
+      return api('adminWatermarkImage', { body: { image, label: sauna.name } });
+    },
+    onSuccess: r => {
+      const a = document.createElement('a');
+      a.href = `data:${r.contentType};base64,${r.dataBase64}`;
+      a.download = `${sauna.slug}.png`;
+      a.click();
+    },
+    onError: e => toast.error(t('errors.title'), errorText(t, e)),
+  });
+
   // Right after the first save the store already holds the configuration the URL now names.
   if (idParam && existing.isPending && st.configurationId !== idParam) return <ConfigureSkeleton />;
 
@@ -357,7 +380,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
         <ButtonLink to={staff ? (st.configurationId ? `/admin/configurations/${st.configurationId}` : '/admin/configurations') : `/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
           {sauna.name}
         </ButtonLink>
-        <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views />
+        <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views captureRef={capture} watermark={staff} />
       </div>
 
       <aside className="cfg__panel">
@@ -476,6 +499,11 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
               <Button variant="ghost" icon={Save} onClick={() => save.mutate(undefined, { onSuccess: () => toast(t('configure.draftSaved')), onError: e => toast.error(t('errors.title'), errorText(t, e)) })} loading={save.isPending && !send.isPending} disabled={save.isPending || send.isPending}>
                 {st.dirty || !st.configurationId ? t('configure.saveDraft') : t('common.saved')}
               </Button>
+              {staff && (
+                <Button variant="ghost" icon={ImageDown} onClick={() => downloadImage.mutate()} loading={downloadImage.isPending}>
+                  {t('configure.downloadImage')}
+                </Button>
+              )}
               {staff ? (
                 <ButtonLink to={st.configurationId ? `/admin/configurations/${st.configurationId}` : '/admin/configurations'} icon={Check}>
                   {t('common.back')}

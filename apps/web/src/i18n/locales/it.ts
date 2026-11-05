@@ -280,6 +280,7 @@ export const it: Messages = {
     askCta: 'Contattaci',
   },
   configure: {
+    downloadImage: 'Scarica l’immagine',
     title: 'Configura {name}',
     eyebrow: 'Configuratore',
     summary: 'Riepilogo',
@@ -832,6 +833,7 @@ export const it: Messages = {
       searchPlaceholder: 'Nome, azienda, e-mail o cellulare',
       empty: 'Ancora nessun contatto.',
       add: 'Aggiungi contatto',
+      downloadPdf: 'Scarica il PDF',
       personName: 'Nome',
       organisation: 'Azienda',
       email: 'E-mail',

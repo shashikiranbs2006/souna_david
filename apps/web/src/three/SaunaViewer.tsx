@@ -26,6 +26,8 @@ export interface SaunaViewerProps {
   background?: string;
   /** Outside orbit, or standing inside (kit models only). */
   view?: CameraView;
+  /** Filled with a function that takes a JPEG picture of the current view (staff "download image"). */
+  captureRef?: { current: (() => Promise<Blob | null>) | null };
 }
 
 function Glb({ url }: { url: string }) {
@@ -104,7 +106,7 @@ function CameraRig({ resetKey, radius }: { resetKey: number; radius: number }) {
   return null;
 }
 
-export default function SaunaViewer({ specs, options, lowUrl = null, highUrl = null, allowHigh = false, label, onProgress, onReady, resetKey = 0, background, view = 'exterior' }: SaunaViewerProps) {
+export default function SaunaViewer({ specs, options, lowUrl = null, highUrl = null, allowHigh = false, label, onProgress, onReady, resetKey = 0, background, view = 'exterior', captureRef }: SaunaViewerProps) {
   const model = useProgressiveModel(lowUrl, highUrl, allowHigh);
   const w = specs.widthMm / 1000;
   const d = specs.depthMm / 1000;
@@ -121,7 +123,11 @@ export default function SaunaViewer({ specs, options, lowUrl = null, highUrl = n
       shadows
       camera={{ position: camPos, fov: 32, near: 0.05, far: 100 }}
       gl={{ antialias: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' }}
-      onCreated={setupKitRenderer}
+      onCreated={state => {
+        setupKitRenderer(state);
+        // Drawn again right before reading, so the picture is not blank without preserveDrawingBuffer.
+        if (captureRef) captureRef.current = () => new Promise(done => { state.gl.render(state.scene, state.camera); state.gl.domElement.toBlob(done, 'image/jpeg', 0.9); });
+      }}
       aria-label={label}
       role="img"
     >

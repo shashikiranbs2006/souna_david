@@ -7,6 +7,9 @@ import { ApiError } from '../lib/problem.ts';
 import { asStaff, mount } from '../lib/route.ts';
 import { getConfigRow, toConfigurationDto } from '../domain/configurations.ts';
 import { scoreShare } from '../domain/likelihood.ts';
+import { loadModel } from '../domain/catalog.ts';
+import { buildOfferPdf } from '../domain/offerPdf.ts';
+import { watermarkImage } from '../domain/watermark.ts';
 
 interface ContactRow {
   id: string; person_name: string; organisation: string | null; email: string | null; mobile: string | null; notes: string | null;
@@ -206,5 +209,47 @@ export function registerQuotes(app: Hono<AppEnv>): void {
         score,
       };
     });
+  });
+
+  // One PDF per quote version, built on the server and watermarked there.
+  mount(app, routes.adminOfferPdf, async ({ c, params }) => {
+    const { tenant, locale } = ctx(c);
+    const data = await tenantTx(c, async db => {
+      const o = await loadQuote(db, c, params.id!);
+      const [cu, br, cfgRow] = await Promise.all([
+        db.query<{ person_name: string; organisation: string | null; email: string | null; mobile: string | null }>('select person_name, organisation, email, mobile from contacts where id = $1', [o.contact.id]),
+        db.query<{ display_name: string; legal_name: string | null; legal_address: string | null; support_phone: string | null; support_email: string | null; vat_display: 'INCLUDED' | 'EXCLUDED' | 'NONE' }>(
+          'select display_name, legal_name, legal_address, support_phone, support_email, vat_display from reseller_branding where reseller_id = $1', [tenant.id]),
+        getConfigRow(db, o.configuration.id, { staff: true }),
+      ]);
+      const cfg = await toConfigurationDto(db, tenant, locale, cfgRow);
+      const model = await loadModel(db, tenant, locale, { id: cfgRow.sauna_model_id }, true);
+      const price = cfg.snapshot ?? cfg.price;
+      const delta = new Map(price.lines.map(l => [l.optionId, l.priceDeltaMinor]));
+      const options = (model?.detail.groups ?? []).flatMap(g => g.options.filter(x => cfg.selections.includes(x.id)).map(x => ({ group: g.name, name: x.name, priceMinor: delta.get(x.id) ?? x.priceDeltaMinor })));
+      const row = cu.rows[0]!;
+      const b = br.rows[0];
+      return {
+        shop: { name: b?.display_name ?? 'Shop', legalName: b?.legal_name ?? null, address: b?.legal_address ?? null, phone: b?.support_phone ?? null, email: b?.support_email ?? null },
+        vat: b?.vat_display ?? 'INCLUDED' as const, label: o.label, version: o.version, createdAt: new Date(o.createdAt),
+        contact: { personName: row.person_name, organisation: row.organisation, email: row.email, mobile: row.mobile },
+        sauna: o.sauna.name, configuration: o.configuration.name, options, currency: o.currency,
+        listPriceMinor: price.listPriceMinor, discountMinor: price.discountMinor, unitPriceMinor: o.unitPriceMinor, quantity: o.quantity,
+        lines: o.lines, totalMinor: o.totalMinor, comment: o.comment, validUntil: 'priceValidUntil' in price ? new Date(String(price.priceValidUntil)) : null,
+      };
+    });
+    const bytes = await buildOfferPdf(data);
+    return new Response(bytes as BodyInit, {
+      status: 200,
+      headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${data.label}-v${data.version}.pdf"`, 'Cache-Control': 'no-store' },
+    });
+  });
+
+  // A picture from the 3D view comes back stamped; the stamp is made here, not in the browser.
+  mount(app, routes.adminWatermarkImage, async ({ c, body }) => {
+    const raw = body.image.replace(/^data:image\/(?:png|jpe?g);base64,/, '');
+    const png = await watermarkImage(Buffer.from(raw, 'base64'), body.label);
+    c.header('Cache-Control', 'no-store');
+    return { contentType: 'image/png' as const, dataBase64: png.toString('base64') };
   });
 }
