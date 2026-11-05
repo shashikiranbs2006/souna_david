@@ -1,193 +1,98 @@
-# saunaKlar
+# SaunaKlar for David (Holzsauna)
 
-A white-label sauna shop with a 3D configurator. One manufacturer publishes a catalogue of
-saunas, options and room scenes. Each authorised reseller gets a branded storefront on its own
-subdomain (`{slug}.<platform-domain>`): their logo, brand colour and one of five storefront
-layouts, with their own prices (within the manufacturer's discount caps), their own option
-settings and currency. Customers configure a sauna in 3D, place it in a room, view it in AR,
-save configurations and request a quote. The reseller reviews the request, sends a quote and
-closes it.
+A quoting tool for David's sauna shop. David builds the sauna for his customer in a 3D
+configurator, sends a quote with a link, sees whether and how the customer looked at it, and
+invoices a prepayment once the quote is accepted. Customers do not configure anything and have no
+accounts: they only open the view-only link David sends them.
 
-## Who can do what
+The shop is `holzsauna` (CHF, prices include 8.1 % VAT, German and English). It sells six
+models: Espoo, Kelo, Fjord, Lappi, Aurora and Saimaa, with their own prices and options.
+The brand and the watermark are SaunaKlar.
 
-| Role | Where | What they do |
-|---|---|---|
-| **Customer** | the storefront | Browse saunas, open the 3D configurator after logging in, save configurations, send a request, accept a quote, export or delete their data. |
-| **Reseller owner** | `/admin` on the reseller's host | Everything an admin can do, plus branding and storefront layout, shop settings, discounts, and per-sauna option settings (enable or disable an option, set its price and description). |
-| **Reseller admin** | `/admin` | Work requests (status, notes, quotes), view customers, create configurations on behalf of a customer, read-only view of saunas, options and branding. |
-| **Manufacturer admin** | its own host (`ADMIN_HOST`) | Resellers, sauna and room assignment, list prices and maximum discounts. Sees no customer personal data. |
+## What David can do
 
-## The catalogue
+David works in `/admin`.
 
-Seven demo saunas are seeded, each with exterior and interior photos and a 3D model built from
-one shared kit (`apps/web/src/three/kit`): Espoo Compact, Kelo Barrel, Fjord Panorama, Lappi
-Corner, Aurora Hex, Saimaa Garden House and Kide Glass Corner (a glass-corner cabin).
-Every option a reseller offers must change the 3D model; `options-visual.test.ts` enforces this.
-A parametric six-sided glass-front renderer (`apps/web/src/three/reference`) exists but is not
-in the catalogue yet.
+- **Contacts and quotes.** Save a contact, build the sauna for them in the 3D configurator
+  (Configurations, Open in 3D), then make a numbered quote (Q-1024, Q-1025, ...) with a quantity,
+  extra lines such as delivery or installation, and a comment. A change after sending is a new
+  version of the same number. The unit price is stored on the quote, so later price changes do
+  not move it.
+- **Share link.** A view-only page for the customer: no sign-in, no configuring, no cloning. David
+  picks the expiry and copies the link. No e-mail is sent yet.
+- **Tracking and likelihood.** Each quote shows opens, visitors, whether the inside view was
+  opened, the longest visit, and a score (none, low, medium, high) with its reasons.
+- **Downloads.** A PDF of every quote version and a picture from the 3D view. Both carry the
+  SaunaKlar watermark, which is added on the server.
+- **Command box** above every admin page: `new quote`, `find Müller`, `open Q-1024`,
+  `list open quotes`, `list expiring links`.
+- **Quotes and Reports.** Quotes by status, conversion, most quoted models, link activity and
+  links to follow up.
+- **Invoices.** From an accepted quote, a prepayment invoice (INV-1001, ...) with a percent, a due
+  date and payment details David types in. He marks it paid by hand. There is a watermarked PDF.
+  No card or bank connection.
 
-## Architecture in short
+## Run it locally
 
-| Part | What it is |
-|---|---|
-| `apps/web` | React 19 + Vite SPA for all four surfaces. React Three Fiber for 3D, `<model-viewer>` for AR. Token-based CSS: colours derive from each reseller's brand colour (`design/theme.ts`). |
-| `services/api` | Hono API in TypeScript. In AWS: one Lambda per function. Locally: one Node server that also emulates CloudFront and S3. |
-| `packages/db` | PostgreSQL 16 schema, migrations, dev seed. Business rules, tenant isolation (row-level security) and audit live in the database. |
-| `packages/pricing`, `packages/rules` | Integer pricing engine and option rules (single/multi groups, requires, excludes), shared by the API and the web app. |
-| `packages/shared` | The API contract: Zod schemas, error codes and host parsing. |
-| `tools/catalog-import` | YAML manifests to validated, optimised, imported catalogue data. |
-| `tools/blender` | Blender scripts for the kit parts, catalogue renders and the reference sauna. |
-| `infra/` | Terraform: network, database, Cognito, SES, S3, CloudFront, WAF, Lambdas, queues, observability. |
-
-How the pieces fit together:
-
-- **Tenancy.** The tenant comes from the `Host` header. The API sets `app.reseller_id` in every
-  transaction, and row-level security enforces it.
-- **Pricing.** Always computed on the server in integer minor units. The list price is the
-  manufacturer's ceiling; a reseller's option price overrides and discounts are applied on top
-  and capped. Disabled options are rejected when a configuration is saved or sent.
-- **Accounts.** Cognito with two pools (customers, staff). Staff use TOTP MFA. The browser never
-  sees an identity token: the API is a backend-for-frontend with `__Host-` cookies and CSRF.
-- **Protected 3D files** are served through CloudFront signed cookies, with an anonymous low tier
-  and a signed-in tier.
-- **E-mail** goes through an outbox, SQS and SES, branded per reseller.
-- **Languages:** English, German, French and Italian.
-
-Design documents: [docs/design.md](docs/design.md), [docs/review-fixes.md](docs/review-fixes.md),
-[docs/implementation-plan.md](docs/implementation-plan.md), [docs/customization.md](docs/customization.md)
-(per-reseller option settings), [docs/api.md](docs/api.md) and the generated
-[docs/openapi.json](docs/openapi.json) (`npm run openapi`).
-
-## Prerequisites
-
-- Node.js **22.18 or newer** (see `.nvmrc`)
-- **Docker** for `docker compose`, or your own PostgreSQL 16 with a superuser
-- Terraform 1.10 or newer and AWS credentials, only for deployment
-
-## Quick start
+You need Node.js **22.18 or newer** (see `.nvmrc`) and **Docker** (or your own PostgreSQL 16 with a
+superuser). On Windows, start Docker Desktop first.
 
 ```sh
 npm ci
 docker compose up -d postgres
-npm run dev
-```
-
-`npm run dev` checks that Postgres is reachable, applies the migrations (including the local
-identity provider schema), seeds demo data if the database is empty, and starts the API
-(port 8787) and Vite (port 5173). Ctrl+C stops both. On Windows, start Docker Desktop first.
-
-| URL | What |
-|---|---|
-| http://alpha.localhost:5173 | Storefront of reseller **alpha** (EUR) |
-| http://beta.localhost:5173 | Storefront of reseller **beta** (CHF) |
-| http://alpha.localhost:5173/saunas/kide-glass-corner | Product page of the glass-corner sauna (swap the slug for any model) |
-| http://alpha.localhost:5173/saunas/kelo-barrel/configure | The 3D configurator (needs a customer login) |
-| http://alpha.localhost:5173/admin | Reseller admin of alpha |
-| http://admin.localhost:5173 | Manufacturer admin |
-| http://localhost:5173 | Platform page |
-| http://localhost:8787/dev/mail | Dev mailbox: every mail sent locally (sign-up codes, resets, invites) |
-
-Reseller **gamma** exists but is suspended, so its storefront answers "not found".
-
-The database URL defaults to `postgres://sauna:sauna@127.0.0.1:5432/sauna`. Override it with
-`DATABASE_URL`. `npm run dev -- --no-seed` skips seeding and `npm run dev -- --skip-db` skips the
-database steps. To start over run `LOCAL_IDP=1 npm run db:reset`; it drops, migrates and seeds,
-and the `LOCAL_IDP` flag creates the login users.
-
-### David's edition (single shop)
-
-```sh
 npm run dev:david
 ```
 
-Starts the same platform as one shop, `holzsauna` (CHF, our six models with their normal prices
-and options), on http://localhost:5173. It is German and English, has no customer accounts or
-sign-up, and customers cannot open the configurator. The owner signs in at `/admin` as
-`owner@holzsauna.test` (password below). Set `SINGLE_SHOP=<slug>` for the API and
-`VITE_SINGLE_SHOP=<slug>` / `VITE_LOCALES=de,en` for the web app (or `singleShop` / `locales` in
-`/config.js`) to run it elsewhere. An existing local database needs `LOCAL_IDP=1 npm run db:reset`
-once so the shop exists. See `docs/david-fork-plan.md`.
+This checks that Postgres is reachable, applies the migrations, seeds the shop if the database is
+empty, and starts the API (port 8787) and the web app (port 5173). Ctrl+C stops both.
 
-What David can do in `/admin`:
+| URL | What |
+|---|---|
+| http://localhost:5173 | David's shop |
+| http://localhost:5173/admin | David's admin |
+| http://localhost:8787/dev/mail | Dev mailbox: every mail sent locally |
 
-- **Contacts and quotes.** Save a contact, build the sauna for them in the 3D configurator (Configurations, Open in 3D), then make a numbered quote (Q-1024, Q-1025, ...) with a quantity, extra lines such as delivery, and a comment. A change after sending is a new version with its own number suffix and link. The unit price is stored on the quote, so later price changes do not move it.
-- **Share link.** A view-only page for the customer (no sign-in, no configuring, no cloning). David picks the expiry. Link copy only; no e-mail is sent yet.
-- **Tracking and likelihood.** Each quote shows opens, visitors, whether the inside view was opened, the longest visit, and a score (none, low, medium, high) with its reasons.
-- **Downloads.** A PDF of every quote version and a picture from the 3D view. Both carry the SaunaKlar watermark.
-- **Command box** above every page: `new quote`, `find Müller`, `open Q-1024`, `list open quotes`, `list expiring links`.
-- **Quotes and Reports.** Quotes by status, conversion, most quoted models, link activity and links to follow up.
-- **Invoices.** From an accepted quote, a prepayment invoice (INV-1001, ...) with a percent, a due date and payment details typed in. David marks it paid by hand. There is a watermarked PDF. No card or bank integration.
+Sign in at `/admin` as `owner@holzsauna.test` with the password **`Sauna!2026`**. Staff sign-in
+asks for an authenticator code by default. To skip it locally, run
+`STAFF_MFA=OPTIONAL npm run dev:david`.
 
-Still open: David's VAT number and rate (invoices only say "includes VAT"), tracking retention and a privacy note on the link page, hosting and domain.
+A database that was seeded before the shop existed needs `LOCAL_IDP=1 npm run db:reset` once.
+`npm run dev -- --no-seed` skips seeding and `npm run dev -- --skip-db` skips the database steps.
+The database URL defaults to `postgres://sauna:sauna@127.0.0.1:5432/sauna`; override it with
+`DATABASE_URL`.
 
-### Seeded logins
-
-Every seeded account uses the password **`Sauna!2026`**.
-
-| Where | E-mail | Role |
-|---|---|---|
-| http://admin.localhost:5173 | `admin@nordlicht.test` | Manufacturer admin |
-| http://alpha.localhost:5173/admin | `owner@alpha.test` | Reseller owner, alpha |
-| http://alpha.localhost:5173/admin | `admin@alpha.test` | Reseller admin, alpha |
-| http://beta.localhost:5173/admin | `owner@beta.test` | Reseller owner, beta |
-| http://alpha.localhost:5173 | `anna@example.test`, `ben@example.test` | Customers of alpha |
-| http://beta.localhost:5173 | `anna@example.test` | Customer of beta (a separate account) |
-
-Staff MFA is required by default. Set `STAFF_MFA=OPTIONAL` in the API environment to skip the
-authenticator app locally, for example `STAFF_MFA=OPTIONAL npm run dev`.
-
-### How subdomains work locally
-
-Browsers resolve every `*.localhost` name to 127.0.0.1, so no hosts-file entries are needed.
-Vite proxies `/api`, `/assets`, `/media`, `/branding`, `/favicon.ico` and `/dev` to the API and
-keeps the original `Host` header. The local server plays the role of CloudFront and S3: it checks
-signed asset cookies, accepts presigned uploads and stores objects under `var/objects/`.
-
-### Configuration
-
-- API variables: [services/api/.env.example](services/api/.env.example). The defaults work locally.
-- Web host config precedence: `window.__SK_CONFIG__` (from `/config.js`), then `VITE_PLATFORM_DOMAIN`
-  and `VITE_ADMIN_HOST`, then `localhost`. In production the API refuses to start with a short
-  `APP_SECRET`, a non-https scheme or the localhost domains.
-- The platform page lists example shops from `exampleShops` in `/config.js` or `VITE_EXAMPLE_SHOPS`
-  (comma separated). Locally it lists alpha, beta and gamma; in production it lists none unless set.
-- `GET /api/ready` checks the database connection.
+To run the single-shop edition elsewhere, set `SINGLE_SHOP=<slug>` for the API and
+`VITE_SINGLE_SHOP=<slug>` and `VITE_LOCALES=de,en` for the web app (or `singleShop` and `locales`
+in `/config.js`). API variables are listed in [services/api/.env.example](services/api/.env.example).
 
 ## Tests
 
 | Command | What runs |
 |---|---|
-| `npm run test:unit` | Pricing, rules, shared schemas, API adapters, web helpers, 3D kit. No database needed. |
-| `npm run test:db` | Schema, database-enforced rules and RLS isolation. Needs Postgres; each file creates and drops its own database. |
-| `npm run test:api` | API integration tests against a real database. Needs Postgres. |
+| `npm run test:unit` | Pricing, rules, shared schemas, web helpers, the 3D kit. No database needed. |
+| `npm run test:db` | Schema, database rules and tenant isolation. Needs Postgres. |
+| `npm run test:api` | API integration tests, including quotes and invoices. Needs Postgres. |
 | `npm test` | All of the above. |
 | `npm run typecheck` | `tsc` in every workspace. |
 | `npm run test:e2e` | Playwright. |
 
-## Assets
+## How it is built
 
-- `npm run assets:optimize` compresses the 3D kit (meshopt) and the wood normal maps, and writes
-  responsive catalogue photos (`-480`, `-800` and `-1200` in avif, webp and jpg). The kit payload
-  is about 1 MB.
-- Catalogue photos live in `apps/web/public/catalogue/<slug>-exterior|interior.jpg`.
-  `npm run db:seed` and `scripts/seed-media.mjs` write the matching files into `var/objects/`.
+React 19 and Vite for the web app (`apps/web`, with React Three Fiber for 3D), a Hono API in
+TypeScript (`services/api`), PostgreSQL 16 with row-level security and migrations
+(`packages/db`), and a shared Zod contract (`packages/shared`). Prices are computed on the server
+in integer minor units. Contacts, quotes and invoices are migrations `0016` to `0018`.
 
-## Catalog import
+This repository is a copy of the multi-reseller SaunaKlar platform, run here as a single shop, so
+the code still contains platform parts David does not use (manufacturer admin, customer accounts,
+the Terraform in `infra/`). Nothing is deployed yet.
 
-Saunas, options, prices and 3D files can also be imported from YAML manifests with
-[`tools/catalog-import`](tools/catalog-import/README.md):
+More: [docs/david-fork-plan.md](docs/david-fork-plan.md) (the plan), [docs/api.md](docs/api.md) and
+the generated [docs/openapi.json](docs/openapi.json) (`npm run openapi`),
+[docs/design.md](docs/design.md) (platform design).
 
-```sh
-npx catalog-import tools/catalog-import/examples --dry-run   # validate and print the plan
-npx catalog-import tools/catalog-import/examples             # import into $DATABASE_URL
-```
+## Still open
 
-## Deployment
-
-Infrastructure is Terraform in `infra/` (`eu-central-1`), one root module per environment in
-`infra/envs/{dev,staging,prod}`. Bootstrap each AWS account once (`infra/bootstrap`), fill in
-`terraform.tfvars` from the example, and deploy through GitHub Actions: a push to `main` runs CI
-and deploys staging; production needs manual approval. Each GitHub environment needs
-`AWS_DEPLOY_ROLE_ARN`, `TF_STATE_BUCKET`, `TFVARS`, `PLATFORM_DOMAIN` and `SMOKE_HOSTS`.
-The runtime `/config.js` is not yet written by the deploy workflow; until it is, set
-`VITE_PLATFORM_DOMAIN` and `VITE_ADMIN_HOST` at build time.
+- David's VAT number and rate (invoices only say "includes VAT") and how his bank details read.
+- How long to keep tracking data, and a privacy note on the link page.
+- Hosting and domain.
