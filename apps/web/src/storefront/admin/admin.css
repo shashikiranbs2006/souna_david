@@ -684,3 +684,8 @@
   align-items: center;
   gap: var(--space-3);
 }
+/* Extra quote lines (delivery, installation, ...). */
+.staff-lines { border: 0; padding: 0; margin: 0; display: grid; gap: var(--space-3, 0.75rem); }
+.staff-lines legend { font-weight: 600; margin-bottom: var(--space-2, 0.5rem); }
+.staff-lines__row { display: grid; grid-template-columns: 1fr 9rem auto; gap: var(--space-3, 0.75rem); align-items: end; }
+@media (max-width: 640px) { .staff-lines__row { grid-template-columns: 1fr auto; } .staff-lines__row > :nth-child(2) { grid-column: 1; } }
