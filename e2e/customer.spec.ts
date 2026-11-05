@@ -5,7 +5,7 @@ test('customer configures a sauna, sees the price change, saves and sends a requ
   await expect(page.getByText(fill(en.auth.welcome, { name: 'Anna' }))).toBeVisible();
 
   await page.goto('/saunas/kelo-barrel');
-  await page.getByRole('link', { name: en.detail.configure }).click();
+  await page.getByRole('link', { name: en.detail.open3d }).first().click();
   await expect(page).toHaveTitle(new RegExp(escape(fill(en.configure.title, { name: 'Kelo Barrel' }))));
   await expect(page.getByRole('heading', { level: 1, name: 'Kelo Barrel' })).toBeVisible();
 
