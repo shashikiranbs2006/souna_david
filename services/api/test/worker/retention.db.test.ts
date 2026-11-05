@@ -106,7 +106,7 @@ describe('runRetention', () => {
 
     const result = await runRetention({ pool: h.api, log: h.deps().log, now: () => now, batchSize: 2, deleteIdpUser });
 
-    expect(result).toEqual({ shareLinkViews: 4, sentOutbox: 2, failedOutbox: 1, auditEvents: 2, pendingCustomers: 1, failedJobs: [] });
+    expect(result).toEqual({ shareLinkViews: 4, shareLinkActivity: 0, sentOutbox: 2, failedOutbox: 1, auditEvents: 2, pendingCustomers: 1, failedJobs: [] });
     expect(deleteIdpUser).toHaveBeenCalledExactlyOnceWith({ customerId: oldPending.id, resellerId: t.resellerId });
 
     const count = async (sql: string) => Number((await h.owner.query<{ n: string }>(sql)).rows[0]!.n);
@@ -120,7 +120,7 @@ describe('runRetention', () => {
 
     // A second run finds nothing.
     const again = await runRetention({ pool: h.api, log: h.deps().log, now: () => now, deleteIdpUser });
-    expect(again).toMatchObject({ shareLinkViews: 0, sentOutbox: 0, failedOutbox: 0, auditEvents: 0, pendingCustomers: 0 });
+    expect(again).toMatchObject({ shareLinkViews: 0, shareLinkActivity: 0, sentOutbox: 0, failedOutbox: 0, auditEvents: 0, pendingCustomers: 0 });
   });
 
   it('keeps a pending customer whose IdP deletion fails', async () => {
