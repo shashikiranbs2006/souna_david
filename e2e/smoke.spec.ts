@@ -17,7 +17,7 @@ test.describe('local server smoke', () => {
 
   test('lists only the visible saunas of the tenant', async ({ page }) => {
     const { body } = await getJson<Catalog>(page, `${ALPHA}/api/catalog`);
-    expect(body.items.map(i => i.slug).sort()).toEqual(['espoo-compact', 'aurora-hex', 'kelo-barrel', 'fjord-panorama']);
+    expect(body.items.map(i => i.slug).sort()).toEqual(['aurora-hex', 'espoo-compact', 'fjord-panorama', 'kelo-barrel', 'kide-glass-corner']);
   });
 
   test('serves the seeded images and, with an asset session, the 3D models', async ({ page }) => {
@@ -48,7 +48,7 @@ test.describe('local server smoke', () => {
     test.use({ locale: 'fr-FR' });
     test('localises catalogue texts by Accept-Language', async ({ page }) => {
       const { body } = await getJson<Detail>(page, `${ALPHA}/api/catalog/saunas/espoo-compact`);
-      expect(body.description).toContain('Sauna d’intérieur compact');
+      expect(body.description).toContain('Sauna d’intérieur pour deux personnes');
       const wood = body.groups.find(g => g.code === 'wood')!;
       expect(wood.options.map(o => o.name)).toContain('Épicéa nordique');
     });
