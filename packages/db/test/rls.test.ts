@@ -140,7 +140,7 @@ describe('platform, worker and catalog roles', () => {
 
   it('app_platform gets aggregate counts through reseller_stats()', async () => {
     const all = await platform(env, c => c.query('SELECT * FROM reseller_stats(NULL)'));
-    expect(all.rows).toHaveLength(3);
+    expect(all.rows).toHaveLength(4);
     const alpha = await platform(env, c => one(c, 'SELECT * FROM reseller_stats($1)', [ALPHA]));
     expect(alpha).toMatchObject({ reseller_id: ALPHA, customers: 2, configurations: 5, locked_configurations: 4, share_links: 1,
       share_link_views: 2, requests: 3, requests_open: 3, requests_accepted: 0 });

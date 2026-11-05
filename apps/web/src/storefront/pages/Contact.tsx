@@ -6,6 +6,7 @@ import { ExternalLink } from '../../design/components/TextLink.tsx';
 import { ButtonLink } from '../../design/components/Button.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { PageHero } from '../components/PageHero.tsx';
+import { isSingleShop } from '../../host.ts';
 import './Content.css';
 
 export default function Contact() {
@@ -60,13 +61,13 @@ export default function Contact() {
             {t('contact.requestCta')}
           </ButtonLink>
         </section>
-        <section className="contact-block">
+        {!isSingleShop() && <section className="contact-block">
           <h2>{t('contact.statusTitle')}</h2>
           <p>{t('contact.statusBody')}</p>
           <ButtonLink to={session?.kind === 'customer' ? '/account/requests' : '/account/login?next=/account/requests'} variant="ghost" iconAfter={ArrowRight}>
             {t('contact.statusCta')}
           </ButtonLink>
-        </section>
+        </section>}
       </div>
     </div>
   );

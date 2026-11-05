@@ -10,7 +10,9 @@
  * 4. Starts the API (tsx watch, port 8787) and Vite (port 5173) with prefixed, coloured output.
  *
  * Ctrl+C stops both; if either exits, the other is stopped too.
- * Flags: --no-seed skips step 3, --skip-db skips steps 1 to 3.
+ * Flags: --no-seed skips step 3, --skip-db skips steps 1 to 3, --david starts the single-shop
+ * edition (David's shop `holzsauna` on http://localhost:5173, German and English, no customer
+ * accounts).
  */
 import { spawn } from 'node:child_process';
 import pg from 'pg';
@@ -19,6 +21,9 @@ const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://sauna:sauna@127.0.0
 const API_PORT = process.env.PORT ?? '8787';
 const args = new Set(process.argv.slice(2));
 const isWindows = process.platform === 'win32';
+/** Single-shop edition: the one shop's slug, for both the API and the web app. */
+const SINGLE_SHOP = args.has('--david') ? 'holzsauna' : process.env.SINGLE_SHOP ?? '';
+const editionEnv = SINGLE_SHOP ? { SINGLE_SHOP, VITE_SINGLE_SHOP: SINGLE_SHOP, VITE_LOCALES: process.env.VITE_LOCALES ?? 'de,en' } : {};
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 
 const paint = (code, text) => (useColor ? `\x1b[${code}m${text}\x1b[0m` : text);
@@ -85,6 +90,11 @@ async function needsSeed() {
   });
 }
 
+/** The single shop's reseller row exists (databases seeded before it was added do not have it). */
+async function hasShop(slug) {
+  return withClient(async (c) => (await c.query('SELECT 1 FROM resellers WHERE slug = $1', [slug])).rowCount > 0);
+}
+
 // ---- long-running processes --------------------------------------------------
 
 const children = [];
@@ -111,7 +121,7 @@ function start(name, color, workspace) {
     shell: isWindows,
     // Own process group, so stopping reaches tsx/vite and not just the npm wrapper.
     detached: !isWindows,
-    env: { ...process.env, DATABASE_URL, PORT: API_PORT, ...(useColor ? { FORCE_COLOR: '1' } : { NO_COLOR: '1' }) },
+    env: { ...process.env, ...editionEnv, DATABASE_URL, PORT: API_PORT, ...(useColor ? { FORCE_COLOR: '1' } : { NO_COLOR: '1' }) },
   });
   prefixLines(child.stdout, prefix, process.stdout);
   prefixLines(child.stderr, prefix, process.stderr);
@@ -171,12 +181,21 @@ async function main() {
         await runNpm('db:media');
       }
     }
+    if (SINGLE_SHOP && !(await hasShop(SINGLE_SHOP))) {
+      console.error(`${paint('31', '[dev]')} The database has no shop "${SINGLE_SHOP}" (it was seeded before the shop was added).`);
+      console.error(`  Reset the local database once: ${bold('LOCAL_IDP=1 npm run db:reset')} then run this again.`);
+      process.exit(1);
+    }
   }
 
   start('api', '36', '@saunaklar/api');
   start('web', '32', '@saunaklar/web');
 
-  const lines = [
+  const lines = SINGLE_SHOP ? [
+    [`Shop (${SINGLE_SHOP})`, 'http://localhost:5173'],
+    ['Shop admin (owner@holzsauna.test)', 'http://localhost:5173/admin'],
+    ['Manufacturer admin', 'http://admin.localhost:5173'],
+  ] : [
     ['Storefront (reseller alpha)', 'http://alpha.localhost:5173'],
     ['Reseller admin (alpha)', 'http://alpha.localhost:5173/admin'],
     ['Manufacturer admin', 'http://admin.localhost:5173'],

@@ -27,7 +27,7 @@ function manufacturerOf(c: Ctx): string {
 
 const storefrontUrl = (c: Ctx, slug: string) => {
   const { config } = c.get('deps');
-  return originFor(config, storefrontHost(slug, { platformDomain: config.PLATFORM_DOMAIN, adminHost: config.ADMIN_HOST }));
+  return originFor(config, storefrontHost(slug, { platformDomain: config.PLATFORM_DOMAIN, adminHost: config.ADMIN_HOST, singleShop: config.SINGLE_SHOP }));
 };
 
 interface ResellerRow { id: string; slug: string; name: string; currency_code: string; status: 'ACTIVE' | 'SUSPENDED'; created_at: Date; default_share_expiry_days: number; catalog_version: string }

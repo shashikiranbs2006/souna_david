@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router';
-import { Flame, FileText, SlidersHorizontal, UserRound, type LucideIcon } from 'lucide-react';
+import { Flame, FileText, Mail, SlidersHorizontal, UserRound, type LucideIcon } from 'lucide-react';
 import { Icon } from '../../design/components/Icon.tsx';
 import { useSession } from '../../api/queries.ts';
 import { useT, type TKey } from '../../i18n/i18n.ts';
+import { isSingleShop } from '../../host.ts';
 import './BottomNav.css';
 
 interface Item {
@@ -18,7 +19,12 @@ export function BottomNav() {
   const { pathname } = useLocation();
   const loggedIn = useSession().data?.kind === 'customer';
 
-  const items: Item[] = [
+  const items: Item[] = isSingleShop() ? [
+    // Single-shop edition: no configurator or account for customers.
+    { to: '/saunas', key: 'nav.saunas', icon: Flame, active: p => p.startsWith('/saunas') },
+    { to: '/how-it-works', key: 'nav.howItWorks', icon: FileText, active: p => p.startsWith('/how-it-works') },
+    { to: '/contact', key: 'nav.contact', icon: Mail, active: p => p.startsWith('/contact') },
+  ] : [
     { to: '/saunas', key: 'nav.saunas', icon: Flame, active: p => p.startsWith('/saunas') && !p.endsWith('/configure') },
     { to: '/saunas', key: 'nav.configure', icon: SlidersHorizontal, active: p => p.startsWith('/saunas') && p.endsWith('/configure') },
     loggedIn

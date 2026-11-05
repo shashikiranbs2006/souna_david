@@ -33,7 +33,7 @@ export const SEED_SHARE_TOKEN = createHash('sha256').update('saunaklar-seed-shar
 
 export const SEED = {
   manufacturerId: seedId('manufacturer:nordlicht'),
-  resellers: { alpha: seedId('reseller:alpha'), beta: seedId('reseller:beta'), gamma: seedId('reseller:gamma') },
+  resellers: { alpha: seedId('reseller:alpha'), beta: seedId('reseller:beta'), gamma: seedId('reseller:gamma'), holzsauna: seedId('reseller:holzsauna') },
   staff: {
     admin: seedId('staff:admin@nordlicht.test'),
     alphaOwner: seedId('staff:owner@alpha.test'),
@@ -41,6 +41,8 @@ export const SEED = {
     alphaAdmin: seedId('staff:admin@alpha.test'),
     betaOwner: seedId('staff:owner@beta.test'),
     gammaOwner: seedId('staff:owner@gamma.test'),
+    /** Owner of the single-shop edition's shop (David's store). */
+    holzsaunaOwner: seedId('staff:owner@holzsauna.test'),
   },
   customers: {
     annaAlpha: seedId('customer:alpha:anna'),
@@ -347,7 +349,7 @@ const ROOMS = [
 ] as const;
 
 interface ResellerDef {
-  key: 'alpha' | 'beta' | 'gamma'; name: string; currency: Cur; status: 'ACTIVE' | 'SUSPENDED';
+  key: 'alpha' | 'beta' | 'gamma' | 'holzsauna'; name: string; currency: Cur; status: 'ACTIVE' | 'SUSPENDED';
   branding: { display: string; tagline: string; color: string; email: string; phone: string; legalName: string; legalAddress: string;
     layout: 'atelier' | 'showroom' | 'nordic' | 'catalogue' | 'journal' };
   saunas: { slug: string; visible?: boolean; discount?: Discount }[];
@@ -380,6 +382,16 @@ const RESELLERS: ResellerDef[] = [
     saunas: [{ slug: 'kelo-barrel' }, { slug: 'lappi-corner' }, { slug: 'aurora-hex' }],
     defaultDiscount: { type: 'FIXED', value: 100000 }, rooms: ['basement-spa'],
     owner: { key: 'gammaOwner', email: 'owner@gamma.test', name: 'Gustav Gran' } },
+  // The single-shop edition's shop (SINGLE_SHOP=holzsauna): our six kit models with their
+  // catalogue prices and options unchanged, CHF. Contact details are placeholders.
+  { key: 'holzsauna', name: 'Holzbau Boscheri GmbH', currency: 'CHF', status: 'ACTIVE',
+    branding: { display: 'Holzsauna', tagline: 'Your sauna, configured together', color: '#5a6b7b', email: 'support@holzsauna.test', phone: '+41 52 000 00 00', legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40, 8507 Hörhausen, Switzerland', layout: 'nordic' },
+    saunas: [
+      { slug: 'espoo-compact' }, { slug: 'kelo-barrel' }, { slug: 'fjord-panorama' },
+      { slug: 'lappi-corner' }, { slug: 'aurora-hex' }, { slug: 'saimaa-garden-house' },
+    ],
+    rooms: ['garden-deck', 'basement-spa', 'lakeside-terrace'],
+    owner: { key: 'holzsaunaOwner', email: 'owner@holzsauna.test', name: 'David Boscheri' } },
 ];
 
 const modelBySlug = new Map(MODELS.map(m => [m.slug, m]));

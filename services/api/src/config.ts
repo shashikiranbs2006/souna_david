@@ -15,6 +15,11 @@ const schema = z.object({
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   PLATFORM_DOMAIN: z.string().default('localhost'),
   ADMIN_HOST: z.string().default('admin.localhost'),
+  /**
+   * Single-shop edition: the slug of the one reseller. Every host except ADMIN_HOST serves that
+   * storefront, and customer accounts are switched off. Empty = multi-reseller platform.
+   */
+  SINGLE_SHOP: z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/).optional().or(z.literal('').transform(() => undefined)),
   /** Scheme used when building absolute links (share links, e-mails). */
   PUBLIC_SCHEME: z.enum(['http', 'https']).default('http'),
   /** Port appended to absolute links in development (e.g. 5173 for Vite). Empty in production. */

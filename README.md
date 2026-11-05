@@ -94,6 +94,20 @@ The database URL defaults to `postgres://sauna:sauna@127.0.0.1:5432/sauna`. Over
 database steps. To start over run `LOCAL_IDP=1 npm run db:reset`; it drops, migrates and seeds,
 and the `LOCAL_IDP` flag creates the login users.
 
+### David's edition (single shop)
+
+```sh
+npm run dev:david
+```
+
+Starts the same platform as one shop, `holzsauna` (CHF, our six models with their normal prices
+and options), on http://localhost:5173. It is German and English, has no customer accounts or
+sign-up, and customers cannot open the configurator. The owner signs in at `/admin` as
+`owner@holzsauna.test` (password below). Set `SINGLE_SHOP=<slug>` for the API and
+`VITE_SINGLE_SHOP=<slug>` / `VITE_LOCALES=de,en` for the web app (or `singleShop` / `locales` in
+`/config.js`) to run it elsewhere. An existing local database needs `LOCAL_IDP=1 npm run db:reset`
+once so the shop exists. See `docs/david-fork-plan.md`.
+
 ### Seeded logins
 
 Every seeded account uses the password **`Sauna!2026`**.

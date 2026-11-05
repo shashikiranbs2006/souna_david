@@ -38,6 +38,8 @@ interface MockTenant {
   defaultDiscount: Discount | null;
   perSauna: Record<string, Discount>;
   hidden: string[];
+  /** Defaults to EUR. The mock keeps the same amounts whatever the currency. */
+  currency?: string;
 }
 
 export const MOCK_TENANTS: Record<string, MockTenant> = {
@@ -87,6 +89,13 @@ export const MOCK_TENANTS: Record<string, MockTenant> = {
     hidden: [],
   },
 };
+// The single-shop edition's shop (VITE_SINGLE_SHOP=holzsauna): our six models, no discounts.
+MOCK_TENANTS.holzsauna = {
+  slug: 'holzsauna', layout: 'nordic', name: 'Holzsauna', tagline: 'Your sauna, configured together',
+  primaryColor: '#5a6b7b', supportEmail: 'support@holzsauna.test', supportPhone: '+41 52 000 00 00',
+  legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40\n8507 Hörhausen\nSwitzerland',
+  vatDisplay: 'INCLUDED', defaultDiscount: null, perSauna: {}, hidden: [], currency: 'CHF',
+};
 MOCK_TENANTS['alpha-spa'] = { ...MOCK_TENANTS.nordic!, slug: 'alpha-spa', layout: 'catalogue', name: 'Alpha Spa', legalName: 'Alpha Spa Ltd', primaryColor: '#2f4f3a' };
 
 export function tenantDto(t: MockTenant, catalogVersion: number): Tenant {
@@ -94,7 +103,7 @@ export function tenantDto(t: MockTenant, catalogVersion: number): Tenant {
     id: fid(`tenant:${t.slug}`),
     slug: t.slug,
     name: t.name,
-    currency: 'EUR',
+    currency: t.currency ?? 'EUR',
     catalogVersion,
     defaultShareExpiryDays: 30,
     branding: {

@@ -140,7 +140,7 @@ export function createLocalEdgeApp(deps: Deps, opts: LocalEdgeOptions): Hono {
 
 /** Storage key of the tenant's favicon, or null (not a storefront, unknown tenant, no favicon). */
 async function tenantFaviconKey(deps: Deps, host: string): Promise<string | null> {
-  const parsed = parseHost(host, { platformDomain: deps.config.PLATFORM_DOMAIN, adminHost: deps.config.ADMIN_HOST });
+  const parsed = parseHost(host, { platformDomain: deps.config.PLATFORM_DOMAIN, adminHost: deps.config.ADMIN_HOST, singleShop: deps.config.SINGLE_SHOP });
   if (parsed.kind !== 'storefront') return null;
   const { rows: [tenant] } = await deps.pool.query<{ id: string }>('SELECT id FROM resolve_tenant($1)', [parsed.slug]);
   if (!tenant) return null;

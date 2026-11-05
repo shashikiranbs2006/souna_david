@@ -212,6 +212,8 @@ export const de: Messages = {
     discountPercent: '{percent} Rabatt',
     configure: 'Diese Sauna konfigurieren',
     loginToConfigure: 'Zum Gestalten anmelden',
+    askOffer: 'Offerte bei {name} anfragen',
+    askOfferHint: '{name} stellt Ihre Sauna mit Ihnen im Showroom zusammen und schickt Ihnen einen Link, um sie in 3D anzusehen.',
     loginHint: 'Ansehen kann jede und jeder. Zum Konfigurieren und Speichern melden Sie sich an oder erstellen ein kostenloses Konto.',
     view3d: '3D-Ansicht',
     viewHint: 'Ziehen zum Drehen · Scrollen zum Zoomen',

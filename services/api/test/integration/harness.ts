@@ -85,7 +85,7 @@ export class Client {
   }
 }
 
-export async function createHarness(): Promise<Harness> {
+export async function createHarness(overrides: Record<string, string> = {}): Promise<Harness> {
   const db = await createTestDatabase({ seed: true });
   const env = {
     NODE_ENV: 'test',
@@ -98,6 +98,7 @@ export async function createHarness(): Promise<Harness> {
     ADAPTERS: 'local',
     LOCAL_OBJECTS_DIR: `var/test-objects/${db.name}`,
     LOG_LEVEL: 'error',
+    ...overrides,
   };
   const config = loadConfig(env);
   const pool = new pg.Pool({ connectionString: db.apiUrl, max: 5 });

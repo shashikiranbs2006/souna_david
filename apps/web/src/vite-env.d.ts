@@ -7,6 +7,10 @@ interface ImportMetaEnv {
   readonly VITE_ADMIN_HOST?: string;
   /** Comma-separated shop slugs the platform page links to as examples (empty list hides the section). */
   readonly VITE_EXAMPLE_SHOPS?: string;
+  /** Single-shop edition: slug of the one shop (runtime `singleShop` in /config.js wins). */
+  readonly VITE_SINGLE_SHOP?: string;
+  /** Languages offered, comma separated, first = fallback (runtime `locales` wins). */
+  readonly VITE_LOCALES?: string;
   /** `1` serves fixtures from src/api/mock.ts instead of calling the API. */
   readonly VITE_MOCK_API?: string;
   /** Manufacturer name on the apex platform page (default "Saunaklar"). */

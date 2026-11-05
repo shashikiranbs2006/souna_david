@@ -6,12 +6,15 @@ import { TextLink } from '../../design/components/TextLink.tsx';
 import { toast } from '../../design/components/Toast.tsx';
 import { useLogout, useSession } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
+import { isSingleShop } from '../../host.ts';
 
 export function AccountMenu() {
   const { t } = useT();
   const session = useSession().data;
   const navigate = useNavigate();
   const logout = useLogout();
+  // Single-shop edition: no customer accounts.
+  if (isSingleShop()) return null;
   if (session?.kind !== 'customer') {
     return (
       <TextLink to="/account/login" className="header__login">
