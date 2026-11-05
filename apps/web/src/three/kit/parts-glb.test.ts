@@ -8,6 +8,9 @@ import { MeshoptDecoder } from 'meshoptimizer';
 // (heater ~0.4 x 0.8 m), not be scaled/offset by the quantization node transform.
 describe('kit-parts.glb', () => {
   it('keeps every part inside a plausible fixture envelope', async () => {
+    // The decoder instantiates its WebAssembly asynchronously; under a busy test run it is
+    // not ready yet unless awaited, and decoding then fails with "reading 'exports'".
+    await MeshoptDecoder.ready;
     const io = new NodeIO()
       .registerExtensions([EXTMeshoptCompression, KHRMeshQuantization])
       .registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
