@@ -42,3 +42,17 @@ export function shareState(link: { expires_at: Date; revoked_at: Date | null }, 
   if (link.revoked_at) return 'REVOKED';
   return link.expires_at <= now ? 'EXPIRED' : 'ACTIVE';
 }
+
+/** A visitor's network, shortened so it cannot identify a household: IPv4 /24, IPv6 /48. */
+export function visitorPrefix(header: { cloudfront?: string | undefined; forwardedFor?: string | undefined }): string | null {
+  let ip = header.cloudfront ? header.cloudfront.replace(/:\d+$/, '') : header.forwardedFor?.split(',')[0]?.trim();
+  if (!ip) return null;
+  ip = ip.replace(/^\[|\]$/g, '');
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/.exec(ip);
+  if (v4) return `${v4[1]}.${v4[2]}.${v4[3]}.0/24`;
+  if (ip.includes(':')) {
+    const groups = ip.split(':').filter(g => g !== '').slice(0, 3);
+    return groups.length ? `${groups.join(':')}::/48` : null;
+  }
+  return null;
+}

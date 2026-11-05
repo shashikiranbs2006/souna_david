@@ -24,6 +24,7 @@ export interface RetentionOptions {
 
 export interface RetentionCounts {
   shareLinkViews: number;
+  shareLinkActivity: number;
   sentOutbox: number;
   failedOutbox: number;
   pendingCustomers: number;
@@ -40,6 +41,7 @@ type JobKey = keyof RetentionCounts;
 /** Retention periods (proposed defaults, to confirm with counsel), in milliseconds-free calendar terms. */
 export const RETENTION = {
   shareLinkViews: { months: 13 },
+  shareLinkActivity: { months: 13 },
   auditEvents: { months: 24 },
   sentOutbox: { days: 30 },
   failedOutbox: { days: 90 },
@@ -59,7 +61,7 @@ const OUTBOX_PREDICATE = { sentOutbox: 'sent_at', failedOutbox: 'failed_at' } as
 export async function runRetention(opts: RetentionOptions): Promise<RetentionResult> {
   const now = (opts.now ?? (() => new Date()))();
   const batchSize = opts.batchSize ?? 5000;
-  const counts: RetentionCounts = { shareLinkViews: 0, sentOutbox: 0, failedOutbox: 0, pendingCustomers: 0, auditEvents: 0 };
+  const counts: RetentionCounts = { shareLinkViews: 0, shareLinkActivity: 0, sentOutbox: 0, failedOutbox: 0, pendingCustomers: 0, auditEvents: 0 };
   const failedJobs: string[] = [];
   const run = async (key: JobKey | 'legacy', job: () => Promise<void>) => {
     try {
@@ -81,6 +83,9 @@ export async function runRetention(opts: RetentionOptions): Promise<RetentionRes
   if (batched) {
     await run('shareLinkViews', async () => {
       counts.shareLinkViews = await deleteViaFunction(opts.pool, 'share_link_views', cutoffFor(now, RETENTION.shareLinkViews), batchSize);
+    });
+    await run('shareLinkActivity', async () => {
+      counts.shareLinkActivity = await deleteViaFunction(opts.pool, 'share_link_activity', cutoffFor(now, RETENTION.shareLinkActivity), batchSize);
     });
     await run('auditEvents', async () => {
       counts.auditEvents = await deleteViaFunction(opts.pool, 'audit_events', cutoffFor(now, RETENTION.auditEvents), batchSize);
@@ -132,7 +137,7 @@ async function deleteOutboxInBatches(pool: Pool, column: 'sent_at' | 'failed_at'
   );
 }
 
-async function deleteViaFunction(pool: Pool, table: 'share_link_views' | 'audit_events', cutoff: Date, batchSize: number): Promise<number> {
+async function deleteViaFunction(pool: Pool, table: 'share_link_views' | 'share_link_activity' | 'audit_events', cutoff: Date, batchSize: number): Promise<number> {
   return loopBatches(batchSize, () =>
     workerTx(pool, async db => {
       const { rows } = await db.query<{ n: number }>('SELECT retention_delete_batch($1, $2, $3) AS n', [table, cutoff, batchSize]);
