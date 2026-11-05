@@ -5,6 +5,7 @@ import { errorText } from '../../i18n/errorText.ts';
 import { useSubmitRequest } from '../configurator/useSubmitRequest.ts';
 import { api, isApiError } from '../../api/client.ts';
 import { useSession, useTenantData } from '../../api/queries.ts';
+import { isSingleShop } from '../../host.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { ScrambleText } from '../../motion/ScrambleText.tsx';
@@ -72,12 +73,15 @@ export default function Shared() {
   const specs = specsOf(d.sauna);
   const chosen = d.sauna.groups.flatMap(g => g.options.filter(o => d.configuration.selections.includes(o.id)).map(o => ({ g: g.name, o })));
   const signedIn = session?.kind === 'customer';
+  // David's edition: customers only look. No claim, clone or login; they contact the shop.
+  const viewOnly = isSingleShop();
+  const b = tenant.branding;
   return (
     <div className="page container">
       <p className="eyebrow">{t('shared.eyebrow')}</p>
       <div className="detail">
         <div className="detail__stage">
-          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} />
+          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views={viewOnly} />
           {d.sauna.assets.hasAr && (
             <div className="detail__ar">
               <ArButton saunaModelId={d.sauna.id} name={d.sauna.name} enabled shareToken={token} />
@@ -100,7 +104,15 @@ export default function Shared() {
               <Price minor={d.snapshot.finalPriceMinor} currency={d.snapshot.currency} listMinor={d.snapshot.discountMinor > 0 ? d.snapshot.subtotalMinor : null} size="lg" />
               <p className="pricecard__vat">{t('shared.priceAsOf', { date: fmt.date(d.snapshot.computedAt) })} · {t('shared.validUntil', { date: fmt.date(d.snapshot.priceValidUntil) })}</p>
               <p className="pricecard__vat">{t('shared.expires', { date: fmt.date(d.expiresAt) })}</p>
-              {claimedId ? (
+              {viewOnly ? (
+                <>
+                  <p className="pricecard__hint">{t('shared.viewOnlyHint', { name: b.displayName })}</p>
+                  <ButtonLink to="/contact" size="lg" block>
+                    {t('shared.contact', { name: b.displayName })}
+                  </ButtonLink>
+                  {b.supportPhone && <a className="btn btn--ghost btn--md btn--block" href={`tel:${b.supportPhone.replace(/[^+\d]/g, '')}`}>{b.supportPhone}</a>}
+                </>
+              ) : claimedId ? (
                 <div className="pricecard__claimed" role="status">
                   <p className="pricecard__claimed-title">{t('shared.claimedTitle')}</p>
                   <p className="pricecard__hint">{t('shared.claimedBody')}</p>

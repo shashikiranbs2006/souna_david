@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { SEED_PASSWORD } from '@saunaklar/db/seed';
+import { SEED, SEED_PASSWORD } from '@saunaklar/db/seed';
 import { createHarness, type Harness } from './harness.ts';
 
 // Single-shop edition: SINGLE_SHOP=holzsauna serves David's shop on any host but the admin
@@ -37,5 +37,19 @@ describe('single-shop edition', () => {
     expect((await shop().get('/api/auth/session')).status).toBe(200);
     const r = await shop().post('/api/auth/staff/login', { email: 'owner@holzsauna.test', password: SEED_PASSWORD });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
+  });
+
+  it('shows a share link to anyone, but nobody can claim it into an account', async () => {
+    const c = shop();
+    await c.staffLogin('owner@holzsauna.test', SEED_PASSWORD);
+    const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'For Keller' });
+    const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 7 });
+    expect(link.status, JSON.stringify(link.body)).toBe(201);
+    const token = /\/s\/([A-Za-z0-9_-]{20,})$/.exec(link.body.url)![1]!;
+    const visitor = shop();
+    const view = await visitor.get(`/api/shared/${token}`);
+    expect(view.status).toBe(200);
+    expect(view.body.configuration.name).toBe('For Keller');
+    expect((await visitor.post(`/api/shared/${token}/claim`, {})).status).toBe(404);
   });
 });

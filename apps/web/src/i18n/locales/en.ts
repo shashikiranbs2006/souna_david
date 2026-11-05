@@ -341,6 +341,7 @@ const messages = {
     viewSaved: 'View in my account',
     expiredTitle: 'This link is no longer valid',
     expiredBody: 'Shared links expire or can be withdrawn. Ask {name} for a new one.',
+    viewOnlyHint: 'This is a preview prepared for you, view only. For questions or changes, contact {name}.',
     contact: 'Contact {name}',
   },
   auth: {
