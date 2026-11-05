@@ -7,6 +7,7 @@ import { csrf, session } from './middleware/session.ts';
 import { hostAndTenant, TenantCache } from './middleware/tenant.ts';
 import { registerAccount } from './routes/account.ts';
 import { registerAdmin } from './routes/admin.ts';
+import { registerQuotes } from './routes/quotes.ts';
 import { registerAssets } from './routes/assets.ts';
 import { registerAuth } from './routes/auth.ts';
 import { registerCatalog } from './routes/catalog.ts';
@@ -42,6 +43,7 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
   if (has('reseller-admin')) {
     registerStaffAuth(app);
     registerAdmin(app);
+    registerQuotes(app);
   }
   if (has('manufacturer-admin')) {
     if (!has('reseller-admin')) registerStaffAuth(app);

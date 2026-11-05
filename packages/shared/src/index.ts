@@ -10,3 +10,4 @@ export * from './sharing.ts';
 export * from './admin.ts';
 export * from './manufacturer.ts';
 export * from './routes.ts';
+export * from './quotes.ts';
