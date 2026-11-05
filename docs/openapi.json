@@ -4861,12 +4861,12 @@
       "patch": {
         "operationId": "adminPatchBranding",
         "summary": "PATCH /api/admin/branding",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -4955,12 +4955,12 @@
       "post": {
         "operationId": "adminCreateUpload",
         "summary": "POST /api/admin/branding/uploads",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5049,12 +5049,12 @@
       "post": {
         "operationId": "adminCompleteUpload",
         "summary": "POST /api/admin/branding/uploads/:uploadId/complete",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5213,12 +5213,12 @@
       "patch": {
         "operationId": "adminPatchSettings",
         "summary": "PATCH /api/admin/settings",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5380,12 +5380,12 @@
       "patch": {
         "operationId": "adminPatchSauna",
         "summary": "PATCH /api/admin/saunas/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5483,12 +5483,12 @@
       "put": {
         "operationId": "adminSaunaOrder",
         "summary": "PUT /api/admin/saunas/order",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5577,12 +5577,12 @@
       "put": {
         "operationId": "adminPutSaunaDiscount",
         "summary": "PUT /api/admin/saunas/:id/discount",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5678,12 +5678,12 @@
       "delete": {
         "operationId": "adminDeleteSaunaDiscount",
         "summary": "DELETE /api/admin/saunas/:id/discount",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5853,12 +5853,12 @@
       "put": {
         "operationId": "adminPutSaunaOptions",
         "summary": "PUT /api/admin/saunas/:id/options",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -5956,12 +5956,12 @@
       "put": {
         "operationId": "adminPutDefaultDiscount",
         "summary": "PUT /api/admin/discount",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -6048,12 +6048,12 @@
       "delete": {
         "operationId": "adminDeleteDefaultDiscount",
         "summary": "DELETE /api/admin/discount",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
         "x-host": "{slug}.{platformDomain}",
-        "x-access": "reseller-staff",
+        "x-access": "reseller-owner",
         "x-lambda": "reseller-admin",
         "servers": [
           {
@@ -9823,6 +9823,18 @@
                   "type": "string",
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "quoteValidUntil": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -10837,6 +10849,18 @@
                   "type": "string",
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "quoteValidUntil": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "customerName": {
                   "type": "string"
@@ -12822,6 +12846,11 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "saunasVisible": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "customers": {
             "type": "integer",
             "minimum": -9007199254740991,
@@ -12927,6 +12956,7 @@
           "status",
           "storefrontUrl",
           "saunasAssigned",
+          "saunasVisible",
           "customers",
           "openRequests",
           "createdAt",
@@ -13070,6 +13100,11 @@
                   "minimum": -9007199254740991,
                   "maximum": 9007199254740991
                 },
+                "saunasVisible": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
                 "customers": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -13094,6 +13129,7 @@
                 "status",
                 "storefrontUrl",
                 "saunasAssigned",
+                "saunasVisible",
                 "customers",
                 "openRequests",
                 "createdAt"
@@ -13465,6 +13501,18 @@
                   "type": "string",
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "quoteValidUntil": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
