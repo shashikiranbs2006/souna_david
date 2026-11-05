@@ -108,6 +108,18 @@ sign-up, and customers cannot open the configurator. The owner signs in at `/adm
 `/config.js`) to run it elsewhere. An existing local database needs `LOCAL_IDP=1 npm run db:reset`
 once so the shop exists. See `docs/david-fork-plan.md`.
 
+What David can do in `/admin`:
+
+- **Contacts and quotes.** Save a contact, build the sauna for them in the 3D configurator (Configurations, Open in 3D), then make a numbered quote (Q-1024, Q-1025, ...) with a quantity, extra lines such as delivery, and a comment. A change after sending is a new version with its own number suffix and link. The unit price is stored on the quote, so later price changes do not move it.
+- **Share link.** A view-only page for the customer (no sign-in, no configuring, no cloning). David picks the expiry. Link copy only; no e-mail is sent yet.
+- **Tracking and likelihood.** Each quote shows opens, visitors, whether the inside view was opened, the longest visit, and a score (none, low, medium, high) with its reasons.
+- **Downloads.** A PDF of every quote version and a picture from the 3D view. Both carry the SaunaKlar watermark.
+- **Command box** above every page: `new quote`, `find Müller`, `open Q-1024`, `list open quotes`, `list expiring links`.
+- **Quotes and Reports.** Quotes by status, conversion, most quoted models, link activity and links to follow up.
+- **Invoices.** From an accepted quote, a prepayment invoice (INV-1001, ...) with a percent, a due date and payment details typed in. David marks it paid by hand. There is a watermarked PDF. No card or bank integration.
+
+Still open: David's VAT number and rate (invoices only say "includes VAT"), tracking retention and a privacy note on the link page, hosting and domain.
+
 ### Seeded logins
 
 Every seeded account uses the password **`Sauna!2026`**.
