@@ -21,7 +21,7 @@ test.describe('storefront', () => {
 
   test('the language switcher changes the UI and the catalogue texts to French', async ({ page }) => {
     await page.goto('/saunas/espoo-compact');
-    await expect(page.getByText('A compact two-to-three seat indoor sauna', { exact: false })).toBeVisible();
+    await expect(page.getByText('A two-person indoor sauna', { exact: false }).first()).toBeVisible();
     await expect(page.getByText(/^Nordic spruce/).first()).toBeVisible();
 
     await page.getByRole('button', { name: new RegExp(`^${en.nav.language}`) }).first().click();
@@ -32,7 +32,7 @@ test.describe('storefront', () => {
     expect(fr.detail.loginToConfigure).not.toBe(en.detail.loginToConfigure);
     await expect(page.getByText(fr.detail.loginToConfigure, { exact: true }).first()).toBeVisible();
     await expect(page.getByText(en.detail.loginToConfigure, { exact: true })).toHaveCount(0);
-    await expect(page.getByText('Sauna d’intérieur compact', { exact: false })).toBeVisible();
+    await expect(page.getByText('Sauna d’intérieur pour deux personnes', { exact: false }).first()).toBeVisible();
     await expect(page.getByText(/^Épicéa nordique/).first()).toBeVisible();
     await expect(page.getByText(/^Nordic spruce/)).toHaveCount(0);
 
