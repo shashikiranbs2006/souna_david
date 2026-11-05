@@ -281,6 +281,7 @@ const messages = {
     askCta: 'Contact us',
   },
   configure: {
+    makeQuote: 'Make quote', quoteTitle: 'Make a quote', quoteBody: 'Who is this for? The sauna is saved with the quote.', contact: 'Contact', newContact: 'New contact',
     downloadImage: 'Download image',
     title: 'Configure {name}',
     eyebrow: 'Configurator',
@@ -911,6 +912,7 @@ const messages = {
       createFor: 'Create configuration',
     },
     configurations: {
+      pickLede: 'Click a sauna to open it in 3D.', saved: 'Saved configurations',
       lede: 'Configurations by customers and by your team.',
       empty: 'No configurations yet.',
       owner: { CUSTOMER: 'Customer', STAFF: 'Staff' },

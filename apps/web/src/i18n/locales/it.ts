@@ -280,6 +280,7 @@ export const it: Messages = {
     askCta: 'Contattaci',
   },
   configure: {
+    makeQuote: 'Crea offerta', quoteTitle: 'Crea un’offerta', quoteBody: 'Per chi è? La sauna viene salvata con l’offerta.', contact: 'Contatto', newContact: 'Nuovo contatto',
     downloadImage: 'Scarica l’immagine',
     title: 'Configura {name}',
     eyebrow: 'Configuratore',
@@ -919,6 +920,7 @@ export const it: Messages = {
       createFor: 'Crea configurazione',
     },
     configurations: {
+      pickLede: 'Clicca su una sauna per aprirla in 3D.', saved: 'Configurazioni salvate',
       lede: 'Configurazioni dei clienti e del Suo team.',
       empty: 'Ancora nessuna configurazione.',
       owner: { CUSTOMER: 'Cliente', STAFF: 'Personale' },
