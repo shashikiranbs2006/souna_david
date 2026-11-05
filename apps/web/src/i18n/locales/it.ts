@@ -772,7 +772,7 @@ export const it: Messages = {
     ownerOnly: 'Solo proprietario',
     title: 'Amministrazione rivenditore',
     placeholder: 'Quest’area è in costruzione.',
-    nav: { dashboard: 'Panoramica', requests: 'Richieste', configurations: 'Configurazioni', saunas: 'Saune', customers: 'Clienti', quotes: 'Offerte', reports: 'Rapporti', contacts: 'Contatti', branding: 'Immagine', settings: 'Impostazioni' },
+    nav: { dashboard: 'Panoramica', requests: 'Richieste', configurations: 'Configurazioni', saunas: 'Saune', customers: 'Clienti', quotes: 'Offerte', reports: 'Rapporti', invoices: 'Fatture', contacts: 'Contatti', branding: 'Immagine', settings: 'Impostazioni' },
     dashboard: {
       seeAll: 'Vedi tutto',
       inboxEmpty: 'Nessuna richiesta aperta.',
@@ -841,6 +841,13 @@ export const it: Messages = {
       label: 'Comando', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
       unknown: 'Comando sconosciuto. Prova: new quote, find <nome>, open Q-1024, list open quotes, list expiring links.',
       noQuote: 'Nessuna offerta con il numero {number}.', failed: 'Non ha funzionato. Riprova.',
+    },
+    invoices: {
+      lede: 'Fatture di acconto per le offerte accettate.', empty: 'Ancora nessuna fattura.', needsAccepted: 'Segna l’offerta come accettata per creare una fattura di acconto.',
+      amount: 'Importo', due: 'Scadenza', issued: 'Emessa', paidOn: 'Pagata il', overdue: 'scaduta', quoteTotal: 'Totale offerta',
+      percent: 'Acconto (% del totale)', dueInDays: 'Pagabile entro (giorni)', paymentDetails: 'Dati di pagamento (conto, riferimento)',
+      create: 'Crea fattura di acconto', created: 'Fattura creata.',
+      status: { ISSUED: 'Aperta', PAID: 'Pagata', CANCELLED: 'Annullata' },
     },
     contacts: {
       lede: 'Persone e aziende a cui invii offerte. Non serve un account.',

@@ -139,3 +139,41 @@ export const reportsSchema = z.object({
     offerId: uuid, label: z.string(), contactName: z.string(), expiresAt: isoDateTime, opened: z.boolean(),
   })),
 });
+
+// ---- Prepayment invoices (phase 2) ---------------------------------------------
+
+export const INVOICE_FIRST_NUMBER = 1001;
+export const invoiceLabel = (n: number): string => `INV-${n}`;
+export const invoiceStatus = z.enum(['ISSUED', 'PAID', 'CANCELLED']);
+
+export const createInvoiceRequest = z.object({
+  quoteId: uuid,
+  /** Share of the quote total to pay before delivery. */
+  percent: z.number().int().min(1).max(100).default(30),
+  dueInDays: z.number().int().min(0).max(90).default(14),
+  paymentDetails: optText(2000),
+  note: optText(2000),
+});
+export const invoiceStatusRequest = z.object({ status: invoiceStatus });
+export const invoiceListQuery = z.object({ quoteId: uuid.optional(), status: invoiceStatus.optional() });
+
+export const invoiceSummarySchema = z.object({
+  id: uuid,
+  number: z.number().int(),
+  label: z.string(),
+  status: invoiceStatus,
+  quote: z.object({ id: uuid, label: z.string(), version: z.number().int() }),
+  contact: z.object({ id: uuid, personName: z.string(), organisation: z.string().nullable() }),
+  percent: z.number().int(),
+  amountMinor: z.number().int(),
+  currency: z.string(),
+  issuedOn: z.string(),
+  dueOn: z.string(),
+  overdue: z.boolean(),
+});
+export const invoiceSchema = invoiceSummarySchema.extend({
+  quoteTotalMinor: z.number().int(),
+  paidAt: isoDateTime.nullable(),
+  paymentDetails: z.string().nullable(),
+  note: z.string().nullable(),
+});

@@ -8,6 +8,7 @@ import { hostAndTenant, TenantCache } from './middleware/tenant.ts';
 import { registerAccount } from './routes/account.ts';
 import { registerAdmin } from './routes/admin.ts';
 import { registerQuotes } from './routes/quotes.ts';
+import { registerInvoices } from './routes/invoices.ts';
 import { registerAssets } from './routes/assets.ts';
 import { registerAuth } from './routes/auth.ts';
 import { registerCatalog } from './routes/catalog.ts';
@@ -44,6 +45,7 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
     registerStaffAuth(app);
     registerAdmin(app);
     registerQuotes(app);
+    registerInvoices(app);
   }
   if (has('manufacturer-admin')) {
     if (!has('reseller-admin')) registerStaffAuth(app);

@@ -792,7 +792,7 @@ export const fr: Messages = {
     ownerOnly: 'Réservé au propriétaire',
     title: 'Administration revendeur',
     placeholder: 'Cette section est en construction.',
-    nav: { dashboard: 'Aperçu', requests: 'Demandes', configurations: 'Configurations', saunas: 'Saunas', customers: 'Clients', quotes: 'Offres', reports: 'Rapports', contacts: 'Contacts', branding: 'Identité visuelle', settings: 'Paramètres' },
+    nav: { dashboard: 'Aperçu', requests: 'Demandes', configurations: 'Configurations', saunas: 'Saunas', customers: 'Clients', quotes: 'Offres', reports: 'Rapports', invoices: 'Factures', contacts: 'Contacts', branding: 'Identité visuelle', settings: 'Paramètres' },
     dashboard: {
       seeAll: 'Tout voir',
       inboxEmpty: 'Aucune demande ouverte.',
@@ -861,6 +861,13 @@ export const fr: Messages = {
       label: 'Commande', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
       unknown: 'Commande inconnue. Essayez : new quote, find <nom>, open Q-1024, list open quotes, list expiring links.',
       noQuote: 'Aucune offre avec le numéro {number}.', failed: 'Cela n’a pas fonctionné. Réessayez.',
+    },
+    invoices: {
+      lede: 'Factures d’acompte pour les offres acceptées.', empty: 'Aucune facture pour le moment.', needsAccepted: 'Marquez l’offre comme acceptée pour créer une facture d’acompte.',
+      amount: 'Montant', due: 'Échéance', issued: 'Émise', paidOn: 'Payée le', overdue: 'en retard', quoteTotal: 'Total de l’offre',
+      percent: 'Acompte (% du total)', dueInDays: 'Payable sous (jours)', paymentDetails: 'Coordonnées de paiement (compte, référence)',
+      create: 'Créer la facture d’acompte', created: 'Facture créée.',
+      status: { ISSUED: 'Ouverte', PAID: 'Payée', CANCELLED: 'Annulée' },
     },
     contacts: {
       lede: 'Personnes et entreprises auxquelles vous envoyez des offres. Aucun compte nécessaire.',

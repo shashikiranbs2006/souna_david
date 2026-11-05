@@ -8453,6 +8453,465 @@
         }
       }
     },
+    "/api/admin/invoices": {
+      "get": {
+        "operationId": "adminInvoices",
+        "summary": "GET /api/admin/invoices",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "quoteId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ISSUED",
+                "PAID",
+                "CANCELLED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminInvoicesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "adminCreateInvoice",
+        "summary": "POST /api/admin/invoices",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreateInvoiceBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreateInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Problem415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
+    "/api/admin/invoices/{id}": {
+      "get": {
+        "operationId": "adminInvoice",
+        "summary": "GET /api/admin/invoices/:id",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreateInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
+    "/api/admin/invoices/{id}/status": {
+      "post": {
+        "operationId": "adminInvoiceStatus",
+        "summary": "POST /api/admin/invoices/:id/status",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminInvoiceStatusBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreateInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Problem415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
+    "/api/admin/invoices/{id}/pdf": {
+      "get": {
+        "operationId": "adminInvoicePdf",
+        "summary": "GET /api/admin/invoices/:id/pdf",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
     "/api/admin/reports": {
       "get": {
         "operationId": "adminReports",
@@ -10913,6 +11372,198 @@
         ],
         "additionalProperties": false
       },
+      "AdminCreateInvoiceBody": {
+        "type": "object",
+        "properties": {
+          "quoteId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          },
+          "percent": {
+            "default": 30,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "dueInDays": {
+            "default": 14,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 90
+          },
+          "paymentDetails": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "quoteId"
+        ]
+      },
+      "AdminCreateInvoiceResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ISSUED",
+              "PAID",
+              "CANCELLED"
+            ]
+          },
+          "quote": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+              },
+              "label": {
+                "type": "string"
+              },
+              "version": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "contact": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+              },
+              "personName": {
+                "type": "string"
+              },
+              "organisation": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "personName",
+              "organisation"
+            ],
+            "additionalProperties": false
+          },
+          "percent": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string"
+          },
+          "issuedOn": {
+            "type": "string"
+          },
+          "dueOn": {
+            "type": "string"
+          },
+          "overdue": {
+            "type": "boolean"
+          },
+          "quoteTotalMinor": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "paidAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paymentDetails": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "label",
+          "status",
+          "quote",
+          "contact",
+          "percent",
+          "amountMinor",
+          "currency",
+          "issuedOn",
+          "dueOn",
+          "overdue",
+          "quoteTotalMinor",
+          "paidAt",
+          "paymentDetails",
+          "note"
+        ],
+        "additionalProperties": false
+      },
       "AdminCreateOfferBody": {
         "type": "object",
         "properties": {
@@ -11691,6 +12342,146 @@
         "required": [
           "items",
           "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "AdminInvoiceStatusBody": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ISSUED",
+              "PAID",
+              "CANCELLED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "AdminInvoicesResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                },
+                "number": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "label": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ISSUED",
+                    "PAID",
+                    "CANCELLED"
+                  ]
+                },
+                "quote": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                },
+                "contact": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                    },
+                    "personName": {
+                      "type": "string"
+                    },
+                    "organisation": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "personName",
+                    "organisation"
+                  ],
+                  "additionalProperties": false
+                },
+                "percent": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "amountMinor": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "issuedOn": {
+                  "type": "string"
+                },
+                "dueOn": {
+                  "type": "string"
+                },
+                "overdue": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "number",
+                "label",
+                "status",
+                "quote",
+                "contact",
+                "percent",
+                "amountMinor",
+                "currency",
+                "issuedOn",
+                "dueOn",
+                "overdue"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "items"
         ],
         "additionalProperties": false
       },

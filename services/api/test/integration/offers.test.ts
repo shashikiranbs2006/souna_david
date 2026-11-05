@@ -136,3 +136,30 @@ describe('reports and quote search', () => {
     expect(r.body.expiring.some((e: { label: string }) => e.label === b.body.label)).toBe(true);
   });
 });
+
+describe('prepayment invoices', () => {
+  it('invoices an accepted quote, numbers it, marks it paid and builds the PDF', async () => {
+    const c = await staff('alpha.localhost', 'owner@alpha.test');
+    const contact = await c.post('/api/admin/contacts', { personName: 'Invoice Person' });
+    const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama') });
+    const q = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id, lines: [{ label: 'Delivery', amountMinor: 10000 }] });
+    const early = await c.post('/api/admin/invoices', { quoteId: q.body.id });
+    expect(early.status).toBe(409); // not accepted yet
+    await c.post(`/api/admin/offers/${q.body.id}/status`, { status: 'ACCEPTED' });
+    const inv = await c.post('/api/admin/invoices', { quoteId: q.body.id, percent: 40, dueInDays: 10, paymentDetails: 'IBAN CH00 0000' });
+    expect(inv.status, JSON.stringify(inv.body)).toBe(201);
+    expect(inv.body).toMatchObject({ percent: 40, status: 'ISSUED', overdue: false, quoteTotalMinor: q.body.totalMinor });
+    expect(inv.body.amountMinor).toBe(Math.round(q.body.totalMinor * 0.4));
+    expect(inv.body.label).toMatch(/^INV-\d+$/);
+    const next = await c.post('/api/admin/invoices', { quoteId: q.body.id });
+    expect(next.body.number).toBe(inv.body.number + 1);
+    const paid = await c.post(`/api/admin/invoices/${inv.body.id}/status`, { status: 'PAID' });
+    expect(paid.body.status).toBe('PAID');
+    expect(paid.body.paidAt).not.toBeNull();
+    expect((await c.get(`/api/admin/invoices?quoteId=${q.body.id}`)).body.items).toHaveLength(2);
+    const pdf = await c.get(`/api/admin/invoices/${inv.body.id}/pdf`);
+    expect(pdf.status).toBe(200);
+    const beta = await staff('beta.localhost', 'owner@beta.test');
+    expect((await beta.get(`/api/admin/invoices/${inv.body.id}`)).status).toBe(404);
+  });
+});

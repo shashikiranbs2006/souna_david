@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router';
-import { BarChart3, Boxes, Contact, FileText, Inbox, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
+import { BarChart3, Boxes, Contact, FileText, Inbox, Receipt, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
 import { useTenantData } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { Icon } from '../../design/components/Icon.tsx';
@@ -13,6 +13,7 @@ import { Dashboard } from './Dashboard.tsx';
 import { RequestDetail, RequestsList } from './Requests.tsx';
 import { ContactDetail, ContactsList, NewOffer, OfferDetail } from './Contacts.tsx';
 import { CommandBox } from './CommandBox.tsx';
+import { InvoiceDetail, InvoicesList } from './Invoices.tsx';
 import { QuotesList, Reports } from './Reports.tsx';
 import { CustomerDetail, CustomersList } from './Customers.tsx';
 import { ConfigurationDetail, ConfigurationsList, NewConfiguration } from './Configurations.tsx';
@@ -56,6 +57,7 @@ export default function AdminApp() {
             { to: '/admin/requests', label: t('admin.nav.requests'), icon: Inbox },
             { to: '/admin/contacts', label: t('admin.nav.contacts'), icon: Contact },
             { to: '/admin/quotes', label: t('admin.nav.quotes'), icon: FileText },
+            { to: '/admin/invoices', label: t('admin.nav.invoices'), icon: Receipt },
             { to: '/admin/reports', label: t('admin.nav.reports'), icon: BarChart3 },
             { to: '/admin/customers', label: t('admin.nav.customers'), icon: Users },
             { to: '/admin/saunas', label: t('admin.nav.saunas'), icon: Boxes },
@@ -78,6 +80,8 @@ export default function AdminApp() {
             <Route path="contacts/:id/quote" element={<NewOffer />} />
             <Route path="offers/:id" element={<OfferDetail />} />
             <Route path="quotes" element={<QuotesList />} />
+            <Route path="invoices" element={<InvoicesList />} />
+            <Route path="invoices/:id" element={<InvoiceDetail />} />
             <Route path="reports" element={<Reports />} />
             <Route path="customers" element={<CustomersList />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
