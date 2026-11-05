@@ -1,0 +1,470 @@
+import { useSubmitRequest } from '../configurator/useSubmitRequest.ts';
+import { errorText } from '../../i18n/errorText.ts';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Armchair, ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon } from 'lucide-react';
+import { calculatePrice } from '@saunaklar/pricing';
+import { availability, validate } from '@saunaklar/rules';
+import { api, isApiError } from '../../api/client.ts';
+import { useRooms, useSauna, useTenantData } from '../../api/queries.ts';
+import type { OptionGroupDto, SaunaDetail } from '../../api/types.ts';
+import { useT } from '../../i18n/i18n.ts';
+import { useFormat } from '../../i18n/format.ts';
+import { ScrambleText } from '../../motion/ScrambleText.tsx';
+import { Button, ButtonLink, IconButton } from '../../design/components/Button.tsx';
+import { Price } from '../../design/components/Price.tsx';
+import { Dialog } from '../../design/components/Dialog.tsx';
+import { Textarea } from '../../design/components/Field.tsx';
+import { Skeleton } from '../../design/components/Skeleton.tsx';
+import { Segmented } from '../../design/components/Segmented.tsx';
+import { Icon } from '../../design/components/Icon.tsx';
+import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
+import { toast } from '../../design/components/Toast.tsx';
+import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
+import { ViewerSlot } from '../../three/ViewerSlot.tsx';
+import { ArButton } from '../../three/ArButton.tsx';
+import { RequireCustomer } from '../account/RequireCustomer.tsx';
+import { specsOf } from '../components/specs.ts';
+import { defaultSelectionOf, rulesOf, viewerOptionsOf } from '../components/sauna-helpers.ts';
+import { useConfigurator } from '../configurator/store.ts';
+import './Configure.css';
+
+const RoomScene = lazy(() => import('../../three/RoomScene.tsx'));
+
+function ConfigureSkeleton() {
+  return (
+    <div className="page cfg" aria-hidden="true">
+      <div className="cfg__stage">
+        <Skeleton height="auto" style={{ aspectRatio: '4 / 3.2' }} />
+      </div>
+      <div className="cfg__panel">
+        <Skeleton width="50%" height="2.5rem" />
+        <Skeleton lines={8} style={{ marginTop: '2rem' }} />
+      </div>
+    </div>
+  );
+}
+
+/** The option groups gathered under the studio's section rail; unknown codes land in "More". */
+type SectionId = 'cabin' | 'benches' | 'heat' | 'extras' | 'more' | 'room' | 'ar';
+const SECTION_OF: Record<string, SectionId> = {
+  wood: 'cabin', exterior: 'cabin', door: 'cabin', roof: 'cabin', window: 'cabin', windows: 'cabin',
+  'bench-layout': 'benches', 'bench-wood': 'benches', 'bench-front': 'benches', 'bench-end': 'benches', 'bench-edge': 'benches', backrest: 'benches',
+  heater: 'heat', control: 'heat',
+  lighting: 'extras', extras: 'extras',
+};
+const SECTION_ICON: Record<SectionId, LucideIcon> = { cabin: House, benches: Armchair, heat: Flame, extras: Lightbulb, more: Shapes, room: Ruler, ar: ScanLine };
+
+function GroupEditor({ group, sauna, currency, open, onToggle }: { group: OptionGroupDto; sauna: SaunaDetail; currency: string; open: boolean; onToggle: () => void }) {
+  const { t } = useT();
+  const fmt = useFormat();
+  const rules = useMemo(() => rulesOf(sauna), [sauna]);
+  const selection = useConfigurator(s => s.selection);
+  const toggleOption = useConfigurator(s => s.toggleOption);
+  const avail = useMemo(() => new Map(availability(rules, selection).map(a => [a.optionId, a])), [rules, selection]);
+  const names = useMemo(() => new Map(sauna.groups.flatMap(g => g.options.map(o => [o.id, o.name] as const))), [sauna]);
+  const isWood = group.options.every(o => o.swatchColor);
+  const single = group.selectionType === 'SINGLE';
+  const chosen = group.options.filter(o => selection.includes(o.id));
+  const bodyId = `cfg-group-${group.id}`;
+
+  const click = (id: string) => {
+    const on = !selection.includes(id);
+    const r = toggleOption(rules, id, on);
+    if (r.rejected) {
+      toast.error(t('configure.blocked', { reason: r.rejected }));
+      return;
+    }
+    const added = r.added.filter(x => x !== id).map(x => names.get(x) ?? '');
+    const removed = r.removed.filter(x => x !== id && !group.options.some(o => o.id === x)).map(x => names.get(x) ?? '');
+    if (added.length) toast(t('configure.added', { list: fmt.list(added) }));
+    if (removed.length) toast(t('configure.removed', { list: fmt.list(removed) }));
+  };
+
+  const state = (id: string) => {
+    const a = avail.get(id);
+    const selected = selection.includes(id);
+    return { a, selected, blocked: Boolean(a?.blockedReason) && !selected };
+  };
+
+  return (
+    <section className={['cfg-group', open && 'is-open'].filter(Boolean).join(' ')}>
+      <button type="button" className="cfg-group__head" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
+        <span className="cfg-group__title">
+          <span>{group.name}</span>
+          <span className="cfg-group__value">{chosen.length ? chosen.map(o => o.name).join(', ') : group.required ? t('detail.required') : (single ? t('detail.chooseOne') : t('detail.chooseAny'))}</span>
+        </span>
+        <Icon icon={ChevronDown} size="sm" className="cfg-group__caret" />
+      </button>
+      {open && (
+        <div id={bodyId} className="cfg-group__body">
+          {isWood ? (
+            <>
+              <div className="cfg-dots" role={single ? 'radiogroup' : 'group'} aria-label={group.name}>
+                {group.options.map(o => {
+                  const { a, selected, blocked } = state(o.id);
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      role={single ? 'radio' : 'checkbox'}
+                      aria-checked={selected}
+                      aria-disabled={blocked || undefined}
+                      title={a?.blockedReason ?? o.description ?? undefined}
+                      className={['cfg-dot', selected && 'is-selected', blocked && 'is-blocked'].filter(Boolean).join(' ')}
+                      onClick={() => click(o.id)}
+                    >
+                      <span className="cfg-dot__disc" style={{ background: o.swatchColor! }} aria-hidden="true">
+                        {selected && (
+                          <span className="cfg-dot__tick">
+                            <Icon icon={Check} size="xs" strokeWidth={2.5} />
+                          </span>
+                        )}
+                      </span>
+                      <span className="cfg-dot__label">{o.name}</span>
+                      <span className="cfg-dot__sub mono">{o.priceDeltaMinor ? `+ ${fmt.money(o.priceDeltaMinor, currency)}` : t('common.included')}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {chosen[0]?.description && <p className="cfg-group__note">{chosen[0].description}</p>}
+            </>
+          ) : (
+            <div className="cfg-opts" role={single ? 'radiogroup' : 'group'} aria-label={group.name}>
+              {group.options.map(o => {
+                const { a, selected, blocked } = state(o.id);
+                const consequence = [
+                  ...(a?.wouldAdd ?? []).map(x => `+ ${names.get(x)}`),
+                  ...(a?.wouldRemove ?? []).filter(x => !group.options.some(g => g.id === x)).map(x => `− ${names.get(x)}`),
+                ];
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    role={single ? 'radio' : 'checkbox'}
+                    aria-checked={selected}
+                    aria-disabled={blocked || undefined}
+                    title={a?.blockedReason}
+                    className={['cfg-opt', selected && 'is-selected', blocked && 'is-blocked'].filter(Boolean).join(' ')}
+                    onClick={() => click(o.id)}
+                  >
+                    <span className={`cfg-opt__mark cfg-opt__mark--${single ? 'radio' : 'check'}`} aria-hidden="true">
+                      {selected && <Icon icon={Check} size="xs" strokeWidth={2.5} />}
+                    </span>
+                    <span className="cfg-opt__text">
+                      <span className="cfg-opt__name">{o.name}</span>
+                      {o.description && <span className="cfg-opt__desc">{o.description}</span>}
+                      {!selected && consequence.length > 0 && <span className="cfg-opt__cons mono">{consequence.join('  ')}</span>}
+                    </span>
+                    <span className="cfg-opt__price mono">{o.priceDeltaMinor ? `+ ${fmt.money(o.priceDeltaMinor, currency)}` : t('common.included')}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RoomPanel({ sauna }: { sauna: SaunaDetail }) {
+  const { t } = useT();
+  const fmt = useFormat();
+  const rooms = useRooms();
+  const { roomId, placement, setRoom, setPlacement, selection } = useConfigurator();
+  const room = rooms.data?.items.find(r => r.id === roomId) ?? null;
+  const specs = specsOf(sauna);
+  return (
+    <div className="cfg-room">
+      <p className="muted">{t('configure.roomLede')}</p>
+      {rooms.isPending ? (
+        <Skeleton height="2.5rem" />
+      ) : (
+        <Segmented
+          label={t('configure.room')}
+          value={roomId ?? 'none'}
+          onChange={v => setRoom(v === 'none' ? null : v)}
+          options={[{ value: 'none', label: t('configure.noRoom') }, ...(rooms.data?.items ?? []).map(r => ({ value: r.id, label: r.name }))]}
+          size="sm"
+        />
+      )}
+      {room?.preset && (
+        <>
+          <div className="cfg-room__stage">
+            <Suspense fallback={<Skeleton height="100%" />}>
+              <RoomScene
+                preset={room.preset}
+                specs={specs}
+                options={viewerOptionsOf(sauna, selection)}
+                value={placement}
+                onChange={setPlacement}
+                label={t('three.roomLabel')}
+              />
+            </Suspense>
+          </div>
+          <div className="cfg-room__tools">
+            <IconButton icon={RotateCcw} label={t('configure.rotateLeft')} variant="ghost" onClick={() => setPlacement({ ...placement, rotationDeg: placement.rotationDeg - 15 })} />
+            <IconButton icon={RotateCw} label={t('configure.rotateRight')} variant="ghost" onClick={() => setPlacement({ ...placement, rotationDeg: placement.rotationDeg + 15 })} />
+            <span className="mono muted">
+              {t('configure.placement', { x: fmt.mm(placement.positionXMm), z: fmt.mm(placement.positionZMm), deg: Math.round(placement.rotationDeg) })}
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Configurator({ sauna }: { sauna: SaunaDetail }) {
+  const { t } = useT();
+  const fmt = useFormat();
+  const tenant = useTenantData();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const idParam = params.get('id');
+  const st = useConfigurator();
+  const [section, setSection] = useState<SectionId>('cabin');
+  const [closed, setClosed] = useState<Set<string>>(() => new Set());
+  const [details, setDetails] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const currency = tenant.currency;
+  const rules = useMemo(() => rulesOf(sauna), [sauna]);
+
+  const existing = useQuery({
+    queryKey: ['configuration', idParam],
+    queryFn: () => api('configuration', { params: { id: idParam! } }),
+    enabled: Boolean(idParam),
+  });
+
+  useEffect(() => {
+    if (idParam && existing.data) {
+      const c = existing.data;
+      st.init(sauna.slug, c.selections, c.id, c.placement ? { id: c.placement.roomSceneId, placement: c.placement } : null);
+    } else if (!idParam && st.slug !== sauna.slug) {
+      st.init(sauna.slug, defaultSelectionOf(sauna));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sauna.slug, idParam, existing.data]);
+
+  const locked = Boolean(existing.data?.locked);
+  const price = useMemo(() => {
+    const opts = sauna.groups.flatMap(g => g.options).filter(o => st.selection.includes(o.id));
+    return calculatePrice({
+      listPriceMinor: sauna.listPriceMinor,
+      maxDiscountBps: sauna.maxDiscountBps,
+      options: opts.map(o => ({ optionId: o.id, priceDeltaMinor: o.priceDeltaMinor })),
+      perSaunaDiscount: sauna.discount,
+    });
+  }, [sauna, st.selection]);
+  const valid = validate(rules, st.selection).valid;
+
+  const save = useMutation({
+    mutationFn: async () => {
+      let id = st.configurationId;
+      if (!id) {
+        const c = await api('createConfiguration', { body: { saunaModelId: sauna.id, selections: st.selection } });
+        id = c.id;
+      } else {
+        await api('putSelections', { params: { id }, body: { optionIds: st.selection } });
+      }
+      await api('putPlacement', { params: { id }, body: st.roomId ? { roomSceneId: st.roomId, ...st.placement } : null });
+      return id;
+    },
+    onSuccess: id => {
+      st.saved(id);
+      if (params.get('id') !== id) setParams({ id }, { replace: true, preventScrollReset: true });
+      void qc.invalidateQueries({ queryKey: ['configurations'] });
+    },
+  });
+
+  const submit = useSubmitRequest({ onSent: () => setSendOpen(false) });
+  const send = {
+    isPending: submit.isPending,
+    mutate: () => submit.mutate({ id: st.dirty || !st.configurationId ? save.mutateAsync() : Promise.resolve(st.configurationId), message }),
+  };
+
+  const clone = useMutation({
+    mutationFn: () => api('clone', { params: { id: st.configurationId! } }),
+    onSuccess: c => setParams({ id: c.id }, { replace: true }),
+  });
+
+  if (idParam && existing.isPending) return <ConfigureSkeleton />;
+
+  const options = viewerOptionsOf(sauna, st.selection);
+  const specs = specsOf(sauna);
+
+  const sections: SectionId[] = [
+    ...(['cabin', 'benches', 'heat', 'extras', 'more'] as const).filter(id => sauna.groups.some(g => (SECTION_OF[g.code] ?? 'more') === id)),
+    'room',
+    ...(sauna.assets.hasAr ? (['ar'] as const) : []),
+  ];
+  const current = sections.includes(section) ? section : sections[0]!;
+  const at = sections.indexOf(current);
+  const step = (d: number) => setSection(sections[(at + d + sections.length) % sections.length]!);
+  const groupsHere = sauna.groups.filter(g => (SECTION_OF[g.code] ?? 'more') === current);
+  const label = (id: SectionId) => (id === 'room' ? t('configure.tabs.room') : id === 'ar' ? t('configure.tabs.ar') : t(`configure.sections.${id}`));
+
+  return (
+    <div className="page cfg">
+      <div className="cfg__stage">
+        <ButtonLink to={`/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
+          {sauna.name}
+        </ButtonLink>
+        <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views />
+      </div>
+
+      <aside className="cfg__panel">
+        <div className="cfg-card cfg-product">
+          <p className="cfg-product__eyebrow">{t('configure.eyebrow')}</p>
+          <ScrambleText as="h1" className="cfg__title" text={sauna.name} />
+          <div className="cfg__total">
+            <Price minor={price.finalPriceMinor} currency={currency} size="md" label={t('configure.total')} />
+          </div>
+          <div className="cfg-product__links">
+            <button type="button" className="cfg-product__toggle" aria-expanded={details} onClick={() => setDetails(v => !v)}>
+              {t('configure.priceDetails')}
+              <Icon icon={ChevronDown} size="xs" className={details ? 'is-up' : undefined} />
+            </button>
+            {!locked && (
+              <button type="button" className="cfg-product__toggle" onClick={() => st.init(sauna.slug, defaultSelectionOf(sauna), st.configurationId, st.roomId ? { id: st.roomId, placement: st.placement } : null)}>
+                <Icon icon={RotateCcw} size="xs" />
+                {t('configure.resetOptions')}
+              </button>
+            )}
+          </div>
+          {details && (
+            <dl className="cfg__lines mono">
+              <div>
+                <dt>{t('configure.basePrice')}</dt>
+                <dd>{fmt.money(price.listPriceMinor, currency)}</dd>
+              </div>
+              <div>
+                <dt>{t('configure.optionsTotal')}</dt>
+                <dd>+ {fmt.money(price.optionsTotalMinor, currency)}</dd>
+              </div>
+              {price.discountMinor > 0 && (
+                <div>
+                  <dt>{t('configure.discount')}</dt>
+                  <dd>− {fmt.money(price.discountMinor, currency)}</dd>
+                </div>
+              )}
+              <p className="muted cfg__vat">{t(`vat.${tenant.branding.vatDisplay}`)}</p>
+            </dl>
+          )}
+        </div>
+        {locked ? (
+          <div className="cfg-card cfg__locked">
+            <p>{t('configure.locked')}</p>
+            <Button onClick={() => clone.mutate()} loading={clone.isPending}>
+              {t('configure.clone')}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="cfg-stepper">
+              <button type="button" aria-label={t('configure.prevSection')} onClick={() => step(-1)}>
+                <Icon icon={ChevronLeft} size="sm" />
+              </button>
+              <span>
+                {label(current)}
+                <small>
+                  {at + 1}/{sections.length}
+                </small>
+              </span>
+              <button type="button" aria-label={t('configure.nextSection')} onClick={() => step(1)}>
+                <Icon icon={ChevronRight} size="sm" />
+              </button>
+            </div>
+            <div className="cfg-body">
+              <nav className="cfg-rail" aria-label={t('configure.tabs.options')}>
+                {sections.map(id => (
+                  <button key={id} type="button" className={id === current ? 'is-active' : undefined} aria-current={id === current ? 'true' : undefined} onClick={() => setSection(id)}>
+                    <Icon icon={SECTION_ICON[id]} size="md" />
+                    <span>{label(id)}</span>
+                  </button>
+                ))}
+              </nav>
+              <div className="cfg-card cfg-list">
+                {current === 'room' ? (
+                  <div className="cfg-list__pad">
+                    <RoomPanel sauna={sauna} />
+                  </div>
+                ) : current === 'ar' ? (
+                  <div className="cfg-list__pad">
+                    <ArButton saunaModelId={sauna.id} name={sauna.name} enabled />
+                  </div>
+                ) : (
+                  groupsHere.map(g => (
+                    <GroupEditor
+                      key={g.id}
+                      group={g}
+                      sauna={sauna}
+                      currency={currency}
+                      open={!closed.has(g.id)}
+                      onToggle={() => setClosed(c => {
+                        const n = new Set(c);
+                        if (!n.delete(g.id)) n.add(g.id);
+                        return n;
+                      })}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="cfg-card cfg__actions">
+              {!valid && <p className="muted cfg__hint">{t('configure.incomplete')}</p>}
+              <Button variant="ghost" icon={Save} onClick={() => save.mutate(undefined, { onSuccess: () => toast(t('configure.draftSaved')), onError: e => toast.error(t('errors.title'), errorText(t, e)) })} loading={save.isPending && !send.isPending}>
+                {st.dirty || !st.configurationId ? t('configure.saveDraft') : t('common.saved')}
+              </Button>
+              <Button icon={Send} onClick={() => setSendOpen(true)} disabled={!valid}>
+                {t('configure.sendRequest')}
+              </Button>
+            </div>
+          </>
+        )}
+      </aside>
+
+      <Dialog
+        open={sendOpen}
+        onClose={() => setSendOpen(false)}
+        title={t('configure.requestTitle')}
+        description={t('configure.requestBody', { name: tenant.branding.displayName })}
+        footer={
+          <>
+            <Button variant="quiet" onClick={() => setSendOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button icon={Send} onClick={() => send.mutate()} loading={send.isPending}>
+              {t('configure.sendRequest')}
+            </Button>
+          </>
+        }
+      >
+        <div className="stack">
+          <Price minor={price.finalPriceMinor} currency={currency} size="lg" label={t('configure.total')} />
+          <Textarea label={t('configure.message')} placeholder={t('configure.messagePlaceholder')} value={message} onChange={e => setMessage(e.target.value)} maxLength={4000} />
+        </div>
+      </Dialog>
+    </div>
+  );
+}
+
+export default function Configure() {
+  const { slug = '' } = useParams();
+  const { t } = useT();
+  const sauna = useSauna(slug);
+  useDocumentTitle(sauna.data ? t('configure.title', { name: sauna.data.name }) : null);
+  return (
+    <RequireCustomer fallback={<ConfigureSkeleton />}>
+      {() => {
+        if (sauna.isPending) return <ConfigureSkeleton />;
+        if (sauna.error) return <ErrorPage error={sauna.error} onRetry={() => void sauna.refetch()} />;
+        return <Configurator sauna={sauna.data} />;
+      }}
+    </RequireCustomer>
+  );
+}
