@@ -463,6 +463,106 @@
         }
       }
     },
+    "/api/shared/{token}/activity": {
+      "post": {
+        "operationId": "sharedActivity",
+        "summary": "POST /api/shared/:token/activity",
+        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "tags": [
+          "public-catalog"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "public",
+        "x-lambda": "public-catalog",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {},
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharedActivityBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedActivityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Problem415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
     "/api/assets/session": {
       "post": {
         "operationId": "assetSession",
@@ -905,7 +1005,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LogoutResponse"
+                  "$ref": "#/components/schemas/SharedActivityResponse"
                 }
               }
             }
@@ -1918,7 +2018,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LogoutResponse"
+                  "$ref": "#/components/schemas/SharedActivityResponse"
                 }
               }
             }
@@ -2697,7 +2797,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LogoutResponse"
+                  "$ref": "#/components/schemas/SharedActivityResponse"
                 }
               }
             }
@@ -3129,7 +3229,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LogoutResponse"
+                  "$ref": "#/components/schemas/SharedActivityResponse"
                 }
               }
             }
@@ -3757,7 +3857,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LogoutResponse"
+                  "$ref": "#/components/schemas/SharedActivityResponse"
                 }
               }
             }
@@ -8166,6 +8266,90 @@
         }
       }
     },
+    "/api/admin/offers/{id}/tracking": {
+      "get": {
+        "operationId": "adminOfferTracking",
+        "summary": "GET /api/admin/offers/:id/tracking",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOfferTrackingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
     "/api/admin/offers/{id}/status": {
       "post": {
         "operationId": "adminOfferStatus",
@@ -11270,6 +11454,179 @@
           "status"
         ]
       },
+      "AdminOfferTrackingResponse": {
+        "type": "object",
+        "properties": {
+          "link": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "revoked": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "createdAt",
+                  "expiresAt",
+                  "revoked"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "opens": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "lastOpenedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visitors": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "insideViewOpened": {
+            "type": "boolean"
+          },
+          "longestVisitSeconds": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "viewedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "device": {
+                  "type": "string",
+                  "enum": [
+                    "MOBILE",
+                    "TABLET",
+                    "DESKTOP",
+                    "OTHER"
+                  ]
+                },
+                "network": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "viewedAt",
+                "device",
+                "network"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "score": {
+            "type": "object",
+            "properties": {
+              "points": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "level": {
+                "type": "string",
+                "enum": [
+                  "NONE",
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH"
+                ]
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "OPENED",
+                        "RETURNED",
+                        "INSIDE_VIEW",
+                        "LONG_VISIT",
+                        "MULTIPLE_VISITORS",
+                        "OPENED_QUICKLY",
+                        "NOT_OPENED",
+                        "EXPIRING_UNOPENED"
+                      ]
+                    },
+                    "points": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "points"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "points",
+              "level",
+              "reasons"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "link",
+          "opens",
+          "lastOpenedAt",
+          "visitors",
+          "insideViewOpened",
+          "longestVisitSeconds",
+          "recent",
+          "score"
+        ],
+        "additionalProperties": false
+      },
       "AdminOfferVersionBody": {
         "type": "object",
         "properties": {
@@ -14078,19 +14435,6 @@
           "password"
         ]
       },
-      "LogoutResponse": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          }
-        },
-        "required": [
-          "ok"
-        ],
-        "additionalProperties": false
-      },
       "MAnalyticsResponse": {
         "type": "object",
         "properties": {
@@ -15845,6 +16189,42 @@
           "groups",
           "rules",
           "maxDiscountBps"
+        ],
+        "additionalProperties": false
+      },
+      "SharedActivityBody": {
+        "type": "object",
+        "properties": {
+          "visitId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          },
+          "insideView": {
+            "type": "boolean"
+          },
+          "seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3600
+          }
+        },
+        "required": [
+          "visitId",
+          "insideView",
+          "seconds"
+        ]
+      },
+      "SharedActivityResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "ok"
         ],
         "additionalProperties": false
       },

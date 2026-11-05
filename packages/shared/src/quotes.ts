@@ -76,3 +76,29 @@ export const offerSchema = offerSummarySchema.extend({
 
 export const QUOTE_FIRST_NUMBER = 1024;
 export const quoteLabel = (n: number): string => `Q-${n}`;
+
+// ---- Share-link tracking and the likelihood score ---------------------------
+
+export const likelihoodLevel = z.enum(['NONE', 'LOW', 'MEDIUM', 'HIGH']);
+export const likelihoodReason = z.enum(['OPENED', 'RETURNED', 'INSIDE_VIEW', 'LONG_VISIT', 'MULTIPLE_VISITORS', 'OPENED_QUICKLY', 'NOT_OPENED', 'EXPIRING_UNOPENED']);
+export const offerTrackingSchema = z.object({
+  /** The newest share link of the quote's configuration; null until David has shared it. */
+  link: z.object({ id: uuid, createdAt: isoDateTime, expiresAt: isoDateTime, revoked: z.boolean() }).nullable(),
+  opens: z.number().int(),
+  lastOpenedAt: isoDateTime.nullable(),
+  visitors: z.number().int(),
+  insideViewOpened: z.boolean(),
+  longestVisitSeconds: z.number().int(),
+  recent: z.array(z.object({ viewedAt: isoDateTime, device: z.enum(['MOBILE', 'TABLET', 'DESKTOP', 'OTHER']), network: z.string().nullable() })),
+  score: z.object({
+    points: z.number().int(),
+    level: likelihoodLevel,
+    reasons: z.array(z.object({ code: likelihoodReason, points: z.number().int() })),
+  }),
+});
+/** Sent by the share page while it is open; the server keeps the largest values per visit. */
+export const shareActivityRequest = z.object({
+  visitId: uuid,
+  insideView: z.boolean(),
+  seconds: z.number().int().min(0).max(3600),
+});

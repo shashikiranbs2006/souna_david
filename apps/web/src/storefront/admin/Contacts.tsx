@@ -207,6 +207,67 @@ export function NewOffer() {
   );
 }
 
+const LEVEL_TONE = { NONE: 'muted', LOW: 'muted', MEDIUM: 'soft', HIGH: 'outline' } as const;
+
+/** What the customer did with the share link, and the explainable score (docs/david-fork-plan.md section 6). */
+function TrackingPanel({ offerId, configurationId }: { offerId: string; configurationId: string }) {
+  const { t } = useT();
+  const fmt = useFormat();
+  const q = useQuery({ queryKey: ['admin', 'offer', offerId, 'tracking'], queryFn: () => api('adminOfferTracking', { params: { id: offerId } }), refetchInterval: 60_000 });
+  if (q.isPending) return <Skeleton lines={3} />;
+  if (q.error) return <ErrorPage error={q.error} onRetry={() => void q.refetch()} />;
+  const d = q.data;
+  if (!d.link)
+    return (
+      <Panel title={t('admin.contacts.tracking.title')}>
+        <p className="staff-muted">{t('admin.contacts.tracking.noLink')}</p>
+        <ButtonLink to={`/admin/configurations/${configurationId}`} variant="ghost" size="sm">{t('admin.contacts.tracking.openConfiguration')}</ButtonLink>
+      </Panel>
+    );
+  const k = (key: string) => t(`admin.contacts.tracking.${key}` as TKey);
+  return (
+    <Panel title={t('admin.contacts.tracking.title')} lede={t('admin.contacts.tracking.hint')}>
+      <p>
+        <span className="staff-muted">{k('likelihood')}: </span>
+        <Badge tone={LEVEL_TONE[d.score.level]}>{t(`admin.contacts.tracking.level.${d.score.level}` as TKey)}</Badge> <span className="mono">{d.score.points}/100</span>
+      </p>
+      {d.score.reasons.length > 0 && (
+        <ul>
+          {d.score.reasons.map(r => (
+            <li key={r.code}>
+              <span className="mono">{r.points > 0 ? '+' : ''}{r.points}</span> {t(`admin.contacts.tracking.reason.${r.code}` as TKey)}
+            </li>
+          ))}
+        </ul>
+      )}
+      <dl className="staff-dl">
+        <dt>{k('opens')}</dt>
+        <dd className="mono">{d.opens}</dd>
+        <dt>{k('lastOpened')}</dt>
+        <dd className="mono">{d.lastOpenedAt ? fmt.date(d.lastOpenedAt, 'short') : k('neverOpened')}</dd>
+        <dt>{k('visitors')}</dt>
+        <dd className="mono">{d.visitors}</dd>
+        <dt>{k('insideViewOpened')}</dt>
+        <dd>{d.insideViewOpened ? k('yes') : k('no')}</dd>
+        <dt>{k('longestVisit')}</dt>
+        <dd className="mono">{Math.floor(d.longestVisitSeconds / 60)}:{String(d.longestVisitSeconds % 60).padStart(2, '0')}</dd>
+      </dl>
+      {d.recent.length > 0 && (
+        <>
+          <p className="staff-muted">{k('recent')}</p>
+          <ul>
+            {d.recent.map((v, i) => (
+              <li key={i} className="mono">
+                {fmt.date(v.viewedAt, 'short')} · {t(`admin.contacts.tracking.device.${v.device}` as TKey)}{v.network ? ` · ${v.network}` : ''}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </Panel>
+  );
+}
+
 export function OfferDetail() {
   const { id = '' } = useParams();
   const { t } = useT();
@@ -260,6 +321,7 @@ export function OfferDetail() {
           ))}
         </div>
       </Panel>
+      <TrackingPanel offerId={o.id} configurationId={o.configuration.id} />
       <Panel title={t('admin.contacts.newVersion')}>
         <form className="staff-form" onSubmit={(e: FormEvent) => { e.preventDefault(); version.mutate(undefined); }}>
           <Input label={t('admin.contacts.quantity')} type="number" min={1} max={99} value={quantity ?? String(o.quantity)} onChange={e => setQuantity(e.target.value)} />

@@ -42,6 +42,7 @@ export const routes = {
   sauna: r({ method: 'GET', path: '/api/catalog/saunas/:slug', fn: 'public-catalog', access: 'public', host: 'storefront', query: catalog.catalogVersionQuery, response: catalog.saunaDetailSchema }),
   rooms: r({ method: 'GET', path: '/api/rooms', fn: 'public-catalog', access: 'public', host: 'storefront', query: catalog.catalogVersionQuery, response: catalog.roomsSchema }),
   shared: r({ method: 'GET', path: '/api/shared/:token', fn: 'public-catalog', access: 'public', host: 'storefront', response: share.sharedConfigurationSchema }),
+  sharedActivity: r({ method: 'POST', path: '/api/shared/:token/activity', fn: 'public-catalog', access: 'public', host: 'storefront', body: quo.shareActivityRequest, response: ok }),
   assetSession: r({ method: 'POST', path: '/api/assets/session', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.assetSessionRequest, response: catalog.assetSessionResponse }),
   assetAr: r({ method: 'POST', path: '/api/assets/ar', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.arRequest, response: catalog.arResponse }),
 
@@ -129,6 +130,7 @@ export const routes = {
   adminCreateOffer: r({ method: 'POST', path: '/api/admin/offers', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.createOfferRequest, response: quo.offerSchema, status: 201 }),
   adminOffer: r({ method: 'GET', path: '/api/admin/offers/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.offerSchema }),
   adminOfferVersion: r({ method: 'POST', path: '/api/admin/offers/:id/versions', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.offerVersionRequest, response: quo.offerSchema, status: 201 }),
+  adminOfferTracking: r({ method: 'GET', path: '/api/admin/offers/:id/tracking', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.offerTrackingSchema }),
   adminOfferStatus: r({ method: 'POST', path: '/api/admin/offers/:id/status', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.offerStatusRequest, response: quo.offerSchema }),
   adminCustomers: r({ method: 'GET', path: '/api/admin/customers', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: admin.adminCustomerListQuery, response: page(admin.adminCustomerSummarySchema) }),
   adminCustomer: r({ method: 'GET', path: '/api/admin/customers/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: admin.adminCustomerSummarySchema.extend({ phone: z.string().nullable(), addresses: z.array(account.addressSchema), recentConfigurations: z.array(cfg.configurationSummarySchema), recentRequests: z.array(req.requestSummarySchema) }) }),

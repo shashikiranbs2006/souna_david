@@ -38,6 +38,8 @@ interface Props {
   eager?: boolean;
   /** Offer Exterior / Interior tabs on kit-built models. */
   views?: boolean;
+  /** Called when the visitor switches between Exterior and Interior (share-page tracking). */
+  onViewChange?: (view: 'exterior' | 'interior') => void;
 }
 
 /**
@@ -46,7 +48,7 @@ interface Props {
  * progress, and the 3D chunk is requested only when the slot is near the
  * viewport (or on demand with data saver).
  */
-export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: assetHigh, allowHigh, thumbnailUrl, eager, shareToken, views }: Props) {
+export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: assetHigh, allowHigh, thumbnailUrl, eager, shareToken, views, onViewChange }: Props) {
   // Kit-built saunas follow the selected options; an uploaded GLB is used only when the model asks for it.
   const lowUrl = specs.source === 'asset' ? assetLow : null;
   const highUrl = specs.source === 'asset' ? assetHigh : null;
@@ -143,7 +145,7 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
         {load && views && !hasGlb && (
           <div className="vslot__views" role="group" aria-label={t('three.viewLabel')}>
             {(['exterior', 'interior'] as const).map(v => (
-              <button key={v} type="button" className={view === v ? 'is-active' : undefined} aria-pressed={view === v} onClick={() => setView(v)}>
+              <button key={v} type="button" className={view === v ? 'is-active' : undefined} aria-pressed={view === v} onClick={() => { setView(v); onViewChange?.(v); }}>
                 {t(`three.${v}`)}
               </button>
             ))}

@@ -6,6 +6,7 @@ import { requestLocale } from '../lib/locale.ts';
 import { ApiError } from '../lib/problem.ts';
 import { asStaff, mount } from '../lib/route.ts';
 import { getConfigRow, toConfigurationDto } from '../domain/configurations.ts';
+import { scoreShare } from '../domain/likelihood.ts';
 
 interface ContactRow {
   id: string; person_name: string; organisation: string | null; email: string | null; mobile: string | null; notes: string | null;
@@ -170,4 +171,40 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       if (!rowCount) throw new ApiError('NOT_FOUND', 'Quote not found.');
       return loadQuote(db, c, params.id!);
     }));
+
+  // What the customer did with the share link of this quote's configuration, and the score.
+  mount(app, routes.adminOfferTracking, async ({ c, params }) => {
+    const now = c.get('deps').now();
+    c.header('Cache-Control', 'no-store');
+    return tenantTx(c, async db => {
+      const q = await db.query<{ configuration_id: string }>('select configuration_id from quotes where id = $1', [params.id]);
+      if (!q.rows[0]) throw new ApiError('NOT_FOUND', 'Quote not found.');
+      const { rows: links } = await db.query<{ id: string; created_at: Date; expires_at: Date; revoked_at: Date | null }>(
+        'select id, created_at, expires_at, revoked_at from share_links where configuration_id = $1 order by created_at desc limit 1', [q.rows[0].configuration_id]);
+      const link = links[0];
+      const empty = { opens: 0, lastOpenedAt: null, visitors: 0, insideViewOpened: false, longestVisitSeconds: 0, recent: [] };
+      if (!link) return { link: null, ...empty, score: { points: 0, level: 'NONE' as const, reasons: [] } };
+      const [views, activity] = await Promise.all([
+        db.query<{ viewed_at: Date; device_class: 'MOBILE' | 'TABLET' | 'DESKTOP' | 'OTHER'; ip_prefix: string | null; user_agent: string | null }>(
+          'select viewed_at, device_class, ip_prefix, user_agent from share_link_views where share_link_id = $1 order by viewed_at desc limit 500', [link.id]),
+        db.query<{ inside_view: boolean; seconds: number }>('select inside_view, seconds from share_link_activity where share_link_id = $1', [link.id]),
+      ]);
+      const visitorOf = (v: { ip_prefix: string | null; user_agent: string | null }) => (v.ip_prefix || v.user_agent ? `${v.ip_prefix ?? ''}|${v.user_agent ?? ''}` : null);
+      const score = scoreShare({
+        sentAt: link.created_at, expiresAt: link.expires_at, now,
+        views: views.rows.map(v => ({ viewedAt: v.viewed_at, visitor: visitorOf(v) })),
+        activity: activity.rows.map(a => ({ insideView: a.inside_view, seconds: a.seconds })),
+      });
+      return {
+        link: { id: link.id, createdAt: link.created_at.toISOString(), expiresAt: link.expires_at.toISOString(), revoked: link.revoked_at !== null },
+        opens: views.rows.length,
+        lastOpenedAt: views.rows[0]?.viewed_at.toISOString() ?? null,
+        visitors: new Set(views.rows.map(visitorOf).filter(Boolean)).size,
+        insideViewOpened: activity.rows.some(a => a.inside_view),
+        longestVisitSeconds: Math.max(0, ...activity.rows.map(a => a.seconds)),
+        recent: views.rows.slice(0, 20).map(v => ({ viewedAt: v.viewed_at.toISOString(), device: v.device_class, network: v.ip_prefix })),
+        score,
+      };
+    });
+  });
 }

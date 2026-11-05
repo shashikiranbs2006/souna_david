@@ -7,7 +7,7 @@ import { ApiError } from '../lib/problem.ts';
 import { mount } from '../lib/route.ts';
 import { assetUrl, listCatalog, listRooms, loadModel } from '../domain/catalog.ts';
 import { getConfigRow, getSelections, getSnapshot } from '../domain/configurations.ts';
-import { deviceClass, resolveShareToken } from '../domain/sharing.ts';
+import { deviceClass, resolveShareToken, visitorPrefix } from '../domain/sharing.ts';
 import { issueAssetCookies } from './assets.ts';
 
 const IMMUTABLE = 'public, max-age=31536000, immutable';
@@ -120,7 +120,7 @@ export function registerCatalog(app: Hono<AppEnv>): void {
     return { items };
   });
 
-  mount(app, routes.shared, async ({ c, params, tenant }) => {
+  mount(app, routes.shared, async ({ c, params, tenant, principal }) => {
     const now = c.get('deps').now();
     const body = await tenantTx(c, async db => {
       const link = await resolveShareToken(db, params.token!, now);
@@ -135,8 +135,12 @@ export function registerCatalog(app: Hono<AppEnv>): void {
           'select room_scene_id, position_x_mm, position_z_mm, rotation_deg from configuration_room_placements where configuration_id = $1', [row.id]),
       ]);
       if (!model || !snapshot) throw new ApiError('NOT_FOUND', 'This link does not exist.');
-      await db.query('insert into share_link_views (share_link_id, reseller_id, device_class) values ($1, $2, $3)',
-        [link.id, tenant!.id, deviceClass(c.req.header('user-agent'))]);
+      // The shop's own staff looking at a link do not count as the customer opening it.
+      if (principal.kind !== 'staff') {
+        const ua = c.req.header('user-agent');
+        await db.query('insert into share_link_views (share_link_id, reseller_id, device_class, ip_prefix, user_agent) values ($1, $2, $3, $4, $5)',
+          [link.id, tenant!.id, deviceClass(ua), visitorPrefix({ cloudfront: c.req.header('cloudfront-viewer-address'), forwardedFor: c.req.header('x-forwarded-for') }), ua?.slice(0, 200) ?? null]);
+      }
       const { maxDiscountBps: _cap, ...sauna } = model.detail;
       const p = placement.rows[0];
       return {
@@ -152,5 +156,28 @@ export function registerCatalog(app: Hono<AppEnv>): void {
     c.header('Cache-Control', 'no-store');
     c.header('Referrer-Policy', 'no-referrer');
     return body;
+  });
+
+  // Time on the page and the inside view, sent by the share page while it is open. Best effort:
+  // staff opens and unknown or expired links are ignored without an error, and a link keeps at
+  // most 500 visits so a client cannot grow the table.
+  mount(app, routes.sharedActivity, async ({ c, params, body, tenant, principal }) => {
+    if (principal.kind !== 'staff') {
+      const now = c.get('deps').now();
+      await tenantTx(c, async db => {
+        const link = await resolveShareToken(db, params.token!, now);
+        const { rows } = await db.query<{ n: string; has: boolean }>(
+          'select count(*) as n, bool_or(visit_id = $2) as has from share_link_activity where share_link_id = $1', [link.id, body.visitId]);
+        if (!rows[0]!.has && Number(rows[0]!.n) >= 500) return;
+        await db.query(
+          `insert into share_link_activity (share_link_id, reseller_id, visit_id, inside_view, seconds) values ($1, $2, $3, $4, $5)
+           on conflict (share_link_id, visit_id) do update
+             set inside_view = share_link_activity.inside_view or excluded.inside_view,
+                 seconds = greatest(share_link_activity.seconds, excluded.seconds), updated_at = now()`,
+          [link.id, tenant!.id, body.visitId, body.insideView, body.seconds]);
+      });
+    }
+    c.header('Cache-Control', 'no-store');
+    return { ok: true as const };
   });
 }

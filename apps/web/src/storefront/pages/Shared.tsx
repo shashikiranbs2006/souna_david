@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { Clock, Copy, Download, Send } from 'lucide-react';
 import { errorText } from '../../i18n/errorText.ts';
 import { useSubmitRequest } from '../configurator/useSubmitRequest.ts';
@@ -22,6 +23,41 @@ import { specsOf } from '../components/specs.ts';
 import { viewerOptionsOf } from '../components/sauna-helpers.ts';
 import './SaunaDetail.css';
 
+/**
+ * David's edition: tell the shop what the visitor did on the page (inside view, seconds the tab
+ * was visible). Best effort every 15 s while visible, so closing the tab loses at most a few seconds.
+ */
+function useVisitActivity(token: string, enabled: boolean) {
+  const visit = useRef({ id: '', inside: false, seconds: 0 });
+  const send = useRef(() => {});
+  send.current = () => {
+    const v = visit.current;
+    if (!enabled || !v.id) return;
+    void api('sharedActivity', { params: { token }, body: { visitId: v.id, insideView: v.inside, seconds: Math.min(3600, Math.round(v.seconds)) } }).catch(() => {});
+  };
+  useEffect(() => {
+    if (!enabled) return;
+    visit.current = { id: crypto.randomUUID(), inside: false, seconds: 0 };
+    const tick = window.setInterval(() => {
+      if (document.visibilityState !== 'visible' || visit.current.seconds >= 3600) return;
+      visit.current.seconds += 5;
+      if (visit.current.seconds % 15 === 0) send.current();
+    }, 5000);
+    const onHide = () => document.visibilityState === 'hidden' && send.current();
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      window.clearInterval(tick);
+      document.removeEventListener('visibilitychange', onHide);
+      send.current();
+    };
+  }, [token, enabled]);
+  return (view: 'exterior' | 'interior') => {
+    if (view !== 'interior' || visit.current.inside) return;
+    visit.current.inside = true;
+    send.current();
+  };
+}
+
 export default function Shared() {
   const { token = '' } = useParams();
   const { t } = useT();
@@ -31,6 +67,7 @@ export default function Shared() {
   const navigate = useNavigate();
   const shared = useQuery({ queryKey: ['shared', token], queryFn: () => api('shared', { params: { token } }), retry: false });
   useDocumentTitle(shared.data?.configuration.name ?? t('shared.eyebrow'));
+  const onViewChange = useVisitActivity(token, isSingleShop() && !session?.kind?.startsWith('staff'));
   // A claimed copy is locked at a fresh price: offer the request straight away,
   // or a clone for customers who want to change options first.
   const claim = useMutation({
@@ -81,7 +118,7 @@ export default function Shared() {
       <p className="eyebrow">{t('shared.eyebrow')}</p>
       <div className="detail">
         <div className="detail__stage">
-          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views={viewOnly} />
+          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views={viewOnly} onViewChange={onViewChange} />
           {d.sauna.assets.hasAr && (
             <div className="detail__ar">
               <ArButton saunaModelId={d.sauna.id} name={d.sauna.name} enabled shareToken={token} />
