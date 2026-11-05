@@ -19,18 +19,20 @@ interface Props {
   currency: string;
   index: number;
   size?: 'md' | 'lg';
+  /** Where the card leads; the product page by default. */
+  to?: string;
 }
 
 /** Rendered width of a card in `.sgrid` (columns of at least 20rem, page max 1440px). */
 const SIZES = '(min-width: 1440px) 460px, (min-width: 720px) 50vw, 100vw';
 
 /** Catalogue card: drawing or thumbnail, name with flip, seats and size, list → discounted price. */
-export function SaunaCard({ item, currency, index, size = 'md' }: Props) {
+export function SaunaCard({ item, currency, index, size = 'md', to: target }: Props) {
   const { t } = useT();
   const fmt = useFormat();
   const s = specsOf(item);
   const [ref, inView] = useInView<HTMLDivElement>('300px');
-  const to = `/saunas/${item.slug}`;
+  const to = target ?? `/saunas/${item.slug}`;
   const saving = item.listPriceMinor - item.priceFromMinor;
   // Intent to open: fetch the detail route and warm the 3D viewer chunk.
   const warm = () => {

@@ -5,7 +5,7 @@ import { Check, Copy, Link2, Plus, X } from 'lucide-react';
 import { toggle } from '@saunaklar/rules';
 import type { ResponseOf } from '@saunaklar/shared';
 import { api } from '../../api/client.ts';
-import { saunaQuery, useTenantData } from '../../api/queries.ts';
+import { saunaQuery, useCatalog, useTenantData } from '../../api/queries.ts';
 import { useT, type TKey } from '../../i18n/i18n.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { Table, type Column } from '../../design/components/Table.tsx';
@@ -22,6 +22,7 @@ import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { PageHead, Panel } from '../../staff/PageHead.tsx';
 import { useCursorList } from '../../staff/useCursorList.ts';
 import { rulesOf } from '../components/sauna-helpers.ts';
+import { SaunaCard, SaunaCardSkeleton, SaunaGrid } from '../components/SaunaCard.tsx';
 import { useDebounced } from './Requests.tsx';
 import { fullName, useAdminMutation } from './helpers.ts';
 
@@ -33,6 +34,7 @@ export function ConfigurationsList() {
   const fmt = useFormat();
   const navigate = useNavigate();
   useDocumentTitle(t('admin.nav.configurations'));
+  const catalog = useCatalog();
   const list = useCursorList<Summary>(['admin', 'configurations'], cursor => api('adminConfigurations', { query: { limit: 25, ...(cursor ? { cursor } : {}) } }));
   const columns: Column<Summary>[] = [
     {
@@ -53,15 +55,13 @@ export function ConfigurationsList() {
   ];
   return (
     <>
-      <PageHead
-        title={t('admin.nav.configurations')}
-        lede={t('admin.configurations.lede')}
-        actions={
-          <ButtonLink to="/admin/configurations/new" icon={Plus} size="sm">
-            {t('admin.configurations.new')}
-          </ButtonLink>
-        }
-      />
+      <PageHead title={t('admin.nav.configurations')} lede={t('admin.configurations.pickLede')} />
+      <SaunaGrid>
+        {catalog.data
+          ? catalog.data.items.map((it, i) => <SaunaCard key={it.id} item={it} index={i} currency={catalog.data.currency} to={`/admin/configure/${it.slug}`} />)
+          : [0, 1, 2].map(n => <SaunaCardSkeleton key={n} />)}
+      </SaunaGrid>
+      <h2 className="staff-section-title">{t('admin.configurations.saved')}</h2>
       <Table columns={columns} rows={list.rows} rowKey={c => c.id} loading={list.isPending} caption={t('admin.nav.configurations')} empty={t('admin.configurations.empty')} onRowClick={c => navigate(`/admin/configurations/${c.id}`)} />
       {list.rows.length > 0 && <LoadMore hasMore={Boolean(list.hasNextPage)} loading={list.isFetchingNextPage} onLoad={() => void list.fetchNextPage()} shown={list.rows.length} />}
     </>

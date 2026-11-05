@@ -3,7 +3,7 @@ import { errorText } from '../../i18n/errorText.ts';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Armchair, ArrowLeft, Check, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon } from 'lucide-react';
+import { Armchair, ArrowLeft, Check, FileText, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon } from 'lucide-react';
 import { calculatePrice } from '@saunaklar/pricing';
 import { availability, validate } from '@saunaklar/rules';
 import { api, isApiError } from '../../api/client.ts';
@@ -15,7 +15,7 @@ import { ScrambleText } from '../../motion/ScrambleText.tsx';
 import { Button, ButtonLink, IconButton } from '../../design/components/Button.tsx';
 import { Price } from '../../design/components/Price.tsx';
 import { Dialog } from '../../design/components/Dialog.tsx';
-import { Textarea } from '../../design/components/Field.tsx';
+import { Input, Select, Textarea } from '../../design/components/Field.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { Segmented } from '../../design/components/Segmented.tsx';
 import { Icon } from '../../design/components/Icon.tsx';
@@ -252,6 +252,8 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   );
   const [details, setDetails] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [contact, setContact] = useState({ id: '', name: '', email: '', mobile: '' });
   const capture = useRef<(() => Promise<Blob | null>) | null>(null);
   const [message, setMessage] = useState('');
   const currency = tenant.currency;
@@ -327,6 +329,23 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     mutate: () => submit.mutate({ id: save.isPending || st.dirty || !st.configurationId ? saveId() : Promise.resolve(st.configurationId), message }),
   };
 
+  // Staff: the customer's details are asked only now, at the end. Saves the configuration, finds or
+  // makes the contact and opens the new quote.
+  const contacts = useQuery({ queryKey: ['admin', 'contacts', 'pick'], queryFn: () => api('adminContacts', { query: {} }), enabled: staff && quoteOpen });
+  const makeQuote = useMutation({
+    mutationFn: async () => {
+      const configurationId = await saveId();
+      const contactId = contact.id || (await api('adminCreateContact', { body: { personName: contact.name.trim(), email: contact.email.trim() || null, mobile: contact.mobile.trim() || null } })).id;
+      return api('adminCreateOffer', { body: { contactId, configurationId } });
+    },
+    onSuccess: o => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'offers'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'contacts'] });
+      navigate(`/admin/offers/${o.id}`);
+    },
+    onError: e => toast.error(t('errors.title'), errorText(t, e)),
+  });
+
   const clone = useMutation({
     mutationFn: () => api('clone', { params: { id: st.configurationId! } }),
     onSuccess: c => setParams({ id: c.id }, { replace: true }),
@@ -377,10 +396,10 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   return (
     <div className="page cfg">
       <div className="cfg__stage">
-        <ButtonLink to={staff ? (st.configurationId ? `/admin/configurations/${st.configurationId}` : '/admin/configurations') : `/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
+        <ButtonLink to={staff ? '/admin/configurations' : `/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
           {sauna.name}
         </ButtonLink>
-        <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views captureRef={capture} watermark={staff} />
+        <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views captureRef={capture} />
       </div>
 
       <aside className="cfg__panel">
@@ -505,9 +524,9 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
                 </Button>
               )}
               {staff ? (
-                <ButtonLink to={st.configurationId ? `/admin/configurations/${st.configurationId}` : '/admin/configurations'} icon={Check}>
-                  {t('common.back')}
-                </ButtonLink>
+                <Button icon={FileText} onClick={() => setQuoteOpen(true)} disabled={!valid}>
+                  {t('configure.makeQuote')}
+                </Button>
               ) : (
                 <Button icon={Send} onClick={() => setSendOpen(true)} disabled={!valid}>
                   {t('configure.sendRequest')}
@@ -537,6 +556,36 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
         <div className="stack">
           <Price minor={price.finalPriceMinor} currency={currency} size="lg" label={t('configure.total')} />
           <Textarea label={t('configure.message')} placeholder={t('configure.messagePlaceholder')} value={message} onChange={e => setMessage(e.target.value)} maxLength={4000} />
+        </div>
+      </Dialog>
+      <Dialog
+        open={quoteOpen}
+        onClose={() => setQuoteOpen(false)}
+        title={t('configure.quoteTitle')}
+        description={t('configure.quoteBody')}
+        footer={
+          <>
+            <Button variant="quiet" onClick={() => setQuoteOpen(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button icon={FileText} onClick={() => makeQuote.mutate()} loading={makeQuote.isPending} disabled={!contact.id && !contact.name.trim()}>
+              {t('configure.makeQuote')}
+            </Button>
+          </>
+        }
+      >
+        <div className="stack">
+          <Price minor={price.finalPriceMinor} currency={currency} size="lg" label={t('configure.total')} />
+          {(contacts.data?.items.length ?? 0) > 0 && (
+            <Select label={t('configure.contact')} value={contact.id} onChange={e => setContact({ ...contact, id: e.target.value })} options={[{ value: '', label: t('configure.newContact') }, ...contacts.data!.items.map(c => ({ value: c.id, label: [c.personName, c.organisation].filter(Boolean).join(' · ') }))]} />
+          )}
+          {!contact.id && (
+            <>
+              <Input label={t('admin.contacts.personName')} value={contact.name} onChange={e => setContact({ ...contact, name: e.target.value })} maxLength={200} />
+              <Input label={t('admin.contacts.email')} type="email" value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} maxLength={254} />
+              <Input label={t('admin.contacts.mobile')} type="tel" value={contact.mobile} onChange={e => setContact({ ...contact, mobile: e.target.value })} maxLength={40} />
+            </>
+          )}
         </div>
       </Dialog>
     </div>

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Link, Navigate, Route, Routes } from 'react-router';
+import { Link, Navigate, Route, Routes, useMatch } from 'react-router';
 import { BarChart3, Boxes, Contact, FileText, Inbox, Receipt, SlidersHorizontal, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
 import { useTenantData } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
@@ -7,6 +7,7 @@ import { Icon } from '../../design/components/Icon.tsx';
 import { EmptyState } from '../../design/components/EmptyState.tsx';
 import { ButtonLink } from '../../design/components/Button.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
+import { Toaster } from '../../design/components/Toast.tsx';
 import { AdminShell } from '../../staff/AdminShell.tsx';
 import { RequireStaff } from '../../staff/RequireStaff.tsx';
 import { Dashboard } from './Dashboard.tsx';
@@ -47,7 +48,29 @@ export default function AdminApp() {
   const { t } = useT();
   return (
     <RequireStaff scope="RESELLER" title={t('admin.title')} brand={<Brand />}>
-      {session => (
+      {session => <AdminBody session={session} />}
+    </RequireStaff>
+  );
+}
+
+function AdminBody({ session }: { session: Parameters<typeof AdminShell>[0]['session'] }) {
+  const { t } = useT();
+  // The 3D configurator is what David shows customers in his showroom: it gets the whole screen,
+  // without the menu or the command box. Its own Back button leads out.
+  const showroom = useMatch('/admin/configure/:slug');
+  if (showroom) {
+    return (
+      <>
+        <main id="main" tabIndex={-1} className="staff-showroom">
+          <Routes>
+            <Route path="configure/:slug" element={<Suspense fallback={<Skeleton lines={8} />}><StaffConfigure /></Suspense>} />
+          </Routes>
+        </main>
+        <Toaster />
+      </>
+    );
+  }
+  return (
         <AdminShell
           brand={<Brand />}
           area={t('admin.title')}
@@ -98,7 +121,5 @@ export default function AdminApp() {
             <Route path="*" element={<AdminNotFound />} />
           </Routes>
         </AdminShell>
-      )}
-    </RequireStaff>
   );
 }
