@@ -33,6 +33,8 @@ CREATE TABLE quotes (
   contact_id          uuid        NOT NULL,
   configuration_id    uuid        NOT NULL,
   quantity            integer     NOT NULL DEFAULT 1 CHECK (quantity BETWEEN 1 AND 99),
+  -- Price of one sauna when this version was saved; later price changes do not touch it.
+  unit_price_minor    bigint      NOT NULL CHECK (unit_price_minor >= 0),
   comment             text        CHECK (length(comment) <= 4000),
   status              text        NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SENT', 'ACCEPTED', 'DECLINED')),
   created_by_staff_id uuid        REFERENCES staff_users (id),

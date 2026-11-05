@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { QUOTE_FIRST_NUMBER, quoteLabel, routes, type Configuration } from '@saunaklar/shared';
+import { QUOTE_FIRST_NUMBER, quoteLabel, routes } from '@saunaklar/shared';
 import type { AppEnv, Ctx, Db } from '../context.ts';
 import { tenantTx } from '../lib/db.ts';
 import { requestLocale } from '../lib/locale.ts';
@@ -12,7 +12,7 @@ interface ContactRow {
   created_at: Date; updated_at: Date; quotes: string;
 }
 interface QuoteRow {
-  id: string; number: number; version: number; status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'DECLINED'; quantity: number; comment: string | null;
+  id: string; number: number; version: number; unit_price_minor: string; status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'DECLINED'; quantity: number; comment: string | null;
   created_at: Date; contact_id: string; configuration_id: string; person_name: string; organisation: string | null; configuration_name: string | null;
 }
 
@@ -54,7 +54,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       getConfigRow(db, q.configuration_id, { staff: true }).then(row => toConfigurationDto(db, tenant, locale, row)),
     ]);
     const extra = lines.rows.map(l => ({ label: l.label, amountMinor: Number(l.amount_minor) }));
-    const unit = (cfg as Configuration).price.finalPriceMinor;
+    const unit = Number(q.unit_price_minor);
     return {
       ...quoteSummary(q), comment: q.comment, lines: extra, currency: tenant.currency, unitPriceMinor: unit,
       totalMinor: unit * q.quantity + extra.reduce((s, l) => s + l.amountMinor, 0), sauna: cfg.sauna,
@@ -62,13 +62,15 @@ export function registerQuotes(app: Hono<AppEnv>): void {
     };
   }
 
-  async function insertQuote(db: Db, resellerId: string, staffId: string, q: {
+  async function insertQuote(db: Db, c: Ctx, resellerId: string, staffId: string, q: {
     number: number; version: number; contactId: string; configurationId: string; quantity: number; comment: string | null; lines: { label: string; amountMinor: number }[];
   }): Promise<string> {
+    const { tenant, locale } = ctx(c);
+    const cfg = await toConfigurationDto(db, tenant, locale, await getConfigRow(db, q.configurationId, { staff: true }));
     const { rows } = await db.query<{ id: string }>(
-      `insert into quotes (reseller_id, number, version, contact_id, configuration_id, quantity, comment, created_by_staff_id)
-       values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`,
-      [resellerId, q.number, q.version, q.contactId, q.configurationId, q.quantity, q.comment, staffId]);
+      `insert into quotes (reseller_id, number, version, contact_id, configuration_id, quantity, unit_price_minor, comment, created_by_staff_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
+      [resellerId, q.number, q.version, q.contactId, q.configurationId, q.quantity, (cfg.snapshot ?? cfg.price).finalPriceMinor, q.comment, staffId]);
     const id = rows[0]!.id;
     for (const [i, l] of q.lines.entries()) {
       await db.query('insert into quote_lines (reseller_id, quote_id, position, label, amount_minor) values ($1, $2, $3, $4, $5)', [resellerId, id, i, l.label, l.amountMinor]);
@@ -130,7 +132,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       // One number at a time per reseller; the unique key backs this up.
       await db.query('select pg_advisory_xact_lock(hashtextextended($1, 16))', [tenant.id]);
       const { rows } = await db.query<{ n: number }>('select coalesce(max(number), $2 - 1) + 1 as n from quotes where reseller_id = $1', [tenant.id, QUOTE_FIRST_NUMBER]);
-      const id = await insertQuote(db, tenant.id, me.staffId, {
+      const id = await insertQuote(db, c, tenant.id, me.staffId, {
         number: rows[0]!.n, version: 1, contactId: body.contactId, configurationId: body.configurationId,
         quantity: body.quantity, comment: blank(body.comment), lines: body.lines,
       });
@@ -154,7 +156,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       if (configurationId !== cur.configuration_id) await assertConfiguration(db, configurationId);
       const lines = body.lines ?? (await db.query<{ label: string; amount_minor: string }>('select label, amount_minor from quote_lines where quote_id = $1 order by position', [cur.id]))
         .rows.map(l => ({ label: l.label, amountMinor: Number(l.amount_minor) }));
-      const id = await insertQuote(db, tenant.id, me.staffId, {
+      const id = await insertQuote(db, c, tenant.id, me.staffId, {
         number: cur.number, version: latest.rows[0]!.v + 1, contactId: cur.contact_id, configurationId,
         quantity: body.quantity ?? cur.quantity, comment: body.comment === undefined ? cur.comment : blank(body.comment), lines,
       });
