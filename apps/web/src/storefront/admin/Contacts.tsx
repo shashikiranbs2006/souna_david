@@ -14,6 +14,7 @@ import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { PageHead, Panel } from '../../staff/PageHead.tsx';
+import { InvoicePanel } from './Invoices.tsx';
 import { useDebounced } from './Requests.tsx';
 import { minorToInput, parseMoney, useAdminMutation } from './helpers.ts';
 
@@ -323,6 +324,7 @@ export function OfferDetail() {
           ))}
         </div>
       </Panel>
+      <InvoicePanel quoteId={o.id} accepted={o.status === 'ACCEPTED'} />
       <TrackingPanel offerId={o.id} configurationId={o.configuration.id} />
       <Panel title={t('admin.contacts.newVersion')}>
         <form className="staff-form" onSubmit={(e: FormEvent) => { e.preventDefault(); version.mutate(undefined); }}>

@@ -764,7 +764,7 @@ const messages = {
     ownerOnly: 'Owner only',
     title: 'Reseller admin',
     placeholder: 'This area is being built.',
-    nav: { dashboard: 'Overview', requests: 'Requests', configurations: 'Configurations', saunas: 'Saunas', customers: 'Customers', quotes: 'Quotes', reports: 'Reports', contacts: 'Contacts', branding: 'Branding', settings: 'Settings' },
+    nav: { dashboard: 'Overview', requests: 'Requests', configurations: 'Configurations', saunas: 'Saunas', customers: 'Customers', quotes: 'Quotes', reports: 'Reports', invoices: 'Invoices', contacts: 'Contacts', branding: 'Branding', settings: 'Settings' },
     dashboard: {
       seeAll: 'See all',
       inboxEmpty: 'No open requests.',
@@ -833,6 +833,13 @@ const messages = {
       label: 'Command', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
       unknown: 'Not a known command. Try: new quote, find <name>, open Q-1024, list open quotes, list expiring links.',
       noQuote: 'No quote with number {number}.', failed: 'That did not work. Try again.',
+    },
+    invoices: {
+      lede: 'Prepayment invoices for accepted quotes.', empty: 'No invoices yet.', needsAccepted: 'Mark the quote as accepted to make a prepayment invoice.',
+      amount: 'Amount', due: 'Due', issued: 'Issued', paidOn: 'Paid on', overdue: 'overdue', quoteTotal: 'Quote total',
+      percent: 'Prepayment (% of total)', dueInDays: 'Pay within (days)', paymentDetails: 'Payment details (bank account, reference)',
+      create: 'Make prepayment invoice', created: 'Invoice made.',
+      status: { ISSUED: 'Open', PAID: 'Paid', CANCELLED: 'Cancelled' },
     },
     contacts: {
       lede: 'People and companies you send quotes to. They do not need an account.',

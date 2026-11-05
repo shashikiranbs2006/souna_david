@@ -782,7 +782,7 @@ export const de: Messages = {
     ownerOnly: 'Nur für Inhaber',
     title: 'Händler-Administration',
     placeholder: 'Dieser Bereich ist im Aufbau.',
-    nav: { dashboard: 'Übersicht', requests: 'Anfragen', configurations: 'Konfigurationen', saunas: 'Saunas', customers: 'Kundschaft', quotes: 'Offerten', reports: 'Berichte', contacts: 'Kontakte', branding: 'Erscheinungsbild', settings: 'Einstellungen' },
+    nav: { dashboard: 'Übersicht', requests: 'Anfragen', configurations: 'Konfigurationen', saunas: 'Saunas', customers: 'Kundschaft', quotes: 'Offerten', reports: 'Berichte', invoices: 'Rechnungen', contacts: 'Kontakte', branding: 'Erscheinungsbild', settings: 'Einstellungen' },
     dashboard: {
       seeAll: 'Alle ansehen',
       inboxEmpty: 'Keine offenen Anfragen.',
@@ -851,6 +851,13 @@ export const de: Messages = {
       label: 'Befehl', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
       unknown: 'Unbekannter Befehl. Versuchen Sie: new quote, find <Name>, open Q-1024, list open quotes, list expiring links.',
       noQuote: 'Keine Offerte mit der Nummer {number}.', failed: 'Das hat nicht geklappt. Bitte erneut versuchen.',
+    },
+    invoices: {
+      lede: 'Anzahlungsrechnungen für angenommene Offerten.', empty: 'Noch keine Rechnungen.', needsAccepted: 'Setzen Sie die Offerte auf «Angenommen», um eine Anzahlungsrechnung zu erstellen.',
+      amount: 'Betrag', due: 'Fällig', issued: 'Ausgestellt', paidOn: 'Bezahlt am', overdue: 'überfällig', quoteTotal: 'Offerttotal',
+      percent: 'Anzahlung (% vom Total)', dueInDays: 'Zahlbar innert (Tage)', paymentDetails: 'Zahlungsangaben (Bankkonto, Referenz)',
+      create: 'Anzahlungsrechnung erstellen', created: 'Rechnung erstellt.',
+      status: { ISSUED: 'Offen', PAID: 'Bezahlt', CANCELLED: 'Storniert' },
     },
     contacts: {
       lede: 'Personen und Firmen, denen Sie Offerten senden. Sie brauchen kein Konto.',
