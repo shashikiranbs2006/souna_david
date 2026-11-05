@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPath, CUSTOMER_TRANSITIONS, ERROR_CODES, ERROR_STATUS, parseHost, routes, signupRequest, STAFF_TRANSITIONS } from '../src/index.ts';
+import { buildPath, CUSTOMER_TRANSITIONS, ERROR_CODES, ERROR_STATUS, isCustomerAccountRoute, parseHost, routes, storefrontHost, signupRequest, STAFF_TRANSITIONS } from '../src/index.ts';
 
 const cfg = { platformDomain: 'saunas.example.com', adminHost: 'admin.example-admin.com' };
 
@@ -20,6 +20,27 @@ describe('parseHost', () => {
     const local = { platformDomain: 'localhost', adminHost: 'admin.localhost' };
     expect(parseHost('alpha.localhost:5173', local)).toEqual({ kind: 'storefront', slug: 'alpha' });
     expect(parseHost('admin.localhost:5173', local)).toEqual({ kind: 'manufacturer' });
+  });
+});
+
+describe('single-shop edition', () => {
+  const single = { platformDomain: 'offers.holzsauna.ch', adminHost: 'admin.example-admin.com', singleShop: 'holzsauna' };
+  it('serves the one shop on every host but the admin host', () => {
+    for (const h of ['offers.holzsauna.ch', 'www.holzsauna.ch', 'localhost:5173', 'alpha.saunas.example.com']) {
+      expect(parseHost(h, single)).toEqual({ kind: 'storefront', slug: 'holzsauna' });
+    }
+    expect(parseHost('admin.example-admin.com', single)).toEqual({ kind: 'manufacturer' });
+    expect(parseHost('', single).kind).toBe('unknown');
+    expect(parseHost('x', { ...single, singleShop: 'Bad Slug' }).kind).toBe('unknown');
+  });
+  it('builds share links on the shop domain itself', () => {
+    expect(storefrontHost('holzsauna', single)).toBe('offers.holzsauna.ch');
+    expect(storefrontHost('alpha', cfg)).toBe('alpha.saunas.example.com');
+  });
+  it('marks exactly the customer-account routes', () => {
+    const names = Object.entries(routes).filter(([, d]) => isCustomerAccountRoute(d)).map(([n]) => n);
+    for (const n of ['signup', 'login', 'confirm', 'resendCode', 'forgotPassword', 'resetPassword', 'me', 'configurations', 'claimShared', 'myRequests']) expect(names).toContain(n);
+    for (const n of ['session', 'logout', 'refresh', 'staffLogin', 'staffMfa', 'catalog', 'sauna', 'shared', 'tenant', 'adminConfigurations']) expect(names).not.toContain(n);
   });
 });
 

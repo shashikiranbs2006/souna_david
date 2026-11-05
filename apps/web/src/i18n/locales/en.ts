@@ -209,6 +209,8 @@ const messages = {
     discountPercent: '{percent} off',
     configure: 'Configure this sauna',
     loginToConfigure: 'Log in to customise',
+    askOffer: 'Ask {name} for an offer',
+    askOfferHint: '{name} configures your sauna with you in the showroom and sends you a link to view it in 3D.',
     loginHint: 'Anyone can browse. To configure and save, log in or create a free account.',
     view3d: '3D view',
     viewHint: 'Drag to rotate · scroll to zoom',

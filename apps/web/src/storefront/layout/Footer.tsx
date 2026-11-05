@@ -8,8 +8,9 @@ import { Credit } from '../../design/components/Credit.tsx';
 import { Icon } from '../../design/components/Icon.tsx';
 import { LogoMark } from '../../design/brand/Logo.tsx';
 import { useCatalog, useSession } from '../../api/queries.ts';
-import { LOCALES, LOCALE_NAMES, setLocale, useT } from '../../i18n/i18n.ts';
+import { OFFERED_LOCALES, LOCALE_NAMES, setLocale, useT } from '../../i18n/i18n.ts';
 import type { Tenant } from '../../api/types.ts';
+import { isSingleShop } from '../../host.ts';
 import './Footer.css';
 
 export function backToTop() {
@@ -117,7 +118,7 @@ export function Languages() {
   const { t, locale } = useT();
   return (
     <ul className="sfoot__langs" aria-label={t('nav.language')}>
-      {LOCALES.map(l => (
+      {OFFERED_LOCALES.map(l => (
         <li key={l}>
           <button type="button" lang={l} className="sfoot__lang" aria-pressed={l === locale} onClick={() => void setLocale(l)}>
             {LOCALE_NAMES[l]}
@@ -231,7 +232,7 @@ export function Footer({ tenant }: { tenant: Tenant }) {
             </li>
           </ul>
         </section>
-        <section>
+        {!isSingleShop() && <section>
           <h2 className="sfoot__cap">{t('footer.account')}</h2>
           <ul>
             {signedIn ? (
@@ -257,7 +258,7 @@ export function Footer({ tenant }: { tenant: Tenant }) {
               </>
             )}
           </ul>
-        </section>
+        </section>}
         <section>
           <h2 className="sfoot__cap">{t('footer.language')}</h2>
           <Languages />

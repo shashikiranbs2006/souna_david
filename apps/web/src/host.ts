@@ -53,19 +53,32 @@ export function parseHost(host: string, config: HostConfig): HostKind {
  */
 declare global {
   interface Window {
-    __SK_CONFIG__?: { platformDomain?: string; adminHost?: string; exampleShops?: string[] };
+    __SK_CONFIG__?: {
+      platformDomain?: string; adminHost?: string; exampleShops?: string[];
+      /** Single-shop edition: the one shop's slug (see `singleShop` in @saunaklar/shared). */
+      singleShop?: string;
+      /** Languages offered, first = default when the browser asks for none of them. */
+      locales?: string[];
+    };
   }
 }
 
 /** Precedence: runtime config, then build-time VITE_* (local builds), then localhost defaults. */
 export function resolveHostConfig(
-  runtime: { platformDomain?: string; adminHost?: string } | undefined,
-  buildEnv: { VITE_PLATFORM_DOMAIN?: string; VITE_ADMIN_HOST?: string },
+  runtime: { platformDomain?: string; adminHost?: string; singleShop?: string } | undefined,
+  buildEnv: { VITE_PLATFORM_DOMAIN?: string; VITE_ADMIN_HOST?: string; VITE_SINGLE_SHOP?: string },
 ): HostConfig {
+  const singleShop = runtime?.singleShop || buildEnv.VITE_SINGLE_SHOP || undefined;
   return {
     platformDomain: runtime?.platformDomain || buildEnv.VITE_PLATFORM_DOMAIN || 'localhost',
     adminHost: runtime?.adminHost || buildEnv.VITE_ADMIN_HOST || 'admin.localhost',
+    ...(singleShop ? { singleShop } : {}),
   };
+}
+
+/** True in the single-shop edition: no platform page, no customer accounts. */
+export function isSingleShop(): boolean {
+  return Boolean(hostConfig().singleShop);
 }
 
 /**

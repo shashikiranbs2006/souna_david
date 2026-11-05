@@ -6,6 +6,7 @@ import { useCatalog, useSauna, useSession, useTenantData } from '../../api/queri
 import { isApiError } from '../../api/client.ts';
 import type { SaunaDetail as Sauna } from '../../api/types.ts';
 import { useT } from '../../i18n/i18n.ts';
+import { isSingleShop } from '../../host.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { ScrambleText } from '../../motion/ScrambleText.tsx';
 import { prefersReducedMotion } from '../../motion/preferences.ts';
@@ -314,7 +315,9 @@ function Product({ s }: { s: Sauna }) {
   const tenant = useTenantData();
   const session = useSession().data;
   const catalog = useCatalog().data;
-  const signedIn = session?.kind === 'customer';
+  // Single-shop edition: no customer accounts; the shop configures with the customer.
+  const single = isSingleShop();
+  const signedIn = !single && session?.kind === 'customer';
   const currency = tenant.currency;
   const specs = specsOf(s);
   const configureTo = `/saunas/${s.slug}/configure`;
@@ -359,7 +362,11 @@ function Product({ s }: { s: Sauna }) {
   const label3d = signedIn ? t('detail.open3d') : t('detail.loginToConfigure');
   const warm = signedIn ? preloadViewer : undefined;
 
-  const open3d = (size: 'md' | 'lg', block = false) => (
+  const open3d = (size: 'md' | 'lg', block = false) => single ? (
+    <ButtonLink to="/contact" size={size} block={block} icon={MessageCircle} iconAfter={ArrowRight}>
+      {t('detail.askOffer', { name: tenant.branding.displayName })}
+    </ButtonLink>
+  ) : (
     <ButtonLink to={threeTo} size={size} block={block} icon={signedIn ? Box : Lock} iconAfter={ArrowRight} onPointerEnter={warm} onFocus={warm}>
       {label3d}
     </ButtonLink>
@@ -375,12 +382,12 @@ function Product({ s }: { s: Sauna }) {
             <PhotoGallery
               name={s.name}
               photos={photos}
-              overlay={
+              overlay={single ? undefined : (
                 <Link to={threeTo} className="pdp__3d" onPointerEnter={warm} onFocus={warm} aria-label={label3d}>
                   <Icon icon={signedIn ? Box : Lock} size="xs" />
                   {t('detail.badge3d')}
                 </Link>
-              }
+              )}
             />
           ) : (
             <div className="pdp__glyph">
@@ -428,8 +435,8 @@ function Product({ s }: { s: Sauna }) {
                   {t('detail.jumpToOptions')}
                 </Button>
               </div>
-              {!signedIn && <p className="pricecard__hint">{t('detail.loginHint')}</p>}
-              {s.assets.hasAr && <ArButton saunaModelId={s.id} name={s.name} enabled={signedIn} />}
+              {single ? <p className="pricecard__hint">{t('detail.askOfferHint', { name: tenant.branding.displayName })}</p> : !signedIn && <p className="pricecard__hint">{t('detail.loginHint')}</p>}
+              {!single && s.assets.hasAr && <ArButton saunaModelId={s.id} name={s.name} enabled={signedIn} />}
               <p className="pricecard__hint">
                 <Icon icon={ArrowRight} size="xs" /> {t('detail.delivery', { name: tenant.branding.displayName, manufacturer: tenant.manufacturer.name })}
               </p>

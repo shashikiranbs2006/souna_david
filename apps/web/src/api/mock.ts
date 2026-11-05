@@ -156,7 +156,7 @@ function priceOf(s: SaunaDetail, selections: string[]) {
     defaultDiscount: t.defaultDiscount,
   });
   return {
-    currency: 'EUR',
+    currency: t.currency ?? 'EUR',
     listPriceMinor: b.listPriceMinor,
     optionsTotalMinor: b.optionsTotalMinor,
     subtotalMinor: b.subtotalMinor,
@@ -270,7 +270,7 @@ const handlers: Partial<Record<RouteName, Handler>> = {
   tenant: () => tenantDto(tenant(), catalogVersion),
   catalog: ({ query }) => {
     checkVersion(query);
-    return { catalogVersion, currency: 'EUR', items: saunas().map(({ groups: _g, rules: _r, maxDiscountBps: _m, ...item }) => item) };
+    return { catalogVersion, currency: tenant().currency ?? 'EUR', items: saunas().map(({ groups: _g, rules: _r, maxDiscountBps: _m, ...item }) => item) };
   },
   sauna: ({ params, query }) => {
     checkVersion(query);
@@ -570,7 +570,7 @@ Object.assign(handlers, {
     const r = state.requests.find(x => x.id === params.id)!;
     const at = now();
     for (const q of state.quotes ?? []) if ((q as { requestId?: string }).requestId === r.id && !q.supersededAt) q.supersededAt = at;
-    const quote = { id: crypto.randomUUID(), amountMinor: Number(body.amountMinor), currency: 'EUR', validUntil: String(body.validUntil), note: (body.note as string) ?? null, createdAt: at, supersededAt: null, requestId: r.id };
+    const quote = { id: crypto.randomUUID(), amountMinor: Number(body.amountMinor), currency: tenant().currency ?? 'EUR', validUntil: String(body.validUntil), note: (body.note as string) ?? null, createdAt: at, supersededAt: null, requestId: r.id };
     (state.quotes ??= []).push(quote);
     const { requestId: _x, ...active } = quote;
     r.quote = active;
@@ -785,7 +785,7 @@ export function installMock(): void {
       const r = requestId ? state.requests.find(x => x.id === requestId) : state.requests.at(-1);
       if (!r) return 'no request';
       const at = now();
-      r.quote = { id: crypto.randomUUID(), amountMinor, currency: 'EUR', validUntil: plusDays(at, 30), note: null, createdAt: at, supersededAt: null };
+      r.quote = { id: crypto.randomUUID(), amountMinor, currency: tenant().currency ?? 'EUR', validUntil: plusDays(at, 30), note: null, createdAt: at, supersededAt: null };
       if (r.status !== 'QUOTED') {
         r.history.push({ fromStatus: r.status, toStatus: 'QUOTED', actor: 'STAFF', actorName: 'Showroom', note: null, at });
         r.status = 'QUOTED';

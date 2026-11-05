@@ -23,24 +23,38 @@ const STORAGE_KEY = 'saunaklar:lang';
 
 export const isLocale = (v: unknown): v is Locale => typeof v === 'string' && (LOCALES as readonly string[]).includes(v);
 
+/**
+ * The languages this deployment offers, from `locales` in /config.js or VITE_LOCALES (comma
+ * separated); every language when neither is set. The first one is the fallback.
+ */
+export function offeredLocales(
+  runtime: string[] | undefined = typeof window === 'undefined' ? undefined : window.__SK_CONFIG__?.locales,
+  build: string | undefined = import.meta.env.VITE_LOCALES as string | undefined,
+): readonly Locale[] {
+  const list = (runtime?.length ? runtime : build?.split(',') ?? []).map(x => x.trim().toLowerCase()).filter(isLocale);
+  return list.length ? [...new Set(list)] : LOCALES;
+}
+export const OFFERED_LOCALES = offeredLocales();
+const isOffered = (v: unknown): v is Locale => isLocale(v) && OFFERED_LOCALES.includes(v);
+
 export function detectLocale(): Locale {
   try {
     const q = new URLSearchParams(window.location.search).get('lang')?.toLowerCase();
-    if (isLocale(q)) return q;
+    if (isOffered(q)) return q;
   } catch {
     /* ignore */
   }
   try {
     const s = window.localStorage.getItem(STORAGE_KEY);
-    if (isLocale(s)) return s;
+    if (isOffered(s)) return s;
   } catch {
     /* ignore */
   }
   for (const l of navigator.languages ?? [navigator.language]) {
     const base = l?.toLowerCase().split('-')[0];
-    if (isLocale(base)) return base;
+    if (isOffered(base)) return base;
   }
-  return DEFAULT_LOCALE;
+  return OFFERED_LOCALES[0] ?? DEFAULT_LOCALE;
 }
 
 const loaders: Record<Locale, () => Promise<Messages>> = {
