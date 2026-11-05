@@ -227,7 +227,12 @@ function RoomPanel({ sauna }: { sauna: SaunaDetail }) {
   );
 }
 
-function Configurator({ sauna }: { sauna: SaunaDetail }) {
+/**
+ * `staff`: the same configurator, used by the reseller in the admin (David builds the sauna for a
+ * contact). Same models, options, rules and prices; it saves through the admin routes, has no
+ * "send request" and no clone.
+ */
+function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: boolean }) {
   const { t } = useT();
   const fmt = useFormat();
   const tenant = useTenantData();
@@ -235,6 +240,7 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const idParam = params.get('id');
+  const cfgKey = (id: string | null) => (staff ? ['admin', 'configuration', id] : ['configuration', id]);
   const st = useConfigurator();
   // `?step=<groupCode>` (the detail page's "Customise" links) opens on that group's section,
   // with the other groups of the section folded.
@@ -251,8 +257,8 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
   const rules = useMemo(() => rulesOf(sauna), [sauna]);
 
   const existing = useQuery({
-    queryKey: ['configuration', idParam],
-    queryFn: () => api('configuration', { params: { id: idParam! } }),
+    queryKey: cfgKey(idParam),
+    queryFn: () => api(staff ? 'adminConfiguration' : 'configuration', { params: { id: idParam! } }),
     enabled: Boolean(idParam),
   });
 
@@ -290,15 +296,15 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
       const draft = useConfigurator.getState();
       let id = draft.configurationId;
       if (!id) {
-        id = (await api('createConfiguration', { body: { saunaModelId: sauna.id, selections: draft.selection } })).id;
+        id = (await api(staff ? 'adminCreateConfiguration' : 'createConfiguration', { body: { saunaModelId: sauna.id, selections: draft.selection } })).id;
         useConfigurator.setState({ configurationId: id });
       } else {
-        await api('putSelections', { params: { id }, body: { optionIds: draft.selection } });
+        await api(staff ? 'adminPutSelections' : 'putSelections', { params: { id }, body: { optionIds: draft.selection } });
       }
-      const saved = await api('putPlacement', { params: { id }, body: draft.roomId ? { roomSceneId: draft.roomId, ...draft.placement } : null });
+      const saved = await api(staff ? 'adminPutPlacement' : 'putPlacement', { params: { id }, body: draft.roomId ? { roomSceneId: draft.roomId, ...draft.placement } : null });
       return { saved, draft };
     }),
-    [sauna.id],
+    [sauna.id, staff],
   );
   const save = useMutation({
     mutationFn: saveDraft,
@@ -307,9 +313,9 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
       // Edits made while the save ran stay unsaved.
       if (now.selection === draft.selection && now.roomId === draft.roomId && now.placement === draft.placement) st.saved(saved.id);
       else useConfigurator.setState({ configurationId: saved.id });
-      qc.setQueryData(['configuration', saved.id], saved);
+      qc.setQueryData(cfgKey(saved.id), saved);
       if (params.get('id') !== saved.id) setParams({ id: saved.id }, { replace: true, preventScrollReset: true });
-      void qc.invalidateQueries({ queryKey: ['configurations'] });
+      void qc.invalidateQueries({ queryKey: staff ? ['admin', 'configurations'] : ['configurations'] });
     },
   });
   const saveId = () => save.mutateAsync().then(r => r.saved.id);
@@ -348,7 +354,7 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
   return (
     <div className="page cfg">
       <div className="cfg__stage">
-        <ButtonLink to={`/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
+        <ButtonLink to={staff ? (st.configurationId ? `/admin/configurations/${st.configurationId}` : '/admin/configurations') : `/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
           {sauna.name}
         </ButtonLink>
         <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views />
@@ -396,9 +402,11 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
         {locked ? (
           <div className="cfg-card cfg__locked">
             <p>{t('configure.locked')}</p>
-            <Button onClick={() => clone.mutate()} loading={clone.isPending}>
-              {t('configure.clone')}
-            </Button>
+            {!staff && (
+              <Button onClick={() => clone.mutate()} loading={clone.isPending}>
+                {t('configure.clone')}
+              </Button>
+            )}
           </div>
         ) : (
           <>
@@ -468,9 +476,15 @@ function Configurator({ sauna }: { sauna: SaunaDetail }) {
               <Button variant="ghost" icon={Save} onClick={() => save.mutate(undefined, { onSuccess: () => toast(t('configure.draftSaved')), onError: e => toast.error(t('errors.title'), errorText(t, e)) })} loading={save.isPending && !send.isPending} disabled={save.isPending || send.isPending}>
                 {st.dirty || !st.configurationId ? t('configure.saveDraft') : t('common.saved')}
               </Button>
-              <Button icon={Send} onClick={() => setSendOpen(true)} disabled={!valid}>
-                {t('configure.sendRequest')}
-              </Button>
+              {staff ? (
+                <ButtonLink to={st.configurationId ? `/admin/configurations/${st.configurationId}` : '/admin/configurations'} icon={Check}>
+                  {t('common.back')}
+                </ButtonLink>
+              ) : (
+                <Button icon={Send} onClick={() => setSendOpen(true)} disabled={!valid}>
+                  {t('configure.sendRequest')}
+                </Button>
+              )}
             </div>
           </>
         )}
@@ -515,4 +529,15 @@ export default function Configure() {
       }}
     </RequireCustomer>
   );
+}
+
+/** Reseller admin: /admin/configure/:slug?id=<configuration>. Staff are already signed in (RequireStaff). */
+export function StaffConfigure() {
+  const { slug = '' } = useParams();
+  const { t } = useT();
+  const sauna = useSauna(slug);
+  useDocumentTitle(sauna.data ? t('configure.title', { name: sauna.data.name }) : null);
+  if (sauna.isPending) return <ConfigureSkeleton />;
+  if (sauna.error) return <ErrorPage error={sauna.error} onRetry={() => void sauna.refetch()} />;
+  return <Configurator sauna={sauna.data} staff />;
 }

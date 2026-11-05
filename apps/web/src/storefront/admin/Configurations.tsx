@@ -122,7 +122,7 @@ export function NewConfiguration() {
 
   const create = useAdminMutation(
     () => api('adminCreateConfiguration', { body: { saunaModelId: saunaId, ...(name.trim() ? { name: name.trim() } : {}), ...(customer ? { customerId: customer.id } : {}) } }),
-    { success: 'admin.configurations.createdToast', invalidate: [['admin', 'configurations']], onSuccess: c => navigate(`/admin/configurations/${c.id}`, { replace: true }) },
+    { success: 'admin.configurations.createdToast', invalidate: [['admin', 'configurations']], onSuccess: c => navigate(`/admin/configure/${c.sauna.slug}?id=${c.id}`, { replace: true }) },
   );
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -183,6 +183,7 @@ export function ConfigurationDetail() {
           { label: c.name },
         ]}
         title={c.name}
+        actions={!c.locked ? <ButtonLink to={`/admin/configure/${c.sauna.slug}?id=${c.id}`} size="sm">{t('detail.open3d')}</ButtonLink> : undefined}
         meta={
           <>
             {c.request ? <StatusBadge status={c.request.status} /> : <StatusBadge status={c.locked ? 'LOCKED' : 'DRAFT'} />}

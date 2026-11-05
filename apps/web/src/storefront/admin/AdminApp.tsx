@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router';
 import { Boxes, Contact, Inbox, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
 import { useTenantData } from '../../api/queries.ts';
@@ -16,7 +17,11 @@ import { ConfigurationDetail, ConfigurationsList, NewConfiguration } from './Con
 import { SaunasAdmin } from './Saunas.tsx';
 import { SaunaOptionsAdmin } from './SaunaOptions.tsx';
 import { BrandingAdmin } from './Branding.tsx';
+import { Skeleton } from '../../design/components/Skeleton.tsx';
 import './admin.css';
+
+// The 3D configurator (three.js) loads only when David opens it.
+const StaffConfigure = lazy(() => import('../pages/Configure.tsx').then(m => ({ default: m.StaffConfigure })));
 
 function Brand() {
   const tenant = useTenantData();
@@ -72,6 +77,7 @@ export default function AdminApp() {
             <Route path="configurations" element={<ConfigurationsList />} />
             <Route path="configurations/new" element={<NewConfiguration />} />
             <Route path="configurations/:id" element={<ConfigurationDetail />} />
+            <Route path="configure/:slug" element={<Suspense fallback={<Skeleton lines={8} />}><StaffConfigure /></Suspense>} />
             <Route path="saunas" element={<SaunasAdmin />} />
             <Route path="saunas/:id/options" element={<SaunaOptionsAdmin />} />
             <Route path="branding" element={<BrandingAdmin />} />
