@@ -16,11 +16,11 @@ const newReseller = (slug: string, currencyCode = 'EUR') => ({
 });
 
 describe('manufacturer: resellers', () => {
-  it('lists resellers with assigned and visible sauna counts (alpha hides one of five)', async () => {
+  it('lists resellers with assigned and visible sauna counts (alpha hides one of six)', async () => {
     const r = await m.get('/api/manufacturer/resellers');
     expect(r.status).toBe(200);
     const alpha = r.body.items.find((x: { slug: string }) => x.slug === 'alpha');
-    expect(alpha).toMatchObject({ saunasAssigned: 5, saunasVisible: 4 });
+    expect(alpha).toMatchObject({ saunasAssigned: 6, saunasVisible: 5 });
     for (const x of r.body.items) expect(x.saunasVisible).toBeLessThanOrEqual(x.saunasAssigned);
   });
 

@@ -19,3 +19,7 @@ coverage/
 var/
 nohup.out
 output.log
+
+# Python bytecode
+__pycache__/
+*.pyc
