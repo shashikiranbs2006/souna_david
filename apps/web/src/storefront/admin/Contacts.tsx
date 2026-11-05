@@ -298,6 +298,7 @@ export function OfferDetail() {
         title={`${o.label} · v${o.version}`}
         lede={<>{o.sauna.name} · <Link to={`/admin/configurations/${o.configuration.id}`}>{o.configuration.name}</Link></>}
         meta={<Badge tone="muted">{t(`admin.contacts.status.${o.status}` as TKey)}</Badge>}
+        actions={<a className="btn btn--ghost btn--sm" href={`/api/admin/offers/${o.id}/pdf`} download>{t('admin.contacts.downloadPdf')}</a>}
       />
       <Panel>
         <dl className="staff-dl">

@@ -281,6 +281,7 @@ const messages = {
     askCta: 'Contact us',
   },
   configure: {
+    downloadImage: 'Download image',
     title: 'Configure {name}',
     eyebrow: 'Configurator',
     summary: 'Summary',
@@ -824,6 +825,7 @@ const messages = {
       searchPlaceholder: 'Name, company, e-mail or mobile',
       empty: 'No contacts yet.',
       add: 'Add contact',
+      downloadPdf: 'Download PDF',
       personName: 'Name',
       organisation: 'Company',
       email: 'E-mail',

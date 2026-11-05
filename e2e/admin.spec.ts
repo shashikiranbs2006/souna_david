@@ -52,4 +52,9 @@ test('reseller admin builds a configuration in the 3D configurator and quotes it
   await page.getByRole('button', { name: en.configure.saveDraft, exact: true }).click();
   await expect(page.getByText(en.configure.draftSaved)).toBeVisible();
   await expect(page.getByRole('button', { name: en.configure.sendRequest })).toHaveCount(0);
+
+  // The picture of the 3D view comes back from the server stamped, as a PNG.
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: en.configure.downloadImage }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.png$/);
 });

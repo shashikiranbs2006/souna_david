@@ -102,3 +102,15 @@ export const shareActivityRequest = z.object({
   insideView: z.boolean(),
   seconds: z.number().int().min(0).max(3600),
 });
+
+// ---- Watermark and downloads -------------------------------------------------
+
+/** Stamped on every downloaded file (server side) and over the live 3D view of the shop. */
+export const WATERMARK_TEXT = 'SaunaKlar';
+/** A picture taken from the 3D view (JPEG or PNG, base64). The server stamps it and sends it back. */
+export const watermarkImageRequest = z.object({
+  image: z.string().min(100).max(8_000_000),
+  /** Printed in the corner stamp next to the watermark, e.g. the configuration name. */
+  label: z.string().trim().max(80).optional(),
+});
+export const watermarkedImageSchema = z.object({ contentType: z.literal('image/png'), dataBase64: z.string() });
