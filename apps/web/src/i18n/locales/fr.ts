@@ -792,7 +792,7 @@ export const fr: Messages = {
     ownerOnly: 'Réservé au propriétaire',
     title: 'Administration revendeur',
     placeholder: 'Cette section est en construction.',
-    nav: { dashboard: 'Aperçu', requests: 'Demandes', configurations: 'Configurations', saunas: 'Saunas', customers: 'Clients', contacts: 'Contacts', branding: 'Identité visuelle', settings: 'Paramètres' },
+    nav: { dashboard: 'Aperçu', requests: 'Demandes', configurations: 'Configurations', saunas: 'Saunas', customers: 'Clients', quotes: 'Offres', reports: 'Rapports', contacts: 'Contacts', branding: 'Identité visuelle', settings: 'Paramètres' },
     dashboard: {
       seeAll: 'Tout voir',
       inboxEmpty: 'Aucune demande ouverte.',
@@ -847,6 +847,20 @@ export const fr: Messages = {
       snapshot: 'Prix à l’envoi',
       contact: 'Contact',
       by: { CUSTOMER: 'Client', STAFF: 'Personnel', SYSTEM: 'Système' },
+    },
+    quotes: { openTitle: 'Offres ouvertes', lede: 'Dernière version de chaque numéro d’offre.', empty: 'Aucune offre pour le moment.' },
+    reports: {
+      lede: 'Où en sont vos offres et vos liens.',
+      sent: 'Offres envoyées', accepted: 'Acceptées', conversion: 'Taux de conclusion', opens7: 'Ouvertures de lien, 7 jours',
+      byStatus: 'Offres par statut', topModels: 'Modèles les plus proposés', links: 'Liens partagés',
+      linksShared: 'Liens partagés', linksOpened: 'Liens ouverts', insideViews: 'Vue intérieure consultée',
+      expiring: 'Liens à relancer', expiringNone: 'Aucune offre ouverte n’a de lien bientôt expiré ou encore non ouvert.',
+      expiresOn: 'Expire le {date}', opened: 'ouvert', notOpened: 'pas encore ouvert',
+    },
+    command: {
+      label: 'Commande', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
+      unknown: 'Commande inconnue. Essayez : new quote, find <nom>, open Q-1024, list open quotes, list expiring links.',
+      noQuote: 'Aucune offre avec le numéro {number}.', failed: 'Cela n’a pas fonctionné. Réessayez.',
     },
     contacts: {
       lede: 'Personnes et entreprises auxquelles vous envoyez des offres. Aucun compte nécessaire.',

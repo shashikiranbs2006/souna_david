@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes } from 'react-router';
-import { Boxes, Contact, Inbox, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
+import { BarChart3, Boxes, Contact, FileText, Inbox, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
 import { useTenantData } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { Icon } from '../../design/components/Icon.tsx';
@@ -12,6 +12,8 @@ import { RequireStaff } from '../../staff/RequireStaff.tsx';
 import { Dashboard } from './Dashboard.tsx';
 import { RequestDetail, RequestsList } from './Requests.tsx';
 import { ContactDetail, ContactsList, NewOffer, OfferDetail } from './Contacts.tsx';
+import { CommandBox } from './CommandBox.tsx';
+import { QuotesList, Reports } from './Reports.tsx';
 import { CustomerDetail, CustomersList } from './Customers.tsx';
 import { ConfigurationDetail, ConfigurationsList, NewConfiguration } from './Configurations.tsx';
 import { SaunasAdmin } from './Saunas.tsx';
@@ -53,6 +55,8 @@ export default function AdminApp() {
             { to: '/admin', label: t('admin.nav.dashboard'), icon: LayoutDashboard, end: true },
             { to: '/admin/requests', label: t('admin.nav.requests'), icon: Inbox },
             { to: '/admin/contacts', label: t('admin.nav.contacts'), icon: Contact },
+            { to: '/admin/quotes', label: t('admin.nav.quotes'), icon: FileText },
+            { to: '/admin/reports', label: t('admin.nav.reports'), icon: BarChart3 },
             { to: '/admin/customers', label: t('admin.nav.customers'), icon: Users },
             { to: '/admin/saunas', label: t('admin.nav.saunas'), icon: Boxes },
             { to: '/admin/branding', label: t('admin.nav.branding'), icon: Store },
@@ -64,6 +68,7 @@ export default function AdminApp() {
             </a>
           }
         >
+          <CommandBox />
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="requests" element={<RequestsList />} />
@@ -72,6 +77,8 @@ export default function AdminApp() {
             <Route path="contacts/:id" element={<ContactDetail />} />
             <Route path="contacts/:id/quote" element={<NewOffer />} />
             <Route path="offers/:id" element={<OfferDetail />} />
+            <Route path="quotes" element={<QuotesList />} />
+            <Route path="reports" element={<Reports />} />
             <Route path="customers" element={<CustomersList />} />
             <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="configurations" element={<ConfigurationsList />} />

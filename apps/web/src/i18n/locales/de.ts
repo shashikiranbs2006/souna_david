@@ -782,7 +782,7 @@ export const de: Messages = {
     ownerOnly: 'Nur für Inhaber',
     title: 'Händler-Administration',
     placeholder: 'Dieser Bereich ist im Aufbau.',
-    nav: { dashboard: 'Übersicht', requests: 'Anfragen', configurations: 'Konfigurationen', saunas: 'Saunas', customers: 'Kundschaft', contacts: 'Kontakte', branding: 'Erscheinungsbild', settings: 'Einstellungen' },
+    nav: { dashboard: 'Übersicht', requests: 'Anfragen', configurations: 'Konfigurationen', saunas: 'Saunas', customers: 'Kundschaft', quotes: 'Offerten', reports: 'Berichte', contacts: 'Kontakte', branding: 'Erscheinungsbild', settings: 'Einstellungen' },
     dashboard: {
       seeAll: 'Alle ansehen',
       inboxEmpty: 'Keine offenen Anfragen.',
@@ -837,6 +837,20 @@ export const de: Messages = {
       snapshot: 'Preis beim Senden',
       contact: 'Kontakt',
       by: { CUSTOMER: 'Kundschaft', STAFF: 'Mitarbeitende', SYSTEM: 'System' },
+    },
+    quotes: { openTitle: 'Offene Offerten', lede: 'Neueste Version jeder Offertnummer.', empty: 'Noch keine Offerten.' },
+    reports: {
+      lede: 'Wie es Ihren Offerten und Links geht.',
+      sent: 'Gesendete Offerten', accepted: 'Angenommen', conversion: 'Abschlussquote', opens7: 'Link-Aufrufe, 7 Tage',
+      byStatus: 'Offerten nach Status', topModels: 'Meistofferierte Modelle', links: 'Geteilte Links',
+      linksShared: 'Links geteilt', linksOpened: 'Links geöffnet', insideViews: 'Innenansicht angesehen',
+      expiring: 'Links zum Nachfassen', expiringNone: 'Keine offene Offerte hat einen Link, der bald abläuft oder noch ungeöffnet ist.',
+      expiresOn: 'Läuft ab am {date}', opened: 'geöffnet', notOpened: 'noch nicht geöffnet',
+    },
+    command: {
+      label: 'Befehl', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
+      unknown: 'Unbekannter Befehl. Versuchen Sie: new quote, find <Name>, open Q-1024, list open quotes, list expiring links.',
+      noQuote: 'Keine Offerte mit der Nummer {number}.', failed: 'Das hat nicht geklappt. Bitte erneut versuchen.',
     },
     contacts: {
       lede: 'Personen und Firmen, denen Sie Offerten senden. Sie brauchen kein Konto.',

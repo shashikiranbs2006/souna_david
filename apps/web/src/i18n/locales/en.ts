@@ -764,7 +764,7 @@ const messages = {
     ownerOnly: 'Owner only',
     title: 'Reseller admin',
     placeholder: 'This area is being built.',
-    nav: { dashboard: 'Overview', requests: 'Requests', configurations: 'Configurations', saunas: 'Saunas', customers: 'Customers', contacts: 'Contacts', branding: 'Branding', settings: 'Settings' },
+    nav: { dashboard: 'Overview', requests: 'Requests', configurations: 'Configurations', saunas: 'Saunas', customers: 'Customers', quotes: 'Quotes', reports: 'Reports', contacts: 'Contacts', branding: 'Branding', settings: 'Settings' },
     dashboard: {
       seeAll: 'See all',
       inboxEmpty: 'No open requests.',
@@ -819,6 +819,20 @@ const messages = {
       snapshot: 'Price when sent',
       contact: 'Contact',
       by: { CUSTOMER: 'Customer', STAFF: 'Staff', SYSTEM: 'System' },
+    },
+    quotes: { openTitle: 'Open quotes', lede: 'Newest version of every quote number.', empty: 'No quotes yet.' },
+    reports: {
+      lede: 'How your quotes and shared links are doing.',
+      sent: 'Quotes sent', accepted: 'Accepted', conversion: 'Conversion', opens7: 'Link opens, 7 days',
+      byStatus: 'Quotes by status', topModels: 'Most quoted models', links: 'Shared links',
+      linksShared: 'Links shared', linksOpened: 'Links opened', insideViews: 'Looked inside',
+      expiring: 'Links to follow up', expiringNone: 'No open quote has a link that is about to expire or still unopened.',
+      expiresOn: 'Expires {date}', opened: 'opened', notOpened: 'not opened yet',
+    },
+    command: {
+      label: 'Command', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
+      unknown: 'Not a known command. Try: new quote, find <name>, open Q-1024, list open quotes, list expiring links.',
+      noQuote: 'No quote with number {number}.', failed: 'That did not work. Try again.',
     },
     contacts: {
       lede: 'People and companies you send quotes to. They do not need an account.',
