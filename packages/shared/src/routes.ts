@@ -132,6 +132,7 @@ export const routes = {
   adminOfferVersion: r({ method: 'POST', path: '/api/admin/offers/:id/versions', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.offerVersionRequest, response: quo.offerSchema, status: 201 }),
   adminOfferTracking: r({ method: 'GET', path: '/api/admin/offers/:id/tracking', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.offerTrackingSchema }),
   adminOfferPdf: r({ method: 'GET', path: '/api/admin/offers/:id/pdf', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: z.unknown() }),
+  adminReports: r({ method: 'GET', path: '/api/admin/reports', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.reportsSchema }),
   adminWatermarkImage: r({ method: 'POST', path: '/api/admin/watermark-image', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.watermarkImageRequest, response: quo.watermarkedImageSchema }),
   adminOfferStatus: r({ method: 'POST', path: '/api/admin/offers/:id/status', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.offerStatusRequest, response: quo.offerSchema }),
   adminCustomers: r({ method: 'GET', path: '/api/admin/customers', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: admin.adminCustomerListQuery, response: page(admin.adminCustomerSummarySchema) }),

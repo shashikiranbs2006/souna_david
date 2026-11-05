@@ -772,7 +772,7 @@ export const it: Messages = {
     ownerOnly: 'Solo proprietario',
     title: 'Amministrazione rivenditore',
     placeholder: 'Quest’area è in costruzione.',
-    nav: { dashboard: 'Panoramica', requests: 'Richieste', configurations: 'Configurazioni', saunas: 'Saune', customers: 'Clienti', contacts: 'Contatti', branding: 'Immagine', settings: 'Impostazioni' },
+    nav: { dashboard: 'Panoramica', requests: 'Richieste', configurations: 'Configurazioni', saunas: 'Saune', customers: 'Clienti', quotes: 'Offerte', reports: 'Rapporti', contacts: 'Contatti', branding: 'Immagine', settings: 'Impostazioni' },
     dashboard: {
       seeAll: 'Vedi tutto',
       inboxEmpty: 'Nessuna richiesta aperta.',
@@ -827,6 +827,20 @@ export const it: Messages = {
       snapshot: 'Prezzo all’invio',
       contact: 'Contatto',
       by: { CUSTOMER: 'Cliente', STAFF: 'Personale', SYSTEM: 'Sistema' },
+    },
+    quotes: { openTitle: 'Offerte aperte', lede: 'Ultima versione di ogni numero di offerta.', empty: 'Ancora nessuna offerta.' },
+    reports: {
+      lede: 'Come vanno le offerte e i link.',
+      sent: 'Offerte inviate', accepted: 'Accettate', conversion: 'Tasso di conclusione', opens7: 'Aperture del link, 7 giorni',
+      byStatus: 'Offerte per stato', topModels: 'Modelli più offerti', links: 'Link condivisi',
+      linksShared: 'Link condivisi', linksOpened: 'Link aperti', insideViews: 'Vista interna guardata',
+      expiring: 'Link da sollecitare', expiringNone: 'Nessuna offerta aperta ha un link in scadenza o ancora non aperto.',
+      expiresOn: 'Scade il {date}', opened: 'aperto', notOpened: 'non ancora aperto',
+    },
+    command: {
+      label: 'Comando', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
+      unknown: 'Comando sconosciuto. Prova: new quote, find <nome>, open Q-1024, list open quotes, list expiring links.',
+      noQuote: 'Nessuna offerta con il numero {number}.', failed: 'Non ha funzionato. Riprova.',
     },
     contacts: {
       lede: 'Persone e aziende a cui invii offerte. Non serve un account.',

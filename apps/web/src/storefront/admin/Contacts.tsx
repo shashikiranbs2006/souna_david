@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import type { ResponseOf } from '@saunaklar/shared';
@@ -60,7 +60,8 @@ export function ContactsList() {
   const fmt = useFormat();
   const navigate = useNavigate();
   useDocumentTitle(t('admin.nav.contacts'));
-  const [search, setSearch] = useState('');
+  const [params] = useSearchParams();
+  const [search, setSearch] = useState(params.get('q') ?? '');
   const [adding, setAdding] = useState(false);
   const q = useDebounced(search.trim());
   const list = useQuery({ queryKey: ['admin', 'contacts', { q }], queryFn: () => api('adminContacts', { query: q ? { q } : {} }) });

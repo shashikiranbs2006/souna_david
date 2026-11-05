@@ -49,7 +49,13 @@ export const offerVersionRequest = z.object({
   lines: offerBody.shape.lines.unwrap().optional(),
 });
 export const offerStatusRequest = z.object({ status: offerStatus });
-export const offerListQuery = z.object({ contactId: uuid.optional() });
+export const offerListQuery = z.object({
+  contactId: uuid.optional(),
+  /** Only drafts and sent quotes: the ones still waiting for an answer. */
+  open: z.enum(['1']).optional(),
+  /** Exact quote number (the command box's "open Q-1024"). */
+  number: z.coerce.number().int().min(1).optional(),
+});
 
 export const offerSummarySchema = z.object({
   id: uuid,
@@ -114,3 +120,22 @@ export const watermarkImageRequest = z.object({
   label: z.string().trim().max(80).optional(),
 });
 export const watermarkedImageSchema = z.object({ contentType: z.literal('image/png'), dataBase64: z.string() });
+
+// ---- Reports ----------------------------------------------------------------
+
+export const reportsSchema = z.object({
+  quotesByStatus: z.array(z.object({ status: offerStatus, count: z.number().int() })),
+  /** Accepted quotes out of all quotes that were sent; null while nothing was sent. */
+  conversion: z.object({ sent: z.number().int(), accepted: z.number().int(), percent: z.number().int().nullable() }),
+  topModels: z.array(z.object({ name: z.string(), quotes: z.number().int() })),
+  linkActivity: z.object({
+    linksShared: z.number().int(),
+    linksOpened: z.number().int(),
+    opensLast7Days: z.number().int(),
+    insideViews: z.number().int(),
+  }),
+  /** Open quotes whose newest share link ends within seven days (or was never opened). */
+  expiring: z.array(z.object({
+    offerId: uuid, label: z.string(), contactName: z.string(), expiresAt: isoDateTime, opened: z.boolean(),
+  })),
+});

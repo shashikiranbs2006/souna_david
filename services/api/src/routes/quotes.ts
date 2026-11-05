@@ -122,9 +122,51 @@ export function registerQuotes(app: Hono<AppEnv>): void {
   mount(app, routes.adminOffers, async ({ c, query }) => {
     const { rows } = await tenantTx(c, db => db.query<QuoteRow>(
       `${QUOTE_SQL} where ($1::uuid is null or q.contact_id = $1)
+         and ($2::int is null or q.number = $2)
+         and (not $3::boolean or q.status in ('DRAFT', 'SENT'))
          and q.version = (select max(version) from quotes x where x.reseller_id = q.reseller_id and x.number = q.number)
-       order by q.number desc limit 200`, [query.contactId ?? null]));
+       order by q.number desc limit 200`, [query.contactId ?? null, query.number ?? null, query.open === '1']));
     return { items: rows.map(quoteSummary) };
+  });
+
+  // Numbers for the reports page; every figure counts the newest version of each quote number.
+  mount(app, routes.adminReports, async ({ c }) => {
+    const now = c.get('deps').now();
+    c.header('Cache-Control', 'no-store');
+    const newest = `q.version = (select max(version) from quotes x where x.reseller_id = q.reseller_id and x.number = q.number)`;
+    const newestLink = `l.id = (select s.id from share_links s where s.configuration_id = q.configuration_id order by s.created_at desc limit 1)`;
+    return tenantTx(c, async db => {
+      const [status, models, links, expiring] = await Promise.all([
+        db.query<{ status: QuoteRow['status']; n: string }>(`select q.status, count(*) as n from quotes q where ${newest} group by q.status`),
+        db.query<{ name: string; n: string }>(
+          `select m.name, count(*) as n from quotes q
+             join configurations cf on cf.id = q.configuration_id join sauna_models m on m.id = cf.sauna_model_id
+            where ${newest} group by m.name order by n desc, m.name limit 6`),
+        db.query<{ shared: string; opened: string; last7: string; inside: string }>(
+          `select (select count(*) from share_links) as shared,
+                  (select count(*) from share_links l where exists (select 1 from share_link_views v where v.share_link_id = l.id)) as opened,
+                  (select count(*) from share_link_views v where v.viewed_at > $1::timestamptz - interval '7 days') as last7,
+                  (select count(*) from share_link_activity a where a.inside_view) as inside`, [now]),
+        db.query<{ id: string; number: number; person_name: string; expires_at: Date; opened: boolean }>(
+          `select q.id, q.number, c.person_name, l.expires_at,
+                  exists (select 1 from share_link_views v where v.share_link_id = l.id) as opened
+             from quotes q join contacts c on c.id = q.contact_id join share_links l on l.configuration_id = q.configuration_id
+            where ${newest} and ${newestLink} and q.status in ('DRAFT', 'SENT')
+              and l.revoked_at is null and l.expires_at > $1::timestamptz
+              and (l.expires_at < $1::timestamptz + interval '7 days' or not exists (select 1 from share_link_views v where v.share_link_id = l.id))
+            order by l.expires_at limit 20`, [now]),
+      ]);
+      const count = (st: QuoteRow['status']) => Number(status.rows.find(r => r.status === st)?.n ?? 0);
+      const sent = count('SENT') + count('ACCEPTED') + count('DECLINED');
+      const l = links.rows[0]!;
+      return {
+        quotesByStatus: (['DRAFT', 'SENT', 'ACCEPTED', 'DECLINED'] as const).map(st => ({ status: st, count: count(st) })),
+        conversion: { sent, accepted: count('ACCEPTED'), percent: sent ? Math.round((count('ACCEPTED') / sent) * 100) : null },
+        topModels: models.rows.map(m => ({ name: m.name, quotes: Number(m.n) })),
+        linkActivity: { linksShared: Number(l.shared), linksOpened: Number(l.opened), opensLast7Days: Number(l.last7), insideViews: Number(l.inside) },
+        expiring: expiring.rows.map(r => ({ offerId: r.id, label: quoteLabel(r.number), contactName: r.person_name, expiresAt: r.expires_at.toISOString(), opened: r.opened })),
+      };
+    });
   });
 
   mount(app, routes.adminCreateOffer, async ({ c, body, principal }) => {

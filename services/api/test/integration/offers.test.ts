@@ -110,3 +110,29 @@ describe('contacts and quotes', () => {
     expect((await c.post('/api/admin/watermark-image', { image: 'x'.repeat(200) })).status).toBe(422);
   });
 });
+
+describe('reports and quote search', () => {
+  it('filters quotes by number and open status and reports the totals', async () => {
+    const c = await staff('beta.localhost', 'owner@beta.test');
+    const contact = await c.post('/api/admin/contacts', { personName: 'Report Person' });
+    const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama') });
+    const a = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id });
+    const b = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id });
+    await c.post(`/api/admin/offers/${a.body.id}/status`, { status: 'ACCEPTED' });
+    await c.post(`/api/admin/offers/${b.body.id}/status`, { status: 'SENT' });
+    const byNumber = await c.get(`/api/admin/offers?number=${a.body.number}`);
+    expect(byNumber.body.items.map((o: { id: string }) => o.id)).toEqual([a.body.id]);
+    const open = await c.get('/api/admin/offers?open=1');
+    expect(open.body.items.map((o: { id: string }) => o.id)).toContain(b.body.id);
+    expect(open.body.items.map((o: { id: string }) => o.id)).not.toContain(a.body.id);
+
+    await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 3 });
+    const r = await c.get('/api/admin/reports');
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.conversion.accepted).toBeGreaterThanOrEqual(1);
+    expect(r.body.conversion.percent).toBeGreaterThan(0);
+    expect(r.body.topModels.length).toBeGreaterThan(0);
+    expect(r.body.linkActivity.linksShared).toBeGreaterThanOrEqual(1);
+    expect(r.body.expiring.some((e: { label: string }) => e.label === b.body.label)).toBe(true);
+  });
+});
