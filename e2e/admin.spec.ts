@@ -27,3 +27,29 @@ test('manufacturer admin logs in at admin.localhost and sees the resellers', asy
   }
   await expect(page.getByRole('row').filter({ hasText: 'Gamma Bastu AB' }).getByText(en.status.SUSPENDED)).toBeVisible();
 });
+
+// The staff session lives in memory, so move inside the app instead of reloading the page.
+const goInApp = (page: import('@playwright/test').Page, path: string) =>
+  page.evaluate(p => { history.pushState({}, '', p); window.dispatchEvent(new PopStateEvent('popstate')); }, path);
+
+test('reseller admin builds a configuration in the 3D configurator and quotes it to a contact', async ({ page }) => {
+  await loginWithForm(page, '/admin', 'owner@alpha.test');
+  await goInApp(page, '/admin/contacts');
+  await page.getByRole('button', { name: en.admin.contacts.add }).click();
+  await page.getByRole('textbox', { name: new RegExp('^' + en.admin.contacts.personName) }).fill('E2E Keller');
+  await page.getByRole('button', { name: en.admin.contacts.add }).last().click();
+  await expect(page.getByRole('heading', { level: 1, name: 'E2E Keller' })).toBeVisible();
+
+  // New configuration -> opens straight in the configurator (same one the shop used to offer).
+  await goInApp(page, '/admin/configurations/new');
+  await page.getByRole('button', { name: en.staff.create }).click();
+  const total = page.locator('.cfg__total');
+  await expect(total).toContainText('€');
+  const before = await total.innerText();
+  const aspen = page.getByRole('radio', { name: /Thermo-aspen/ }).last();
+  await aspen.click();
+  await expect(total).not.toHaveText(before);
+  await page.getByRole('button', { name: en.configure.saveDraft, exact: true }).click();
+  await expect(page.getByText(en.configure.draftSaved)).toBeVisible();
+  await expect(page.getByRole('button', { name: en.configure.sendRequest })).toHaveCount(0);
+});
