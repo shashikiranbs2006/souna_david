@@ -280,6 +280,8 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   }, [sauna.slug, idParam, existing.data]);
 
   const locked = Boolean(existing.data?.locked);
+  // Staff keep editing a locked sauna: the changes are saved as a new one (see saveDraft).
+  const lockedView = locked && !staff;
   // Effective option prices come from the API (reseller override, else manufacturer price); the
   // server recomputes the same breakdown on save and lock.
   const livePrice = useMemo(() => {
@@ -292,7 +294,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     });
   }, [sauna, st.selection]);
   // A locked configuration keeps the price frozen at lock time.
-  const price = locked && existing.data ? existing.data.price : livePrice;
+  const price = locked && existing.data && !st.dirty ? existing.data.price : livePrice;
   const valid = validate(rules, st.selection).valid;
 
   // One save at a time, reading the store when it starts: a Send (or second Save)
@@ -301,11 +303,24 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     () => oneAtATime(async () => {
       const draft = useConfigurator.getState();
       let id = draft.configurationId;
-      if (!id) {
-        id = (await api(staff ? 'adminCreateConfiguration' : 'createConfiguration', { body: { saunaModelId: sauna.id, selections: draft.selection } })).id;
-        useConfigurator.setState({ configurationId: id });
-      } else {
-        await api(staff ? 'adminPutSelections' : 'putSelections', { params: { id }, body: { optionIds: draft.selection } });
+      // Staff: nothing changed since the last save, so there is nothing to write. This is also how a
+      // sauna already sent to the customer (its link locks it) is quoted as it is.
+      if (staff && id && !draft.dirty) return { saved: await api('adminConfiguration', { params: { id } }), draft };
+      const create = async () => {
+        const created = (await api(staff ? 'adminCreateConfiguration' : 'createConfiguration', { body: { saunaModelId: sauna.id, selections: draft.selection } })).id;
+        useConfigurator.setState({ configurationId: created });
+        return created;
+      };
+      if (!id) id = await create();
+      else {
+        try {
+          await api(staff ? 'adminPutSelections' : 'putSelections', { params: { id }, body: { optionIds: draft.selection } });
+        } catch (e) {
+          // Staff: a customer link locks the sauna at its price, so the link keeps showing what was
+          // sent. A change made after that is saved as a new sauna instead of failing.
+          if (!staff || !isApiError(e, 'CONFIGURATION_LOCKED')) throw e;
+          id = await create();
+        }
       }
       const saved = await api(staff ? 'adminPutPlacement' : 'putPlacement', { params: { id }, body: draft.roomId ? { roomSceneId: draft.roomId, ...draft.placement } : null });
       return { saved, draft };
@@ -417,7 +432,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
               {t('configure.priceDetails')}
               <Icon icon={ChevronDown} size="xs" className={details ? 'is-up' : undefined} />
             </button>
-            {!locked && (
+            {!lockedView && (
               <button type="button" className="cfg-product__toggle" onClick={() => st.init(sauna.slug, defaultSelectionOf(sauna), st.configurationId, st.roomId ? { id: st.roomId, placement: st.placement } : null)}>
                 <Icon icon={RotateCcw} size="xs" />
                 {t('configure.resetOptions')}
@@ -444,14 +459,12 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
             </dl>
           )}
         </div>
-        {locked ? (
+        {lockedView ? (
           <div className="cfg-card cfg__locked">
             <p>{t('configure.locked')}</p>
-            {!staff && (
-              <Button onClick={() => clone.mutate()} loading={clone.isPending}>
-                {t('configure.clone')}
-              </Button>
-            )}
+            <Button onClick={() => clone.mutate()} loading={clone.isPending}>
+              {t('configure.clone')}
+            </Button>
           </div>
         ) : (
           <>
@@ -518,6 +531,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
             </div>
             <div className="cfg-card cfg__actions">
               {!valid && <p className="muted cfg__hint">{t('configure.incomplete')}</p>}
+              {staff && locked && <p className="muted cfg__hint">{t('configure.sharedCopy')}</p>}
               <Button variant="ghost" icon={Save} onClick={() => save.mutate(undefined, { onSuccess: () => toast(t('configure.draftSaved')), onError: e => toast.error(t('errors.title'), errorText(t, e)) })} loading={save.isPending && !send.isPending} disabled={save.isPending || send.isPending}>
                 {st.dirty || !st.configurationId ? t('configure.saveDraft') : t('common.saved')}
               </Button>
@@ -582,7 +596,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
             <Suspense fallback={<Skeleton lines={2} />}>
               <CustomerLinkMaker
                 configurationId={() => (save.isPending || st.dirty || !st.configurationId ? saveId() : Promise.resolve(st.configurationId))}
-                invalidate={[['admin', 'configurations']]}
+                invalidate={[['admin', 'configurations'], ['admin', 'configuration']]}
               />
             </Suspense>
           )}

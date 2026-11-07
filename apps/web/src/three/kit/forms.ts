@@ -289,11 +289,12 @@ function barrelFixtures(P: Parts, M: KitMaterials, spec: KitSpec, b: { R: number
       P.add(M.black, g);
     }
   }
-  // Outside the salt bricks, low enough to stay clear of the curve.
-  if (spec.extras.thermometer) thermometer(P, M, back(-0.62), floorY + 0.95);
-  if (spec.extras.aroma) aromaUnit(P, M, back(0.6), floorY + 0.95);
+  // Heights are above the floor: `back` already stands on it. Outside the salt bricks, low
+  // enough to stay clear of the curve.
+  if (spec.extras.thermometer) thermometer(P, M, back(-0.62), 0.95);
+  if (spec.extras.aroma) aromaUnit(P, M, back(0.6), 0.95);
   // Above the heater guard (0.82 m), as far up as the curve allows.
-  if (spec.extras.saltWall) saltPanels(P, M, back(0), floorY + 0.95, 4);
+  if (spec.extras.saltWall) saltPanels(P, M, back(0), 0.95, 4);
   if (spec.extras.bucket) bucket(P, M, [b.xBench, b.benchEnd - 0.3], b.top);
   if (spec.control) controlUnit(P, M, facingMatrix([-0.5, zIn1 + 0.042], [0, -1], floorY), 1.15);
 }
