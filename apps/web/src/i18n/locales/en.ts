@@ -324,6 +324,7 @@ const messages = {
     noRoom: 'No room',
     placement: 'Position {x} / {z}, {deg}°',
     locked: 'This configuration is locked. Clone it to make changes.',
+    sharedCopy: 'This sauna was sent to a customer with a link, so the link keeps showing it as it was. Changes you make now are saved as a new sauna.',
     clone: 'Clone to edit',
     name: 'Name',
     incomplete: 'Make the required choices first, then request a quote.',

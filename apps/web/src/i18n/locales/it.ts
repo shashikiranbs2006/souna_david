@@ -323,6 +323,7 @@ export const it: Messages = {
     noRoom: 'Nessuna stanza',
     placement: 'Posizione {x} / {z}, {deg}°',
     locked: 'Questa configurazione è bloccata. La duplichi per apportare modifiche.',
+    sharedCopy: 'Questa sauna è stata inviata a un cliente con un link, che continua a mostrarla così com’era. Le modifiche vengono salvate come una nuova sauna.',
     clone: 'Duplica per modificare',
     name: 'Nome',
     incomplete: 'Completi le scelte obbligatorie per inviare una richiesta.',

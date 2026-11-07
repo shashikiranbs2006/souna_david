@@ -327,6 +327,7 @@ export const de: Messages = {
     noRoom: 'Kein Raum',
     placement: 'Position {x} / {z}, {deg}°',
     locked: 'Diese Konfiguration ist fixiert. Duplizieren Sie sie, um Änderungen vorzunehmen.',
+    sharedCopy: 'Diese Sauna wurde per Link an einen Kunden geschickt, der Link zeigt sie weiter so wie gesendet. Änderungen werden jetzt als neue Sauna gespeichert.',
     clone: 'Zum Bearbeiten duplizieren',
     name: 'Name',
     incomplete: 'Treffen Sie alle Pflichtauswahlen, um eine Anfrage zu senden.',

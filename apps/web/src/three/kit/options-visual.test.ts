@@ -91,3 +91,31 @@ describe('seed options on every model', () => {
     expect(gaps).toEqual(KNOWN_GAPS);
   });
 });
+
+describe('barrel extras', () => {
+  it('the back-wall extras stay inside the curved shell', () => {
+    const m = MODELS.find(x => x.slug === 'kelo-barrel')!;
+    const all = groupsOf(m).flatMap(g => (GROUPS[g.code]!.multi ? g.options.map(o => o.id) : [g.options[0]!.id]));
+    const spec = { ...kitOptionsOf(groupsOf(m), all, 2), form: m.form, width: m.w / 1000, depth: m.d / 1000, height: m.h / 1000 };
+    expect(spec.extras.saltWall && spec.extras.thermometer && spec.extras.aroma).toBe(true);
+    const { group } = buildSauna(spec, fakeMaterials());
+    // Same numbers as barrel() in forms.ts: outer radius, axis height and stave thickness.
+    const R = Math.min(spec.width, spec.height) / 2 - 0.03, yc = R + 0.14, inner = R - 0.042;
+    const zBack = -spec.depth / 2 + 0.1;
+    let worst = 0;
+    group.updateMatrixWorld(true);
+    group.traverse(x => {
+      const mesh = x as THREE.Mesh;
+      const name = (mesh.material as THREE.Material | undefined)?.name;
+      if (!mesh.isMesh || (name !== 'salt' && name !== 'white' && name !== 'black')) return;
+      const p = mesh.geometry.getAttribute('position');
+      const v = new THREE.Vector3();
+      for (let i = 0; i < p.count; i++) {
+        v.fromBufferAttribute(p, i).applyMatrix4(mesh.matrixWorld);
+        if (v.z > zBack + 0.2) continue; // only what hangs on the back wall
+        worst = Math.max(worst, Math.hypot(v.x, v.y - yc) - inner);
+      }
+    });
+    expect(worst).toBeLessThanOrEqual(0);
+  });
+});

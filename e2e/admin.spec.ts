@@ -60,3 +60,36 @@ test('reseller admin opens a model in 3D from the list, configures it and makes 
   await page.getByRole('dialog').getByRole('button', { name: en.configure.makeQuote }).click();
   await expect(page.getByRole('heading', { level: 1, name: /^Q-\d+/ })).toBeVisible();
 });
+
+test('reseller admin sends a customer link, then makes a quote from the same configurator', async ({ page }) => {
+  await loginWithForm(page, '/admin', 'owner@alpha.test');
+  await goInApp(page, '/admin/configurations');
+  await page.locator('.scard__link').first().click();
+  await expect(page.locator('.cfg__total')).toContainText('€');
+
+  // The customer link saves and locks the sauna at its price.
+  await page.getByRole('button', { name: en.admin.customerLink.button }).click();
+  await page.getByRole('dialog').getByRole('button', { name: en.admin.customerLink.create }).click();
+  await expect(page.getByRole('dialog').locator('.once-box__url code')).toContainText('/s/');
+  await page.getByRole('dialog').getByRole('button', { name: en.common.close }).first().click();
+  const linked = new URL(page.url()).searchParams.get('id');
+  expect(linked).toBeTruthy();
+
+  // Quoting it unchanged quotes that same sauna instead of failing with "locked".
+  await page.getByRole('button', { name: en.configure.makeQuote }).first().click();
+  await page.getByRole('textbox', { name: new RegExp('^' + en.admin.contacts.personName) }).fill('E2E Link First');
+  await page.getByRole('dialog').getByRole('button', { name: en.configure.makeQuote }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /^Q-\d+/ })).toBeVisible();
+
+  // Changing it after the link saves a new sauna; the link keeps showing the old one.
+  await page.goBack();
+  await expect(page.getByText(en.configure.sharedCopy)).toBeVisible();
+  const total = page.locator('.cfg__total');
+  const before = await total.innerText();
+  await page.getByRole('radio', { name: /Thermo-aspen/ }).last().click();
+  await expect(total).not.toHaveText(before);
+  await page.getByRole('button', { name: en.configure.makeQuote }).first().click();
+  await page.getByRole('textbox', { name: new RegExp('^' + en.admin.contacts.personName) }).fill('E2E Link Changed');
+  await page.getByRole('dialog').getByRole('button', { name: en.configure.makeQuote }).click();
+  await expect(page.getByRole('heading', { level: 1, name: /^Q-\d+/ })).toBeVisible();
+});

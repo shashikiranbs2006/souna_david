@@ -331,6 +331,7 @@ export const fr: Messages = {
     noRoom: 'Sans pièce',
     placement: 'Position {x} / {z}, {deg}°',
     locked: 'Cette configuration est verrouillée. Dupliquez-la pour la modifier.',
+    sharedCopy: 'Ce sauna a été envoyé à un client par lien, le lien le montre toujours tel quel. Vos modifications sont enregistrées comme un nouveau sauna.',
     clone: 'Dupliquer pour modifier',
     name: 'Nom',
     incomplete: 'Complétez les choix obligatoires pour envoyer une demande.',

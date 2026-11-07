@@ -621,6 +621,7 @@ Object.assign(handlers, {
   adminPutSelections: ({ params, body }: Ctx) => {
     requireStaff();
     const c = state.configs.find(x => x.id === params.id)!;
+    if (c.lockedAt) throw new Problem('CONFIGURATION_LOCKED', 'This configuration is locked. Clone it to make changes.');
     c.selections = body.optionIds as string[];
     c.updatedAt = now();
     return configDto(c);
@@ -628,6 +629,7 @@ Object.assign(handlers, {
   adminPutPlacement: ({ params, body }: Ctx) => {
     requireStaff();
     const c = state.configs.find(x => x.id === params.id)!;
+    if (c.lockedAt) throw new Problem('CONFIGURATION_LOCKED', 'This configuration is locked. Clone it to make changes.');
     c.placement = (body && 'roomSceneId' in body ? body : null) as Configuration['placement'];
     c.updatedAt = now();
     return configDto(c);
@@ -635,6 +637,9 @@ Object.assign(handlers, {
   adminShareLinks: ({ params }: Ctx) => (requireStaff(), { items: (state.links ?? []).filter(l => l.configurationId === params.id).reverse().map(linkDto) }),
   adminCreateShareLink: ({ params, body }: Ctx) => {
     requireStaff();
+    // Sharing locks the configuration at its price, like the API.
+    const c = state.configs.find(x => x.id === params.id);
+    if (c && !c.lockedAt) c.lockedAt = c.snapshotAt = now();
     const l: StoredLink = { id: crypto.randomUUID(), configurationId: params.id!, expiresAt: plusDays(now(), Number(body.expiresInDays ?? state.shareDays ?? 30)), revokedAt: null, createdAt: now(), views: 0 };
     (state.links ??= []).push(l);
     return { id: l.id, url: `${location.origin}/s/${l.id}`, expiresAt: l.expiresAt };
