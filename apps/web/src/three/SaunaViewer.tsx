@@ -26,6 +26,10 @@ export interface SaunaViewerProps {
   background?: string;
   /** Outside orbit, or standing inside (kit models only). */
   view?: CameraView;
+  /** Kit models: the door stands open. */
+  doorOpen?: boolean;
+  /** Kit models: going inside walks the camera in through the door. */
+  walkIn?: boolean;
   /** Filled with a function that takes a JPEG picture of the current view (staff "download image"). */
   captureRef?: { current: (() => Promise<Blob | null>) | null };
 }
@@ -106,7 +110,7 @@ function CameraRig({ resetKey, radius }: { resetKey: number; radius: number }) {
   return null;
 }
 
-export default function SaunaViewer({ specs, options, lowUrl = null, highUrl = null, allowHigh = false, label, onProgress, onReady, resetKey = 0, background, view = 'exterior', captureRef }: SaunaViewerProps) {
+export default function SaunaViewer({ specs, options, lowUrl = null, highUrl = null, allowHigh = false, label, onProgress, onReady, resetKey = 0, background, view = 'exterior', captureRef, doorOpen = false, walkIn = false }: SaunaViewerProps) {
   const model = useProgressiveModel(lowUrl, highUrl, allowHigh);
   const w = specs.widthMm / 1000;
   const d = specs.depthMm / 1000;
@@ -135,12 +139,12 @@ export default function SaunaViewer({ specs, options, lowUrl = null, highUrl = n
       <ProgressReporter onProgress={onProgress} />
       <KitLights interior={kit && view === 'interior'} />
       <Suspense fallback={null}>
-        <group>{specs.source === 'reference' ? <ReferenceSauna specs={specs} options={options} onReady={onReady} /> : !kit && model.lowUrl ? <ProgressiveGlb lowUrl={model.lowUrl} highUrl={model.highUrl} /> : <KitSauna specs={specs} options={options} onReady={onReady} />}</group>
+        <group>{specs.source === 'reference' ? <ReferenceSauna specs={specs} options={options} onReady={onReady} /> : !kit && model.lowUrl ? <ProgressiveGlb lowUrl={model.lowUrl} highUrl={model.highUrl} /> : <KitSauna specs={specs} options={options} onReady={onReady} doorOpen={doorOpen} />}</group>
       </Suspense>
       {view === 'exterior' && <ContactShadows position={[0, 0.001, 0]} opacity={0.42} scale={radius * 3.5} blur={2.4} far={h * 1.2} resolution={512} />}
       {kit ? (
         <>
-          <KitCamera spec={kitSpec} view={view} reference={specs.source === 'reference'} resetKey={resetKey} />
+          <KitCamera spec={kitSpec} view={view} reference={specs.source === 'reference'} resetKey={resetKey} walkIn={walkIn} />
           <KitEffects interior={view === 'interior'} />
         </>
       ) : (

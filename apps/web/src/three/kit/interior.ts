@@ -7,6 +7,8 @@ export interface InteriorView {
   eye: [number, number, number];
   /** What the viewer looks at first. */
   look: [number, number, number];
+  /** A step in front of the door, outside: the walk in passes through here. */
+  doorway: [number, number, number];
 }
 
 /**
@@ -23,9 +25,10 @@ export function interiorView(spec: KitSpec): InteriorView {
     const floorY = yc - R * 0.7;
     const eye: [number, number, number] = [0, Math.min(floorY + 1.45, yc + R * 0.5), length / 2 - 0.42];
     const look: [number, number, number] = [0, floorY + 0.75, -length / 2];
+    const doorway: [number, number, number] = [0, eye[1], length / 2 + 0.9];
     // Built along z and turned a quarter when wider than deep: (x, z) → (z, −x).
     const q = (p: [number, number, number]): [number, number, number] => (turn ? [p[2], p[1], -p[0]] : p);
-    return { eye: q(eye), look: q(look) };
+    return { eye: q(eye), look: q(look), doorway: q(doorway) };
   }
   const L = computeLayout(spec);
   const door = L.segments.find(s => s.door)!;
@@ -38,7 +41,9 @@ export function interiorView(spec: KitSpec): InteriorView {
   const away = sub(centre, eye2);
   const far = add(centre, mul(away, len(away) > 1e-3 ? 0.9 / len(away) : 0));
   const eyeY = L.floorY + Math.min(1.55, L.wallHeight - 0.3);
+  const out = add(doorMid, mul(door.inward, -0.9));
   return {
+    doorway: [out[0], eyeY, out[1]],
     eye: [eye2[0], eyeY, eye2[1]],
     look: [far[0], L.floorY + L.upperTop + 0.5, far[1]],
   };

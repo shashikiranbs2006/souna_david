@@ -762,6 +762,7 @@ const messages = {
     noEventsFiltered: 'Nothing matches these filters.',
   },
   admin: {
+    customerLink: { button: 'Customer link', title: 'Link for your customer', body: 'Your customer sees this sauna in 3D with its price. They can turn it, open the door and go inside, but cannot change anything. No account needed. The sauna is saved first.', create: 'Create and copy link', open: 'Open as the customer sees it' },
     ownerOnly: 'Owner only',
     title: 'Reseller admin',
     placeholder: 'This area is being built.',
@@ -879,7 +880,7 @@ const messages = {
       versionSaved: 'New version saved.',
       tracking: {
         title: 'Customer activity',
-        noLink: 'No share link yet. Create one on the configuration page.',
+        noLink: 'No customer link yet. Make one here and send it to the customer.',
         openConfiguration: 'Open the configuration',
         opens: 'Opens',
         lastOpened: 'Last opened',
@@ -926,8 +927,8 @@ const messages = {
       createdToast: 'Configuration created',
       options: 'Options',
       price: 'Price',
-      shareLinks: 'Share links',
-      shareLinksLede: 'Anyone with the link can view this configuration with its price, without an account.',
+      shareLinks: 'Customer links (view only)',
+      shareLinksLede: 'Anyone with the link can look at this sauna in 3D with its price, open the door and go inside, without an account. They cannot change it.',
       newLink: 'Create link',
       expiresIn: 'Valid for',
       linkCreated: 'Share link created',
@@ -1116,6 +1117,8 @@ const messages = {
     exterior: 'Exterior',
     interior: 'Interior',
     viewLabel: 'View',
+    openDoor: 'Open door',
+    closeDoor: 'Close door',
   },
 } as const;
 

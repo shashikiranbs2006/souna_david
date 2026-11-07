@@ -136,6 +136,18 @@
   transition: background-color 0.15s, color 0.15s;
 }
 
+.vslot__views-sep {
+  width: 1px;
+  margin: 4px 3px;
+  background: #e5e3de;
+}
+
+.vslot__views .vslot__door {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .vslot__views button:hover:not(.is-active) {
   background: #efeeea;
 }
