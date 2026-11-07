@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import type { ResponseOf } from '@saunaklar/shared';
 import { api } from '../../api/client.ts';
+import { CustomerLinkMaker } from './CustomerLink.tsx';
 import { useT, type TKey } from '../../i18n/i18n.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { Table, type Column } from '../../design/components/Table.tsx';
@@ -216,14 +217,16 @@ function TrackingPanel({ offerId, configurationId }: { offerId: string; configur
   const { t } = useT();
   const fmt = useFormat();
   const q = useQuery({ queryKey: ['admin', 'offer', offerId, 'tracking'], queryFn: () => api('adminOfferTracking', { params: { id: offerId } }), refetchInterval: 60_000 });
+  // A link made here stays on screen (it is shown only once) until David leaves the page.
+  const [made, setMade] = useState(false);
   if (q.isPending) return <Skeleton lines={3} />;
   if (q.error) return <ErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
-  if (!d.link)
+  if (!d.link || made)
     return (
       <Panel title={t('admin.contacts.tracking.title')}>
         <p className="staff-muted">{t('admin.contacts.tracking.noLink')}</p>
-        <ButtonLink to={`/admin/configurations/${configurationId}`} variant="ghost" size="sm">{t('admin.contacts.tracking.openConfiguration')}</ButtonLink>
+        <CustomerLinkMaker configurationId={() => Promise.resolve(configurationId)} onCreated={() => setMade(true)} />
       </Panel>
     );
   const k = (key: string) => t(`admin.contacts.tracking.${key}` as TKey);

@@ -65,7 +65,7 @@ function solidWall(P: Parts, M: KitMaterials, L: KitLayout, s: Segment, timber: 
   }
   if (s.door) {
     lining(P, M, s.door, L.wall, m);
-    doorLeaf(P, M, s.door, timber ? 0.042 : -0.002, m, true, timber);
+    doorLeaf(P, M, s, timber ? 0.042 : -0.002, m, true, timber);
   }
 }
 
@@ -79,11 +79,15 @@ function lining(P: Parts, M: KitMaterials, o: Opening, wall: number, m: THREE.Ma
 }
 
 /** Door leaf in an opening: frameless glass with steel hinges and a bar handle, or timber with a slit window. */
-function doorLeaf(P: Parts, M: KitMaterials, d: Opening & { hingeAtStart: boolean }, z: number, m: THREE.Matrix4, framed: boolean, timber = false) {
+function doorLeaf(W: Parts, M: KitMaterials, s: Segment, z: number, m: THREE.Matrix4, framed: boolean, timber = false) {
+  const d = s.door!;
   const inset = framed ? 0.032 : 0.004;
   const u0 = d.u0 + inset, u1 = d.u1 - inset, y0 = 0.012, y1 = d.y1 - (framed ? 0.034 : 0.006);
   const hingeU = d.hingeAtStart ? u0 : u1;
   const handleU = d.hingeAtStart ? u1 - 0.09 : u0 + 0.09;
+  // The leaf swings outwards about its hinge edge, on the outer face of the leaf.
+  const hz = timber ? z - 0.042 : z - 0.008;
+  const P = W.doorLeaf(new THREE.Vector3(hingeU, y0, hz).applyMatrix4(m), new THREE.Vector3(handleU, y0, hz).applyMatrix4(m), [-s.inward[0], -s.inward[1]]);
   if (timber) {
     const t = 0.042;
     const wu0 = (u0 + u1) / 2 - 0.06 + (d.hingeAtStart ? 0.06 : -0.06), wu1 = wu0 + 0.12;
@@ -120,7 +124,7 @@ function glassRun(P: Parts, M: KitMaterials, L: KitLayout, s: Segment) {
   const ch = (a: number, b: number, y0: number, y1: number) => P.box(M.steel, a, b, y0, y1, w / 2 - 0.016, w / 2 + 0.016, m);
   ch(uA, uB, H - 0.03, H);
   for (const [a, b] of panes) if (b - a > 0.02) ch(a, b, 0, 0.03);
-  if (s.door) doorLeaf(P, M, s.door, z1, m, false);
+  if (s.door) doorLeaf(P, M, s, z1, m, false);
 }
 
 export function buildStructure(P: Parts, M: KitMaterials, L: KitLayout, spec: KitSpec) {

@@ -207,14 +207,16 @@ export function barrel(P: Parts, M: KitMaterials, spec: KitSpec) {
   }
   // Door leaf, lining and handle on the front.
   const zf = Lz / 2;
+  // The leaf swings outwards (+z) about its left edge; the handle sits on the right.
+  const D = P.doorLeaf(new THREE.Vector3(-doorW / 2 + 0.01, floorY, zf + 0.02), new THREE.Vector3(doorW / 2 - 0.09, floorY, zf + 0.02), [0, 1]);
   if (spec.door === 'timber') {
-    P.box(M.benchPanel, -doorW / 2 + 0.01, -0.07, floorY + 0.01, floorY + doorH - 0.01, zf - 0.01, zf + 0.02, undefined, 'y');
-    P.box(M.benchPanel, 0.07, doorW / 2 - 0.01, floorY + 0.01, floorY + doorH - 0.01, zf - 0.01, zf + 0.02, undefined, 'y');
-    P.box(M.glass, -0.07, 0.07, floorY + 0.4, floorY + doorH - 0.2, zf - 0.002, zf + 0.006);
+    D.box(M.benchPanel, -doorW / 2 + 0.01, -0.07, floorY + 0.01, floorY + doorH - 0.01, zf - 0.01, zf + 0.02, undefined, 'y');
+    D.box(M.benchPanel, 0.07, doorW / 2 - 0.01, floorY + 0.01, floorY + doorH - 0.01, zf - 0.01, zf + 0.02, undefined, 'y');
+    D.box(M.glass, -0.07, 0.07, floorY + 0.4, floorY + doorH - 0.2, zf - 0.002, zf + 0.006);
   } else {
-    P.box(M.doorGlass, -doorW / 2 + 0.01, doorW / 2 - 0.01, floorY + 0.01, floorY + doorH - 0.01, zf, zf + 0.008);
+    D.box(M.doorGlass, -doorW / 2 + 0.01, doorW / 2 - 0.01, floorY + 0.01, floorY + doorH - 0.01, zf, zf + 0.008);
   }
-  P.box(M.steel, doorW / 2 - 0.1, doorW / 2 - 0.08, floorY + 0.8, floorY + 1.2, zf + 0.05, zf + 0.07, undefined, 'y');
+  D.box(M.steel, doorW / 2 - 0.1, doorW / 2 - 0.08, floorY + 0.8, floorY + 1.2, zf + 0.05, zf + 0.07, undefined, 'y');
   // Benches along both sides, running the length.
   const top = floorY + 0.46;
   const zA = zIn0 + 0.42, zB = zIn1 - 0.04;

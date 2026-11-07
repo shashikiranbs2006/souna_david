@@ -813,6 +813,11 @@
   color: var(--ink);
 }
 
+.once-box__open {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .once-box__note {
   font-size: var(--step--1);
   color: color-mix(in oklab, var(--on-ink) 75%, transparent);

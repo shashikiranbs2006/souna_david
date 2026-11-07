@@ -429,6 +429,22 @@ const handlers: Partial<Record<RouteName, Handler>> = {
     return requestDto(r);
   },
   shared: ({ params }) => {
+    // A link made in the mock admin shows that configuration; `demo` shows a ready-made one.
+    const link = (state.links ?? []).find(l => l.id === params.token);
+    const linked = link && !link.revokedAt ? state.configs.find(c => c.id === link.configurationId) : undefined;
+    if (link && linked) {
+      link.views += 1;
+      const full = sauna(linked.saunaSlug);
+      const { maxDiscountBps: _x, ...ls } = full;
+      const at = linked.lockedAt ?? linked.updatedAt;
+      return {
+        configuration: { id: linked.id, name: linked.name, selections: linked.selections, lockedAt: at },
+        sauna: ls,
+        placement: linked.placement,
+        snapshot: { ...priceOf(full, linked.selections), computedAt: at, priceValidUntil: plusDays(at, 30) },
+        expiresAt: link.expiresAt,
+      };
+    }
     if (params.token !== 'demo') throw new Problem('SHARE_LINK_EXPIRED', 'This link has expired.');
     const { maxDiscountBps: _m, ...s } = sauna('fjord-panorama');
     const selections = defaultSelection(rulesOf(sauna('fjord-panorama')));
@@ -598,7 +614,7 @@ Object.assign(handlers, {
   adminCreateConfiguration: ({ body }: Ctx) => {
     requireStaff();
     const s = saunaDetails().find(x => x.id === body.saunaModelId)!;
-    const c: StoredConfig = { id: crypto.randomUUID(), name: (body.name as string) || s.name, saunaSlug: s.slug, selections: defaultSelection(rulesOf(s)), placement: null, lockedAt: null, snapshotAt: null, source: null, createdAt: now(), updatedAt: now() };
+    const c: StoredConfig = { id: crypto.randomUUID(), name: (body.name as string) || s.name, saunaSlug: s.slug, selections: (body.selections as string[] | undefined) ?? defaultSelection(rulesOf(s)), placement: null, lockedAt: null, snapshotAt: null, source: null, createdAt: now(), updatedAt: now() };
     state.configs.push(c);
     return configDto(c);
   },
@@ -609,12 +625,19 @@ Object.assign(handlers, {
     c.updatedAt = now();
     return configDto(c);
   },
+  adminPutPlacement: ({ params, body }: Ctx) => {
+    requireStaff();
+    const c = state.configs.find(x => x.id === params.id)!;
+    c.placement = (body && 'roomSceneId' in body ? body : null) as Configuration['placement'];
+    c.updatedAt = now();
+    return configDto(c);
+  },
   adminShareLinks: ({ params }: Ctx) => (requireStaff(), { items: (state.links ?? []).filter(l => l.configurationId === params.id).reverse().map(linkDto) }),
   adminCreateShareLink: ({ params, body }: Ctx) => {
     requireStaff();
     const l: StoredLink = { id: crypto.randomUUID(), configurationId: params.id!, expiresAt: plusDays(now(), Number(body.expiresInDays ?? state.shareDays ?? 30)), revokedAt: null, createdAt: now(), views: 0 };
     (state.links ??= []).push(l);
-    return { id: l.id, url: `${location.origin}/s/demo`, expiresAt: l.expiresAt };
+    return { id: l.id, url: `${location.origin}/s/${l.id}`, expiresAt: l.expiresAt };
   },
   adminRevokeShareLink: ({ params }: Ctx) => {
     requireStaff();

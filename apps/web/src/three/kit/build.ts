@@ -32,7 +32,7 @@ export function buildSauna(spec: KitSpec, M: KitMaterials, library?: Map<string,
     buildFixtures(P, M, L, spec, irAt, irBand ? L.segments.find(s => s.id === irBand.segment)! : null);
   }
   const lights = [...P.lights].sort((a, b) => b.intensity - a.intensity).slice(0, MAX_LIGHTS);
-  const group = P.toGroup(`sauna-${spec.form}`);
+  const group = P.withDoor(`sauna-${spec.form}`);
   if (!turn) return { group, lights };
   group.rotation.y = Math.PI / 2;
   // (x, z) → (z, −x): the same quarter turn for the lights.

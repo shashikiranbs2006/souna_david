@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { Box, DoorClosed, DoorOpen, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
 import { useT } from '../i18n/i18n.ts';
 import { prefersSaveData } from '../motion/preferences.ts';
 import { useInView } from '../design/useInView.ts';
@@ -67,6 +67,13 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
   const [resetKey, setResetKey] = useState(0);
   const [full, setFull] = useState(false);
   const [view, setView] = useState<CameraView>('exterior');
+  const [doorOpen, setDoorOpen] = useState(false);
+  const goTo = (v: CameraView) => {
+    // Going inside opens the door and walks in through it.
+    if (v === 'interior') setDoorOpen(true);
+    setView(v);
+    onViewChange?.(v);
+  };
   const stage = useRef<HTMLDivElement>(null);
   const saveData = prefersSaveData();
   const wanted = webgl && (requested || (Boolean(inView || eager) && !saveData));
@@ -128,7 +135,7 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
           >
             <Suspense fallback={null}>
               <div className="vslot__canvas">
-                <SaunaViewer specs={specs} options={options} lowUrl={lowUrl} highUrl={highUrl} allowHigh={allowHigh} label={t('three.canvasLabel', { name })} onProgress={onProgress} onReady={onReady} resetKey={resetKey} view={view} captureRef={captureRef} />
+                <SaunaViewer specs={specs} options={options} lowUrl={lowUrl} highUrl={highUrl} allowHigh={allowHigh} label={t('three.canvasLabel', { name })} onProgress={onProgress} onReady={onReady} resetKey={resetKey} view={view} captureRef={captureRef} doorOpen={views ? doorOpen : false} walkIn={Boolean(views)} />
               </div>
             </Suspense>
           </ErrorBoundary>
@@ -158,15 +165,21 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
         {load && views && !hasGlb && (
           <div className="vslot__views" role="group" aria-label={t('three.viewLabel')}>
             {(['exterior', 'interior'] as const).map(v => (
-              <button key={v} type="button" className={view === v ? 'is-active' : undefined} aria-pressed={view === v} onClick={() => { setView(v); onViewChange?.(v); }}>
+              <button key={v} type="button" className={view === v ? 'is-active' : undefined} aria-pressed={view === v} onClick={() => goTo(v)}>
                 {t(`three.${v}`)}
               </button>
             ))}
+            <span className="vslot__views-sep" aria-hidden="true" />
+            <button type="button" className="vslot__door" aria-pressed={doorOpen} onClick={() => setDoorOpen(o => !o)}>
+              {doorOpen ? <DoorClosed size={15} aria-hidden="true" /> : <DoorOpen size={15} aria-hidden="true" />}
+              {doorOpen ? t('three.closeDoor') : t('three.openDoor')}
+            </button>
           </div>
         )}
         {load && (
           <div className="vslot__tools">
-            <span className="vslot__hint mono">{t('detail.viewHint')}</span>
+            {/* The view switcher takes the top of the stage; the hint would run under it. */}
+            {!(views && !hasGlb) && <span className="vslot__hint mono">{t('detail.viewHint')}</span>}
             <IconButton icon={RotateCcw} label={t('three.reset')} onClick={() => setResetKey(k => k + 1)} size="sm" />
             <IconButton icon={full ? Minimize2 : Maximize2} label={full ? t('three.exitFullscreen') : t('three.fullscreen')} onClick={toggleFull} size="sm" />
           </div>

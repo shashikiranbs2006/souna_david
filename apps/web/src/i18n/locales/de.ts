@@ -780,6 +780,7 @@ export const de: Messages = {
     noEventsFiltered: 'Nichts entspricht diesen Filtern.',
   },
   admin: {
+    customerLink: { button: 'Kundenlink', title: 'Link für Ihren Kunden', body: 'Ihr Kunde sieht diese Sauna in 3D mit Preis. Er kann sie drehen, die Tür öffnen und hineingehen, aber nichts ändern. Kein Konto nötig. Die Sauna wird zuerst gespeichert.', create: 'Link erstellen und kopieren', open: 'So sieht es der Kunde' },
     ownerOnly: 'Nur für Inhaber',
     title: 'Händler-Administration',
     placeholder: 'Dieser Bereich ist im Aufbau.',
@@ -897,7 +898,7 @@ export const de: Messages = {
       versionSaved: 'Neue Version gespeichert.',
       tracking: {
         title: 'Aktivität der Kundschaft',
-        noLink: 'Noch kein Link geteilt. Erstellen Sie einen auf der Konfigurationsseite.',
+        noLink: 'Noch kein Kundenlink. Erstellen Sie hier einen und senden Sie ihn dem Kunden.',
         openConfiguration: 'Konfiguration öffnen',
         opens: 'Aufrufe',
         lastOpened: 'Zuletzt geöffnet',
@@ -944,8 +945,8 @@ export const de: Messages = {
       createdToast: 'Konfiguration erstellt',
       options: 'Optionen',
       price: 'Preis',
-      shareLinks: 'Geteilte Links',
-      shareLinksLede: 'Wer den Link hat, kann diese Konfiguration mit Preis ansehen, ohne Konto.',
+      shareLinks: 'Kundenlinks (nur ansehen)',
+      shareLinksLede: 'Wer den Link hat, kann diese Sauna in 3D mit Preis ansehen, die Tür öffnen und hineingehen, ohne Konto. Ändern kann er sie nicht.',
       newLink: 'Link erstellen',
       expiresIn: 'Gültig für',
       linkCreated: 'Geteilter Link erstellt',
@@ -1134,5 +1135,7 @@ export const de: Messages = {
     exterior: 'Außen',
     interior: 'Innen',
     viewLabel: 'Ansicht',
+    openDoor: 'Tür öffnen',
+    closeDoor: 'Tür schliessen',
   },
 };

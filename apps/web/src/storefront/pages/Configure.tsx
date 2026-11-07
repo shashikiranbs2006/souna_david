@@ -3,7 +3,7 @@ import { errorText } from '../../i18n/errorText.ts';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Armchair, ArrowLeft, Check, FileText, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon } from 'lucide-react';
+import { Armchair, ArrowLeft, Check, FileText, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon, Link2 } from 'lucide-react';
 import { calculatePrice } from '@saunaklar/pricing';
 import { availability, validate } from '@saunaklar/rules';
 import { api, isApiError } from '../../api/client.ts';
@@ -34,6 +34,8 @@ import { useConfigurator } from '../configurator/store.ts';
 import './Configure.css';
 
 const RoomScene = lazy(() => import('../../three/RoomScene.tsx'));
+// Staff only: the customer-link maker lives with the admin code.
+const CustomerLinkMaker = lazy(() => import('../admin/CustomerLink.tsx').then(m => ({ default: m.CustomerLinkMaker })));
 
 function ConfigureSkeleton() {
   return (
@@ -253,6 +255,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   const [details, setDetails] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [contact, setContact] = useState({ id: '', name: '', email: '', mobile: '' });
   const capture = useRef<(() => Promise<Blob | null>) | null>(null);
   const [message, setMessage] = useState('');
@@ -523,6 +526,11 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
                   {t('configure.downloadImage')}
                 </Button>
               )}
+              {staff && (
+                <Button variant="ghost" icon={Link2} onClick={() => setLinkOpen(true)} disabled={!valid}>
+                  {t('admin.customerLink.button')}
+                </Button>
+              )}
               {staff ? (
                 <Button icon={FileText} onClick={() => setQuoteOpen(true)} disabled={!valid}>
                   {t('configure.makeQuote')}
@@ -558,6 +566,28 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
           <Textarea label={t('configure.message')} placeholder={t('configure.messagePlaceholder')} value={message} onChange={e => setMessage(e.target.value)} maxLength={4000} />
         </div>
       </Dialog>
+      {staff && (
+        <Dialog
+          open={linkOpen}
+          onClose={() => setLinkOpen(false)}
+          title={t('admin.customerLink.title')}
+          description={t('admin.customerLink.body')}
+          footer={
+            <Button variant="quiet" onClick={() => setLinkOpen(false)}>
+              {t('common.close')}
+            </Button>
+          }
+        >
+          {linkOpen && (
+            <Suspense fallback={<Skeleton lines={2} />}>
+              <CustomerLinkMaker
+                configurationId={() => (save.isPending || st.dirty || !st.configurationId ? saveId() : Promise.resolve(st.configurationId))}
+                invalidate={[['admin', 'configurations']]}
+              />
+            </Suspense>
+          )}
+        </Dialog>
+      )}
       <Dialog
         open={quoteOpen}
         onClose={() => setQuoteOpen(false)}

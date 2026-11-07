@@ -13,6 +13,9 @@ export interface LightSpec {
 
 const UP = new THREE.Vector3(0, 1, 0);
 
+/** How far an open door swings (radians, about 85°). */
+export const DOOR_OPEN_ANGLE = 1.48;
+
 /**
  * Collects geometry per material and merges each bucket into one mesh, so a
  * whole sauna (hundreds of slats and boards) renders in about fifteen draw
@@ -69,6 +72,39 @@ export class Parts {
     g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
     metreUVs(g, grain);
     this.add(mat, g, m);
+  }
+
+  /** The hinged door leaf, built into its own Parts so it can swing open (see `withDoor`). */
+  door: { parts: Parts; hinge: THREE.Vector3; openAngle: number } | null = null;
+
+  /**
+   * Starts the door leaf: geometry added to the returned Parts swings about a vertical
+   * axis through `hinge`. `handle` is a point on the leaf's free edge and `outward` the
+   * plan direction the door opens towards (sauna doors open outwards).
+   */
+  doorLeaf(hinge: THREE.Vector3, handle: THREE.Vector3, outward: Vec2): Parts {
+    const parts = new Parts(this.casters, this.library, this.slot);
+    // rotation.y by θ moves the free edge by θ·(vz, −vx) at first: pick the sign that points it outwards.
+    const vx = handle.x - hinge.x, vz = handle.z - hinge.z;
+    const sign = vz * outward[0] - vx * outward[1] >= 0 ? 1 : -1;
+    this.door = { parts, hinge: hinge.clone(), openAngle: sign * DOOR_OPEN_ANGLE };
+    return parts;
+  }
+
+  /** `toGroup`, plus the door leaf on a pivot named `door-pivot` (its `userData.openAngle` is the open position). */
+  withDoor(name: string): THREE.Group {
+    const group = this.toGroup(name);
+    if (!this.door) return group;
+    const { parts, hinge, openAngle } = this.door;
+    const leaf = parts.toGroup('door-leaf');
+    leaf.position.set(-hinge.x, -hinge.y, -hinge.z);
+    const pivot = new THREE.Group();
+    pivot.name = 'door-pivot';
+    pivot.position.copy(hinge);
+    pivot.userData.openAngle = openAngle;
+    pivot.add(leaf);
+    group.add(pivot);
+    return group;
   }
 
   toGroup(name: string): THREE.Group {
