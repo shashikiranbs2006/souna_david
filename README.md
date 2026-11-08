@@ -65,6 +65,24 @@ To run the single-shop edition elsewhere, set `SINGLE_SHOP=<slug>` for the API a
 `VITE_SINGLE_SHOP=<slug>` and `VITE_LOCALES=de,en` for the web app (or `singleShop` and `locales`
 in `/config.js`). API variables are listed in [services/api/.env.example](services/api/.env.example).
 
+## Deploy (Contabo server)
+
+The edition runs on the Contabo server next to other projects, without touching them: user
+`holz_sauna`, folder `/opt/holz_sauna`, port 3010 behind a new nginx site, Postgres 16 in its own
+Docker container on localhost, one systemd service. Planned addresses:
+`sauna-configurator.klardatalabs.com` (the shop and `/admin`) and
+`admin.sauna-configurator.klardatalabs.com` (manufacturer admin).
+
+1. Add two DNS A records for those names pointing to the server.
+2. As root, once: `deploy/holz_sauna/setup-root.sh` (database container, secrets, service, nginx,
+   HTTPS).
+3. As `holz_sauna`: clone the repository to `/opt/holz_sauna/app`, then run
+   `deploy/holz_sauna/deploy.sh` for the first deploy and for every update.
+
+The first deploy seeds the shop and replaces all seeded passwords with random ones, printed once.
+Secrets live only in `/opt/holz_sauna/.env*` on the server, never in git. Details, backups and how
+to remove it again: [deploy/holz_sauna/README.md](deploy/holz_sauna/README.md).
+
 ## Tests
 
 | Command | What runs |
@@ -85,7 +103,7 @@ in integer minor units. Contacts, quotes and invoices are migrations `0016` to `
 
 This repository is a copy of the multi-reseller SaunaKlar platform, run here as a single shop, so
 the code still contains platform parts David does not use (manufacturer admin, customer accounts,
-the Terraform in `infra/`). Nothing is deployed yet.
+the Terraform in `infra/`). The server deploy files are in `deploy/holz_sauna/`.
 
 More: [docs/david-fork-plan.md](docs/david-fork-plan.md) (the plan), [docs/api.md](docs/api.md) and
 the generated [docs/openapi.json](docs/openapi.json) (`npm run openapi`),
@@ -95,4 +113,5 @@ the generated [docs/openapi.json](docs/openapi.json) (`npm run openapi`),
 
 - David's VAT number and rate (invoices only say "includes VAT") and how his bank details read.
 - How long to keep tracking data, and a privacy note on the link page.
-- Hosting and domain.
+- Final domain (the klardatalabs.com names above are for testing), e-mail sending (nothing is
+  sent in production yet), and automatic backups.
