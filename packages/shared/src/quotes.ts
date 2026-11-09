@@ -109,6 +109,26 @@ export const shareActivityRequest = z.object({
   seconds: z.number().int().min(0).max(3600),
 });
 
+// ---- Sending a quote and the customer's question -----------------------------
+
+/** Sends the quote by e-mail from the admin: the PDF attached and a view-only 3D link. */
+export const sendOfferRequest = z.object({
+  /** A personal note shown in the mail above the link. */
+  message: z.string().trim().max(2000).optional(),
+  /** Language of the mail; defaults to the language of the admin. */
+  locale: z.enum(['en', 'de', 'fr', 'it']).optional(),
+  /** How long the customer link stays valid; defaults to the shop setting. */
+  expiresInDays: z.number().int().min(1).max(90).optional(),
+});
+
+/** A question from the customer link page; it reaches the shop by e-mail. */
+export const shareEnquiryRequest = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.string().trim().email().max(254),
+  phone: z.string().trim().max(40).optional(),
+  message: z.string().trim().min(1).max(4000),
+});
+
 // ---- Watermark and downloads -------------------------------------------------
 
 /** Stamped on every downloaded file (server side) and over the live 3D view of the shop. */

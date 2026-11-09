@@ -1,13 +1,14 @@
 import { useParams } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Clock } from 'lucide-react';
 import { api, isApiError } from '../../api/client.ts';
 import { useSession, useTenantData } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { ScrambleText } from '../../motion/ScrambleText.tsx';
-import { ButtonLink } from '../../design/components/Button.tsx';
+import { Button, ButtonLink } from '../../design/components/Button.tsx';
+import { Input, Textarea } from '../../design/components/Field.tsx';
 import { Price } from '../../design/components/Price.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { EmptyState } from '../../design/components/EmptyState.tsx';
@@ -52,6 +53,42 @@ function useVisitActivity(token: string, enabled: boolean) {
     visit.current.inside = true;
     send.current();
   };
+}
+
+/** A question to the shop from the customer link: it arrives by e-mail with the customer as Reply-To. */
+function EnquiryForm({ token }: { token: string }) {
+  const { t } = useT();
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
+  const send = useMutation({
+    mutationFn: () => api('sharedEnquiry', { params: { token }, body: { name: form.name.trim(), email: form.email.trim(), message: form.message.trim(), ...(form.phone.trim() ? { phone: form.phone.trim() } : {}) } }),
+  });
+  const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm(f => ({ ...f, [k]: e.target.value }));
+  if (send.isSuccess)
+    return (
+      <p className="pricecard__hint" role="status">
+        {t('shared.enquirySent')}
+      </p>
+    );
+  return (
+    <form
+      className="enquiry"
+      onSubmit={(e: FormEvent) => {
+        e.preventDefault();
+        send.mutate();
+      }}
+    >
+      <h2 className="enquiry__title">{t('shared.enquiryTitle')}</h2>
+      <p className="pricecard__hint">{t('shared.enquiryIntro')}</p>
+      <Input label={t('shared.enquiryName')} value={form.name} onChange={set('name')} autoComplete="name" required maxLength={120} />
+      <Input label={t('shared.enquiryEmail')} type="email" value={form.email} onChange={set('email')} autoComplete="email" required maxLength={254} />
+      <Input label={t('shared.enquiryPhone')} type="tel" value={form.phone} onChange={set('phone')} autoComplete="tel" maxLength={40} />
+      <Textarea label={t('shared.enquiryMessage')} value={form.message} onChange={set('message')} required maxLength={4000} rows={4} />
+      {send.isError && <p className="field__error" role="alert">{t('shared.enquiryError')}</p>}
+      <Button type="submit" size="lg" block loading={send.isPending}>
+        {t('shared.enquirySend')}
+      </Button>
+    </form>
+  );
 }
 
 export default function Shared() {
@@ -120,10 +157,8 @@ export default function Shared() {
               <p className="pricecard__vat">{t('shared.priceAsOf', { date: fmt.date(d.snapshot.computedAt) })} · {t('shared.validUntil', { date: fmt.date(d.snapshot.priceValidUntil) })}</p>
               <p className="pricecard__vat">{t('shared.expires', { date: fmt.date(d.expiresAt) })}</p>
               <p className="pricecard__hint">{t('shared.viewOnlyHint', { name: b.displayName })}</p>
-              <ButtonLink to="/contact" size="lg" block>
-                {t('shared.contact', { name: b.displayName })}
-              </ButtonLink>
-              {b.supportPhone && <a className="btn btn--ghost btn--md btn--block" href={`tel:${b.supportPhone.replace(/[^+d]/g, '')}`}>{b.supportPhone}</a>}
+              <EnquiryForm token={token} />
+              {b.supportPhone && <a className="btn btn--ghost btn--md btn--block" href={`tel:${b.supportPhone.replace(/[^+\d]/g, '')}`}>{b.supportPhone}</a>}
             </div>
           </div>
         </aside>

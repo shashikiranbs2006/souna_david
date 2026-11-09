@@ -7,6 +7,8 @@ import { ApiError } from '../lib/problem.ts';
 import { mount } from '../lib/route.ts';
 import { assetUrl, listCatalog, listRooms, loadModel } from '../domain/catalog.ts';
 import { getConfigRow, getSelections, getSnapshot } from '../domain/configurations.ts';
+import { loadMailBrand } from '../domain/mailBrand.ts';
+import { templates } from '../adapters/mail/templates.ts';
 import { deviceClass, isAutomatedClient, resolveShareToken, visitorPrefix } from '../domain/sharing.ts';
 import { issueAssetCookies } from './assets.ts';
 
@@ -183,6 +185,36 @@ export function registerCatalog(app: Hono<AppEnv>): void {
                  seconds = greatest(share_link_activity.seconds, excluded.seconds), updated_at = now()`,
           [link.id, tenant!.id, body.visitId, body.insideView, body.seconds]);
       });
+    }
+    c.header('Cache-Control', 'no-store');
+    return { ok: true as const };
+  });
+
+  // A question from the customer link reaches the shop by e-mail (Reply-To is the customer).
+  mount(app, routes.sharedEnquiry, async ({ c, params, body }) => {
+    const { deps } = { deps: c.get('deps') };
+    const found = await tenantTx(c, async db => {
+      const link = await resolveShareToken(db, params.token!, deps.now());
+      const { rows } = await db.query<{ sauna: string }>(
+        `select coalesce(t.name, m.name) as sauna
+           from configurations cf join sauna_models m on m.id = cf.sauna_model_id
+           left join sauna_model_translations t on t.sauna_model_id = m.id and t.locale = $2
+          where cf.id = $1`, [link.configuration_id, requestLocale(c)]);
+      return { sauna: rows[0]?.sauna ?? null, brand: await loadMailBrand(db, c) };
+    });
+    const to = found.brand.supportEmail;
+    if (!to) throw new ApiError('VALIDATION_FAILED', 'The shop has no contact e-mail yet.');
+    const mail = templates.enquiry(found.brand, {
+      name: body.name, email: body.email, phone: body.phone ?? null, message: body.message, saunaName: found.sauna,
+      linkUrl: `${found.brand.storefrontUrl}/s/${params.token}`,
+    }, requestLocale(c));
+    try {
+      await deps.adapters.mailer.send({
+        to, subject: mail.subject, html: mail.html, text: mail.text, resellerId: c.get('tenant')!.id, fromName: found.brand.brandName, replyTo: body.email,
+      });
+    } catch (err) {
+      deps.log.error('enquiry.mail_failed', { error: err instanceof Error ? err.message : String(err) });
+      throw new ApiError('INTERNAL', 'The message could not be sent. Please try again or call the shop.', { status: 502 });
     }
     c.header('Cache-Control', 'no-store');
     return { ok: true as const };

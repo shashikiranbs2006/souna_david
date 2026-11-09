@@ -30,6 +30,8 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
   app.use('*', requestContext, securityHeaders, originLock, hostAndTenant(tenantCache), session, csrf);
   app.use('/api/auth/*', rateLimit({ group: 'auth', windowMs: 60_000, max: 30 }));
   app.use('/api/shared/*', rateLimit({ group: 'shared', windowMs: 60_000, max: 60 }));
+  // The enquiry form sends e-mail: five messages per ten minutes per visitor.
+  app.use('/api/shared/:token/enquiry', rateLimit({ group: 'enquiry', windowMs: 600_000, max: 5 }));
   app.use('/api/assets/*', rateLimit({ group: 'assets', windowMs: 60_000, max: 120 }));
 
   const has = (f: LambdaFunction) => functions.includes(f);

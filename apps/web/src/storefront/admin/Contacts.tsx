@@ -1,16 +1,17 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Trash2 } from 'lucide-react';
+import { Mail, Plus, Trash2 } from 'lucide-react';
 import type { ResponseOf } from '@saunaklar/shared';
 import { api } from '../../api/client.ts';
 import { CustomerLinkMaker } from './CustomerLink.tsx';
-import { useT, type TKey } from '../../i18n/i18n.ts';
+import { LOCALE_NAMES, OFFERED_LOCALES, useT, type Locale, type TKey } from '../../i18n/i18n.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { Table, type Column } from '../../design/components/Table.tsx';
 import { Badge } from '../../design/components/Badge.tsx';
 import { Button, ButtonLink } from '../../design/components/Button.tsx';
 import { Input, Select, Textarea } from '../../design/components/Field.tsx';
+import { Dialog } from '../../design/components/Dialog.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
@@ -272,6 +273,48 @@ function TrackingPanel({ offerId, configurationId }: { offerId: string; configur
   );
 }
 
+/** Sends the quote to the customer by e-mail: PDF attached, link to the sauna in 3D (view only). */
+function SendOffer({ offerId, contactId, status }: { offerId: string; contactId: string; status: Status }) {
+  const { t, locale } = useT();
+  const contact = useQuery({ queryKey: ['admin', 'contact', contactId], queryFn: () => api('adminContact', { params: { id: contactId } }) });
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [lang, setLang] = useState<Locale>(locale);
+  const email = contact.data?.email ?? null;
+  const send = useAdminMutation(
+    () => api('adminSendOffer', { params: { id: offerId }, body: { ...(message.trim() ? { message: message.trim() } : {}), locale: lang } }),
+    { success: () => t('admin.contacts.quoteSentToast', { email: email ?? '' }), invalidate: [['admin', 'offer', offerId], ['admin', 'offers']], onSuccess: () => { setOpen(false); setMessage(''); } },
+  );
+  return (
+    <>
+      <div className="staff-form__actions">
+        <Button icon={Mail} onClick={() => setOpen(true)} disabled={!email}>
+          {t('admin.contacts.sendQuote')}
+        </Button>
+        {contact.data && !email && <span className="staff-muted">{t('admin.contacts.noEmail')}</span>}
+        {status === 'SENT' && <Badge tone="soft">{t('admin.contacts.status.SENT')}</Badge>}
+      </div>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t('admin.contacts.sendQuoteTitle')}
+        description={t('admin.contacts.sendQuoteBody', { email: email ?? '' })}
+        footer={
+          <>
+            <Button variant="quiet" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+            <Button icon={Mail} onClick={() => send.mutate(undefined)} loading={send.isPending}>{t('admin.contacts.sendQuoteConfirm')}</Button>
+          </>
+        }
+      >
+        <div className="stack">
+          <Select label={t('nav.language')} value={lang} onChange={e => setLang(e.target.value as Locale)} options={OFFERED_LOCALES.map(l => ({ value: l, label: LOCALE_NAMES[l] }))} />
+          <Textarea label={t('admin.contacts.sendQuoteMessage')} value={message} onChange={e => setMessage(e.target.value)} maxLength={2000} rows={4} />
+        </div>
+      </Dialog>
+    </>
+  );
+}
+
 export function OfferDetail() {
   const { id = '' } = useParams();
   const { t } = useT();
@@ -317,6 +360,7 @@ export function OfferDetail() {
           <dt>{t('admin.contacts.total')}</dt>
           <dd className="mono staff-strong">{fmt.money(o.totalMinor, o.currency)}</dd>
         </dl>
+        {o.versions[0]?.id === o.id && <SendOffer offerId={o.id} contactId={o.contact.id} status={o.status} />}
         <p className="staff-muted">{t('admin.contacts.markAs')}</p>
         <div className="staff-form__actions">
           {(o.versions[0]?.id === o.id ? STATUSES.filter(s => s !== o.status && (o.status === 'DRAFT' || o.status === 'SENT')) : []).map(s => (

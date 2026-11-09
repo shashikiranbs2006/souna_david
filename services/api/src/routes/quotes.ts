@@ -5,10 +5,13 @@ import { tenantTx } from '../lib/db.ts';
 import { requestLocale } from '../lib/locale.ts';
 import { ApiError } from '../lib/problem.ts';
 import { asStaff, mount } from '../lib/route.ts';
-import { getConfigRow, toConfigurationDto } from '../domain/configurations.ts';
+import { getConfigRow, lockConfiguration, toConfigurationDto } from '../domain/configurations.ts';
 import { scoreShare } from '../domain/likelihood.ts';
 import { loadModel } from '../domain/catalog.ts';
 import { buildOfferPdf } from '../domain/offerPdf.ts';
+import { loadMailBrand } from '../domain/mailBrand.ts';
+import { hashShareToken, newShareToken } from '../domain/sharing.ts';
+import { templates } from '../adapters/mail/templates.ts';
 import { watermarkImage } from '../domain/watermark.ts';
 
 interface ContactRow {
@@ -278,10 +281,11 @@ export function registerQuotes(app: Hono<AppEnv>): void {
   });
 
   // One PDF per quote version, built on the server and watermarked there.
-  mount(app, routes.adminOfferPdf, async ({ c, params }) => {
+  /** Everything the offer PDF (and the offer e-mail) shows, read in one transaction. */
+  async function offerPdfData(c: Ctx, id: string) {
     const { tenant, locale } = ctx(c);
-    const data = await tenantTx(c, async db => {
-      const o = await loadQuote(db, c, params.id!);
+    return tenantTx(c, async db => {
+      const o = await loadQuote(db, c, id);
       const [cu, br, cfgRow] = await Promise.all([
         db.query<{ person_name: string; organisation: string | null; email: string | null; mobile: string | null }>('select person_name, organisation, email, mobile from contacts where id = $1', [o.contact.id]),
         db.query<{ display_name: string; legal_name: string | null; legal_address: string | null; support_phone: string | null; support_email: string | null; vat_display: 'INCLUDED' | 'EXCLUDED' | 'NONE' }>(
@@ -296,6 +300,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       const row = cu.rows[0]!;
       const b = br.rows[0];
       return {
+        quoteId: o.id, configurationId: o.configuration.id,
         shop: { name: b?.display_name ?? 'Shop', legalName: b?.legal_name ?? null, address: b?.legal_address ?? null, phone: b?.support_phone ?? null, email: b?.support_email ?? null },
         vat: b?.vat_display ?? 'INCLUDED' as const, label: o.label, version: o.version, createdAt: new Date(o.createdAt),
         contact: { personName: row.person_name, organisation: row.organisation, email: row.email, mobile: row.mobile },
@@ -304,10 +309,63 @@ export function registerQuotes(app: Hono<AppEnv>): void {
         lines: o.lines, totalMinor: o.totalMinor, comment: o.comment, validUntil: validUntilOf(price),
       };
     });
+  }
+
+  mount(app, routes.adminOfferPdf, async ({ c, params }) => {
+    const data = await offerPdfData(c, params.id!);
     const bytes = await buildOfferPdf(data);
     return new Response(bytes as BodyInit, {
       status: 200,
       headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${data.label}-v${data.version}.pdf"`, 'Cache-Control': 'no-store' },
+    });
+  });
+
+  // The customer receives the quote by e-mail: summary, the PDF attached, a view-only link to the sauna in 3D.
+  mount(app, routes.adminSendOffer, async ({ c, params, body, principal }) => {
+    const me = asStaff(principal);
+    const { tenant, locale } = ctx(c);
+    const { deps } = { deps: c.get('deps') };
+    const data = await offerPdfData(c, params.id!);
+    const to = data.contact.email;
+    if (!to) throw new ApiError('VALIDATION_FAILED', 'This contact has no e-mail address yet.', { errors: { email: ['required'] } });
+
+    // A new customer link for this sauna (it locks the configuration at its price); only its hash is stored.
+    const token = newShareToken();
+    const link = await tenantTx(c, async db => {
+      const row = await getConfigRow(db, data.configurationId);
+      await lockConfiguration(db, tenant, locale, row, deps.config.SHARE_PRICE_VALID_DAYS);
+      const { rows: s } = await db.query<{ d: number }>('select default_share_expiry_days as d from resellers where id = $1', [tenant.id]);
+      const { rows } = await db.query<{ id: string; expires_at: Date }>(
+        `insert into share_links (reseller_id, configuration_id, token_hash, created_by_staff_id, expires_at)
+         values ($1, $2, $3, $4, now() + make_interval(days => $5)) returning id, expires_at`,
+        [tenant.id, row.id, hashShareToken(token), me.staffId, body.expiresInDays ?? s[0]!.d]);
+      return { expiresAt: rows[0]!.expires_at, brand: await loadMailBrand(db, c) };
+    });
+
+    const mailLocale = body.locale ?? locale;
+    const mail = templates.offerSent(link.brand, {
+      firstName: data.contact.personName.split(/\s+/)[0] ?? null,
+      label: data.label,
+      saunaName: data.sauna,
+      total: { amountMinor: data.totalMinor, currency: data.currency },
+      validUntil: data.validUntil ?? link.expiresAt,
+      comment: body.message || data.comment,
+      viewUrl: `${link.brand.storefrontUrl}/s/${token}`,
+    }, mailLocale);
+    const pdf = await buildOfferPdf(data);
+    try {
+      await deps.adapters.mailer.send({
+        to, subject: mail.subject, html: mail.html, text: mail.text, resellerId: tenant.id, fromName: link.brand.brandName,
+        ...(link.brand.supportEmail ? { replyTo: link.brand.supportEmail } : {}),
+        attachments: [{ filename: `${data.label}-v${data.version}.pdf`, contentBase64: Buffer.from(pdf).toString('base64') }],
+      });
+    } catch (err) {
+      deps.log.error('offer.mail_failed', { quoteId: data.quoteId, error: err instanceof Error ? err.message : String(err) });
+      throw new ApiError('INTERNAL', 'The e-mail could not be sent. Nothing was changed; try again in a moment.', { status: 502 });
+    }
+    return tenantTx(c, async db => {
+      await db.query("update quotes set status = 'SENT' where id = $1 and status = 'DRAFT'", [data.quoteId]);
+      return loadQuote(db, c, data.quoteId);
     });
   });
 

@@ -16,3 +16,12 @@ test('an unknown share token shows the expired page', async ({ page }) => {
   await page.goto('/s/not-a-real-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
   await expect(page.getByRole('heading', { name: en.shared.expiredTitle })).toBeVisible();
 });
+
+test('a visitor can send a question to the shop from the customer link', async ({ page }) => {
+  await page.goto(`/s/${SEED_SHARE_TOKEN}`);
+  await page.getByLabel(en.shared.enquiryName).fill('Anna Muster');
+  await page.getByLabel(en.shared.enquiryEmail).fill('anna.muster@example.test');
+  await page.getByLabel(en.shared.enquiryMessage).fill('Can you deliver in March?');
+  await page.getByRole('button', { name: en.shared.enquirySend }).click();
+  await expect(page.getByText(en.shared.enquirySent)).toBeVisible();
+});

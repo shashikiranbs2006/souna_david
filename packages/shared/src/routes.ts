@@ -41,6 +41,7 @@ export const routes = {
   rooms: r({ method: 'GET', path: '/api/rooms', fn: 'public-catalog', access: 'public', host: 'storefront', query: catalog.catalogVersionQuery, response: catalog.roomsSchema }),
   shared: r({ method: 'GET', path: '/api/shared/:token', fn: 'public-catalog', access: 'public', host: 'storefront', response: share.sharedConfigurationSchema }),
   sharedActivity: r({ method: 'POST', path: '/api/shared/:token/activity', fn: 'public-catalog', access: 'public', host: 'storefront', body: quo.shareActivityRequest, response: ok }),
+  sharedEnquiry: r({ method: 'POST', path: '/api/shared/:token/enquiry', fn: 'public-catalog', access: 'public', host: 'storefront', body: quo.shareEnquiryRequest, response: ok }),
   assetSession: r({ method: 'POST', path: '/api/assets/session', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.assetSessionRequest, response: catalog.assetSessionResponse }),
   assetAr: r({ method: 'POST', path: '/api/assets/ar', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.arRequest, response: catalog.arResponse }),
 
@@ -95,6 +96,7 @@ export const routes = {
   adminInvoicePdf: r({ method: 'GET', path: '/api/admin/invoices/:id/pdf', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: z.unknown() }),
   adminReports: r({ method: 'GET', path: '/api/admin/reports', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.reportsSchema }),
   adminWatermarkImage: r({ method: 'POST', path: '/api/admin/watermark-image', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.watermarkImageRequest, response: quo.watermarkedImageSchema }),
+  adminSendOffer: r({ method: 'POST', path: '/api/admin/offers/:id/send', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.sendOfferRequest, response: quo.offerSchema }),
   adminOfferStatus: r({ method: 'POST', path: '/api/admin/offers/:id/status', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.offerStatusRequest, response: quo.offerSchema }),
 
   // ---- prices (the shop owner edits base price and largest discount of each sauna) ----------
