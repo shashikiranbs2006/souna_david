@@ -49,14 +49,23 @@ set +a
 export LOCAL_IDP=1 LOCAL_OBJECTS_DIR="$BASE/data/objects"
 npm run db:migrate
 node deploy/holz_sauna/db-tasks.mjs ensure-api-password
+OWNER=info@holzsauna.ch
 if node deploy/holz_sauna/db-tasks.mjs needs-seed; then
   echo "empty database: seeding the shop"
   npm run db:seed
-  # Only David's shop stays: the other demo shops, the manufacturer admin and their logins go.
-  node deploy/holz_sauna/db-tasks.mjs keep-only-shop holzsauna info@holzsauna.ch
-  node deploy/holz_sauna/db-tasks.mjs lock-demo-users info@holzsauna.ch
+  FRESH=1
 else
   npm run db:media
+  FRESH=0
+fi
+# On every deploy: David's earlier login (owner@holzsauna.test) becomes the shop's own address, and only
+# David's shop stays (the other demo shops and all other logins go). Both steps are safe to repeat.
+node deploy/holz_sauna/db-tasks.mjs rename-user owner@holzsauna.test "$OWNER"
+node deploy/holz_sauna/db-tasks.mjs keep-only-shop holzsauna "$OWNER"
+node deploy/holz_sauna/db-tasks.mjs ensure-contact holzsauna "$OWNER" "+41 52 552 43 23" "Ihre Sauna, gemeinsam geplant"
+if [ "$FRESH" = 1 ] || [ "${RESET_OWNER_PASSWORD:-}" = 1 ]; then
+  # A new random password, printed once (set RESET_OWNER_PASSWORD=1 to do this on a later deploy).
+  node deploy/holz_sauna/db-tasks.mjs lock-demo-users "$OWNER"
 fi
 
 # ---- start --------------------------------------------------------------------------------

@@ -6,6 +6,12 @@
  *   lock-demo-users <email>...
  *                         gives every local IdP user a random unusable password, except the
  *                         listed e-mails: those get a new random password, printed once.
+ *   rename-user <old> <new>
+ *                         gives an existing user (staff row and IdP sign-in) a new e-mail; does nothing
+ *                         when <old> does not exist or <new> already does.
+ *   ensure-contact <slug> <email> <phone> <tagline>
+ *                         replaces placeholder contact details of a shop (an address ending in .test, or empty)
+ *                         with the real ones; details David already entered are kept.
  *   set-password <email>  sets the password of one user (read from NEW_PASSWORD)
  *   keep-only-shop <slug> <email>...
  *                         removes every other shop (and its staff, customers, quotes, links),
@@ -103,6 +109,29 @@ try {
       await client.query('ROLLBACK');
       throw err;
     }
+  } else if (cmd === 'rename-user') {
+    const [from, to] = rest.map((e) => e?.toLowerCase());
+    if (!from || !to) throw new Error('usage: db-tasks.mjs rename-user <old e-mail> <new e-mail>');
+    const exists = async (e) => (await client.query('SELECT 1 FROM staff_users WHERE lower(email) = $1', [e])).rowCount;
+    if (!(await exists(from)) || (await exists(to))) {
+      console.log('rename-user: nothing to do');
+    } else {
+      await client.query('BEGIN');
+      await client.query('UPDATE staff_users SET email = $2 WHERE lower(email) = $1', [from, to]);
+      await client.query('UPDATE idp.users SET email = $2, username = $2 WHERE lower(email) = $1', [from, to]);
+      await client.query('COMMIT');
+      console.log(`rename-user: ${from} is now ${to}`);
+    }
+  } else if (cmd === 'ensure-contact') {
+    const [slug, email, phone, tagline] = rest;
+    if (!slug || !email || !phone) throw new Error('usage: db-tasks.mjs ensure-contact <slug> <email> <phone> [tagline]');
+    const res = await client.query(
+      `UPDATE reseller_branding b SET
+         support_email = CASE WHEN b.support_email IS NULL OR b.support_email LIKE '%.test' THEN $2 ELSE b.support_email END,
+         support_phone = CASE WHEN b.support_phone IS NULL OR b.support_phone LIKE '%000 00 00' THEN $3 ELSE b.support_phone END,
+         tagline = CASE WHEN $4::text IS NOT NULL AND (b.tagline IS NULL OR b.tagline = 'Your sauna, configured together') THEN $4 ELSE b.tagline END
+       FROM resellers r WHERE r.id = b.reseller_id AND r.slug = $1`, [slug, email, phone, tagline ?? null]);
+    console.log(`ensure-contact: ${res.rowCount} shop(s) checked`);
   } else if (cmd === 'set-password') {
     const email = rest[0];
     const pw = process.env.NEW_PASSWORD;
