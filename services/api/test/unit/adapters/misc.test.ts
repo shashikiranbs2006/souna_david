@@ -1,26 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createAdapters, createLocalEdge, roleTx } from '../../../src/adapters/index.ts';
 import { DevMailboxMailer } from '../../../src/adapters/mail/dev-mailbox.ts';
-import { InProcessQueue } from '../../../src/adapters/queue/in-process.ts';
-import { NoopEdgeTenantStore } from '../../../src/adapters/edge/memory.ts';
 import { LocalObjectStore } from '../../../src/adapters/storage/local.ts';
 import type { Queryable } from '../../../src/adapters/types.ts';
 
 describe('createAdapters', () => {
   it('returns exactly the adapters the routes use, lazily', () => {
     const adapters = createAdapters({ ADAPTERS: 'local' }, {});
-    expect(Object.keys(adapters).sort()).toEqual(['assetSigner', 'edgeTenants', 'identity', 'mailer', 'objectStore', 'queue']);
+    expect(Object.keys(adapters).sort()).toEqual(['assetSigner', 'identity', 'mailer', 'objectStore']);
     // Nothing needing a DB pool is built until used.
     expect(adapters.assetSigner).toBeDefined();
     expect(adapters.objectStore).toBeInstanceOf(LocalObjectStore);
     expect(() => adapters.identity).toThrow('database pool');
-  });
-
-  it('aws mode only demands the variables of adapters that are used', () => {
-    const adapters = createAdapters({ ADAPTERS: 'aws', AWS_REGION: 'eu-central-1', SQS_QUEUE_URL: 'https://sqs.eu-central-1.amazonaws.com/1/q' });
-    expect(adapters.queue).toBeDefined();
-    expect(() => adapters.identity).toThrow('COGNITO_CUSTOMER_POOL_ID');
-    expect(() => adapters.objectStore).toThrow('S3_ASSETS_BUCKET');
   });
 
   it('local secrets have dev defaults but are mandatory in production', () => {
@@ -63,43 +54,5 @@ describe('DevMailboxMailer', () => {
     await expect(mailer.send({ to: 'a@b.ch', subject: 'Hi\nthere', html: '<p/>', text: 'body', fromName: 'Alpha', replyTo: 'r@a.ch', resellerId: 'r1' })).resolves.toEqual({ messageId: '7' });
     expect(calls[0]![0]).toContain('INSERT INTO devtools.mailbox (reseller_id, to_address, subject, html, text)');
     expect(calls[0]![1]).toEqual(['r1', 'a@b.ch', 'Hi there', '<p/>', 'From: "Alpha" <no-reply@mail.localhost>\nReply-To: r@a.ch\n\nbody']);
-  });
-});
-
-describe('InProcessQueue', () => {
-  it('delivers a JSON copy on a later tick and isolates handler failures', async () => {
-    const received: unknown[] = [];
-    const onError = vi.fn();
-    const queue = new InProcessQueue((m) => {
-      received.push(m);
-      if ((m as { fail?: boolean }).fail) throw new Error('handler failed');
-    }, onError);
-    const msg = { type: 'X', id: 1 };
-    await queue.send(msg);
-    expect(received).toHaveLength(0);
-    await queue.send({ fail: true });
-    await queue.drain();
-    expect(received).toEqual([{ type: 'X', id: 1 }, { fail: true }]);
-    expect(received[0]).not.toBe(msg);
-    expect(onError).toHaveBeenCalledOnce();
-  });
-});
-
-describe('NoopEdgeTenantStore', () => {
-  it('records writes and validates slugs', async () => {
-    const store = new NoopEdgeTenantStore();
-    await store.put('alpha', 'ACTIVE');
-    await store.put('beta', 'SUSPENDED');
-    await store.delete('alpha');
-    expect([...store.entries]).toEqual([['beta', 'SUSPENDED']]);
-    await expect(store.put('-bad-', 'ACTIVE')).rejects.toThrow();
-  });
-});
-
-describe('createAdapters (aws) CloudFront key source', () => {
-  it('needs the key pair id and a key source, preferring the Secrets Manager ARN', () => {
-    const base = { ADAPTERS: 'aws', AWS_REGION: 'eu-central-1', CLOUDFRONT_KEY_PAIR_ID: 'K1' };
-    expect(() => createAdapters(base).assetSigner).toThrow('CLOUDFRONT_PRIVATE_KEY_SECRET_ARN');
-    expect(createAdapters({ ...base, CLOUDFRONT_PRIVATE_KEY_SECRET_ARN: 'arn:aws:secretsmanager:eu-central-1:1:secret:k' }).assetSigner).toBeDefined();
   });
 });

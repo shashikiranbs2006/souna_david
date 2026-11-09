@@ -1,7 +1,7 @@
 /**
  * Local server (`npm run dev`): the whole platform on one port. The API, a CloudFront/S3
  * emulation (signed asset cookies, presigned uploads, public media, tenant favicon), the
- * built SPA, the dev mailbox, and the background worker with an in-process queue.
+ * built SPA, the dev mailbox, and the background retention job.
  */
 import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
@@ -12,7 +12,6 @@ import type { Deps } from './context.ts';
 import { createDbPool } from './deps.ts';
 import { createLogger } from './lib/log.ts';
 import { createLocalEdgeApp } from './local/edge.ts';
-import { workerDepsFrom } from './worker/deps.ts';
 import { startLocalWorker, type LocalWorker } from './worker/local.ts';
 
 type Env = Record<string, string | undefined>;
@@ -29,14 +28,13 @@ export interface LocalServer {
 /** Builds the local server without listening; `startWorker: false` for tests. */
 export function createLocalServer(env: Env = process.env, opts: { startWorker?: boolean; webDist?: string } = {}): LocalServer {
   const config = loadConfig(env);
-  const pool = createDbPool(config, env);
+  const pool = createDbPool(config);
   const log = createLogger(config.LOG_LEVEL, { service: 'local' });
   let worker: LocalWorker | null = null;
-  // Outbox nudges from the API go straight to the in-process worker, like SQS → worker Lambda.
-  const adapters = createAdapters(env, { pool, log, onQueueMessage: () => worker?.nudge() });
+  const adapters = createAdapters(env, { pool, log });
   const deps: Deps = { config, pool, adapters, log, now: () => new Date() };
 
-  if (opts.startWorker ?? true) worker = startLocalWorker(workerDepsFrom(deps, env), { intervalMs: 2000 });
+  if (opts.startWorker ?? true) worker = startLocalWorker({ pool, log });
   const app = createLocalEdgeApp(deps, {
     api: createApp(deps),
     edge: createLocalEdge(env),

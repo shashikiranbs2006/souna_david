@@ -27,9 +27,7 @@ export type Block =
   | { kind: 'button'; label: string; url: string }
   | { kind: 'facts'; rows: [label: string, value: string][] }
   | { kind: 'quote'; text: string }
-  | { kind: 'note'; text: string }
-  /** A sentence followed by an inline link, e.g. "Forgot your password? Reset it here". */
-  | { kind: 'link'; text: string; label: string; url: string };
+  | { kind: 'note'; text: string };
 
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif";
 
@@ -39,8 +37,6 @@ function blockHtml(block: Block, c: ReturnType<typeof palette>): string {
       return `<h1 style="margin:0 0 20px;font-family:${FONT};font-size:26px;line-height:32px;font-weight:600;letter-spacing:-0.3px;color:${c.ink};">${escapeHtml(block.text)}</h1>`;
     case 'paragraph':
       return `<p style="margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:24px;color:${c.ink};">${escapeHtml(block.text)}</p>`;
-    case 'link':
-      return `<p style="margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:24px;color:${c.ink};">${escapeHtml(block.text)} <a href="${escapeHtml(safeUrl(block.url))}" style="color:${c.accent};text-decoration:underline;">${escapeHtml(block.label)}</a></p>`;
     case 'note':
       return `<p style="margin:0 0 16px;font-family:${FONT};font-size:13px;line-height:20px;color:${c.muted};">${escapeHtml(block.text)}</p>`;
     case 'quote':
@@ -77,8 +73,6 @@ function blockText(block: Block): string {
       return `    ${block.code}`;
     case 'button':
       return `${block.label}: ${safeUrl(block.url)}`;
-    case 'link':
-      return `${block.text} ${block.label}: ${safeUrl(block.url)}`;
     case 'facts':
       return block.rows.map(([l, v]) => `${l}: ${v}`).join('\n');
   }

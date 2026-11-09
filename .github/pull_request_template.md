@@ -15,9 +15,8 @@
 - [ ] **Migrations** are forward-only and backward-compatible (expand now, contract in a later release); RLS and grants are set for new tables
 - [ ] **No personal data or tokens** in logs, outbox payloads or error messages
 - [ ] **Caching**: personalised responses are `no-store`; cacheable catalog responses are keyed by `catalog_version`
-- [ ] **Infra**: `terraform fmt` + `terraform test` (infra/modules/platform) pass; new AWS permissions are least-privilege and justified in the PR
 - [ ] **UI**: header and footer intact, keyboard accessible, `prefers-reduced-motion` respected
-- [ ] Docs updated (`docs/`, `infra/README.md`) where behaviour or operations changed
+- [ ] Docs updated (`docs/`) where behaviour or operations changed
 
 ## Deployment notes
 

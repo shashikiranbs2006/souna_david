@@ -14,10 +14,8 @@ export interface TxContext {
   role: DbRole;
   /** app.reseller_id: the tenant (from the Host header). Required for app_tenant to see rows. */
   resellerId?: string | null;
-  /** app.actor_staff_id: staff user acting (audit, request history, transition actor kind). */
+  /** app.actor_staff_id: staff user acting (audit rows). */
   actorStaffId?: string | null;
-  /** app.actor_customer_id: customer acting; narrows PII/request rows to that customer. */
-  actorCustomerId?: string | null;
   /** SET TRANSACTION READ ONLY. */
   readOnly?: boolean;
   isolation?: 'read committed' | 'repeatable read' | 'serializable';
@@ -65,8 +63,6 @@ export async function withTx<T>(pool: pg.Pool, ctx: TxContext, fn: (client: pg.P
   if (!DB_ROLES.includes(ctx.role)) throw new TypeError(`withTx: unknown role ${String(ctx.role)}`);
   const resellerId = checkUuid('resellerId', ctx.resellerId);
   const staffId = checkUuid('actorStaffId', ctx.actorStaffId);
-  const customerId = checkUuid('actorCustomerId', ctx.actorCustomerId);
-  if (staffId && customerId) throw new TypeError('withTx: set actorStaffId or actorCustomerId, not both');
 
   const client = await pool.connect();
   let broken = false;
@@ -80,9 +76,8 @@ export async function withTx<T>(pool: pg.Pool, ctx: TxContext, fn: (client: pg.P
       // The role name is from the closed DB_ROLES list, so interpolation is safe.
       await client.query(`SET LOCAL ROLE ${ctx.role}`);
       await client.query(
-        `SELECT set_config('app.reseller_id', $1, true), set_config('app.actor_staff_id', $2, true),
-                set_config('app.actor_customer_id', $3, true), set_config('app.status_note', '', true)`,
-        [resellerId, staffId, customerId],
+        `SELECT set_config('app.reseller_id', $1, true), set_config('app.actor_staff_id', $2, true)`,
+        [resellerId, staffId],
       );
       const result = await fn(client);
       await client.query('COMMIT');
@@ -107,11 +102,6 @@ export async function withTx<T>(pool: pg.Pool, ctx: TxContext, fn: (client: pg.P
 function isConnectionError(err: unknown): boolean {
   const code = (err as { code?: unknown })?.code;
   return typeof code === 'string' && (code.startsWith('08') || code === '57P01' || code === '57P02' || code === '57P03');
-}
-
-/** Sets the note stored in request_status_history (and the outbox payload) for the next status change. */
-export async function setStatusNote(client: Queryable, note: string | null): Promise<void> {
-  await client.query(`SELECT set_config('app.status_note', $1, true)`, [note ?? '']);
 }
 
 // ---------------------------------------------------------------------------------------------

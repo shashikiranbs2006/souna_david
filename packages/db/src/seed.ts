@@ -4,8 +4,7 @@
  * Manufacturer "Nordlicht Saunabau", 6 saunas with specs, EUR/CHF/SEK prices for models and every
  * option, option groups and rules, 3 room scenes, translations (de, fr, it), resellers alpha
  * (EUR), beta (CHF) and gamma (SEK, suspended) with branding, assignments and discounts, staff,
- * customers (anna@example.test exists at alpha AND beta), configurations (drafts, locked with
- * snapshots), a share link, requests in several statuses with quotes, and one sample asset set.
+ * configurations (drafts, locked with snapshots), a share link and one sample asset set.
  *
  * Every id is deterministic (seedId), so tests and E2E can reference rows. With LOCAL_IDP=1 the
  * matching local IdP users are created with the password SEED_PASSWORD.
@@ -44,23 +43,16 @@ export const SEED = {
     /** Owner of the single-shop edition's shop (David's store). */
     holzsaunaOwner: seedId('staff:owner@holzsauna.test'),
   },
-  customers: {
-    annaAlpha: seedId('customer:alpha:anna'),
-    annaBeta: seedId('customer:beta:anna'),
-    benAlpha: seedId('customer:alpha:ben'),
-  },
   models: (slug: string) => seedId(`model:${slug}`),
   options: (code: string) => seedId(`option:${code}`),
   groups: (code: string) => seedId(`group:${code}`),
   rooms: (code: string) => seedId(`room:${code}`),
   configurations: {
-    annaDraft: seedId('configuration:alpha:anna-draft'),
-    annaInReview: seedId('configuration:alpha:anna-in-review'),
-    annaQuoted: seedId('configuration:alpha:anna-quoted'),
-    benSubmitted: seedId('configuration:alpha:ben-submitted'),
+    alphaDraft: seedId('configuration:alpha:draft'),
+    alphaLocked: seedId('configuration:alpha:locked'),
     staffShared: seedId('configuration:alpha:staff-shared'),
-    annaBetaAccepted: seedId('configuration:beta:anna-accepted'),
-    annaBetaDraft: seedId('configuration:beta:anna-draft'),
+    betaLocked: seedId('configuration:beta:locked'),
+    betaDraft: seedId('configuration:beta:draft'),
   },
   shareLinkId: seedId('share-link:alpha'),
 } as const;
@@ -402,11 +394,6 @@ async function q(db: Db, text: string, values: unknown[] = []): Promise<pg.Query
   return db.query(text, values);
 }
 
-async function setActor(db: Db, actor: { staff?: string; customer?: string }, note = ''): Promise<void> {
-  await q(db, `SELECT set_config('app.actor_staff_id', $1, true), set_config('app.actor_customer_id', $2, true),
-                      set_config('app.status_note', $3, true)`, [actor.staff ?? '', actor.customer ?? '', note]);
-}
-
 async function seedCatalog(db: Db): Promise<void> {
   await q(db, `INSERT INTO manufacturers (id, name) VALUES ($1, 'Nordlicht Saunabau')`, [SEED.manufacturerId]);
 
@@ -590,39 +577,7 @@ async function seedTenants(db: Db): Promise<void> {
   }
 }
 
-interface CustomerDef { id: string; reseller: 'alpha' | 'beta'; email: string; first: string; last: string; phone: string; locale: string; marketing: boolean;
-  addresses: { type: 'BILLING' | 'SITE'; line1: string; postal: string; city: string; country: string }[] }
-const CUSTOMERS: CustomerDef[] = [
-  { id: SEED.customers.annaAlpha, reseller: 'alpha', email: 'anna@example.test', first: 'Anna', last: 'Virtanen', phone: '+49 151 2345678', locale: 'de', marketing: true,
-    addresses: [
-      { type: 'BILLING', line1: 'Lindenallee 4', postal: '10437', city: 'Berlin', country: 'DE' },
-      { type: 'SITE', line1: 'Am Seeufer 9', postal: '14469', city: 'Potsdam', country: 'DE' },
-    ] },
-  { id: SEED.customers.annaBeta, reseller: 'beta', email: 'anna@example.test', first: 'Anna', last: 'Virtanen', phone: '+41 79 123 45 67', locale: 'de', marketing: false,
-    addresses: [{ type: 'BILLING', line1: 'Bahnhofstrasse 21', postal: '8001', city: 'Zürich', country: 'CH' }] },
-  { id: SEED.customers.benAlpha, reseller: 'alpha', email: 'ben@example.test', first: 'Ben', last: 'Koskinen', phone: '+49 89 7654321', locale: 'en', marketing: false,
-    addresses: [{ type: 'BILLING', line1: 'Leopoldstraße 50', postal: '80802', city: 'München', country: 'DE' }] },
-];
-
-async function seedCustomers(db: Db): Promise<void> {
-  for (const c of CUSTOMERS) {
-    const rid = SEED.resellers[c.reseller];
-    await q(db, `INSERT INTO customers (id, reseller_id, email, first_name, last_name, phone, locale, status, email_verified_at, created_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, 'ACTIVE', now() - interval '20 days', now() - interval '21 days')`,
-      [c.id, rid, c.email, c.first, c.last, c.phone, c.locale]);
-    for (const a of c.addresses) {
-      await q(db, `INSERT INTO customer_addresses (customer_id, reseller_id, address_type, recipient, line1, postal_code, city, country_code, is_default)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)`, [c.id, rid, a.type, `${c.first} ${c.last}`, a.line1, a.postal, a.city, a.country]);
-    }
-    const consents = ['TERMS', 'PRIVACY', ...(c.marketing ? ['MARKETING'] : [])];
-    for (const t of consents) {
-      await q(db, `INSERT INTO customer_consents (customer_id, reseller_id, consent_type, version, granted_at)
-                   VALUES ($1, $2, $3, '2026-01', now() - interval '21 days')`, [c.id, rid, t]);
-    }
-  }
-}
-
-interface ConfigDef { id: string; reseller: 'alpha' | 'beta'; model: string; customer?: string; staff?: string; name: string; options: string[];
+interface ConfigDef { id: string; reseller: 'alpha' | 'beta'; model: string; staff: string; name: string; options: string[];
   room?: { code: string; x: number; z: number; rot: number }; lock: boolean }
 
 /** Writes a configuration with selections; when lock, also a price snapshot (pricing package) and locked_at. */
@@ -631,8 +586,8 @@ async function writeConfiguration(db: Db, c: ConfigDef): Promise<void> {
   const rid = SEED.resellers[c.reseller];
   const m = modelBySlug.get(c.model)!;
   const mid = SEED.models(c.model);
-  await q(db, `INSERT INTO configurations (id, reseller_id, sauna_model_id, customer_id, created_by_staff_id, name, created_at)
-               VALUES ($1, $2, $3, $4, $5, $6, now() - interval '10 days')`, [c.id, rid, mid, c.customer ?? null, c.staff ?? null, c.name]);
+  await q(db, `INSERT INTO configurations (id, reseller_id, sauna_model_id, created_by_staff_id, name, created_at)
+               VALUES ($1, $2, $3, $4, $5, now() - interval '10 days')`, [c.id, rid, mid, c.staff, c.name]);
   for (const code of c.options) {
     await q(db, `INSERT INTO configuration_selections (configuration_id, sauna_model_id, option_id) VALUES ($1, $2, $3)`, [c.id, mid, SEED.options(code)]);
   }
@@ -665,25 +620,19 @@ async function writeConfiguration(db: Db, c: ConfigDef): Promise<void> {
 
 async function seedConfigurations(db: Db): Promise<void> {
   const C = SEED.configurations;
-  const { annaAlpha, annaBeta, benAlpha } = SEED.customers;
   const alphaOwner = SEED.staff.alphaOwner;
   const betaOwner = SEED.staff.betaOwner;
   const configs: ConfigDef[] = [
-    { id: C.annaDraft, reseller: 'alpha', model: 'espoo-compact', customer: annaAlpha, name: 'Bathroom sauna (draft)',
+    { id: C.alphaDraft, reseller: 'alpha', model: 'espoo-compact', staff: alphaOwner, name: 'Bathroom sauna (draft)',
       options: ['spruce', 'heater-6kw', 'door-clear', 'led-backrest'], lock: false },
-    { id: C.annaInReview, reseller: 'alpha', model: 'kelo-barrel', customer: annaAlpha, name: 'Kelo with audio',
+    { id: C.alphaLocked, reseller: 'alpha', model: 'kelo-barrel', staff: alphaOwner, name: 'Kelo with audio',
       options: ['thermo-aspen', 'heater-9kw', 'control-wifi', 'door-bronze', 'led-backrest', 'audio'],
       room: { code: 'garden-deck', x: 1200, z: -800, rot: 90 }, lock: true },
-    { id: C.annaQuoted, reseller: 'alpha', model: 'fjord-panorama', customer: annaAlpha, name: 'Fjord by the lake',
-      options: ['red-cedar', 'heater-wood', 'door-wood', 'led-underbench', 'bucket-set'],
-      room: { code: 'lakeside-terrace', x: 0, z: 0, rot: 180 }, lock: true },
-    { id: C.benSubmitted, reseller: 'alpha', model: 'aurora-hex', customer: benAlpha, name: 'Aurora for the family',
-      options: ['aspen', 'heater-9kw', 'door-clear', 'aroma', 'bucket-set'], lock: true },
     { id: C.staffShared, reseller: 'alpha', model: 'espoo-compact', staff: alphaOwner, name: 'Showroom offer: Espoo Compact',
       options: ['spruce', 'heater-6kw', 'control-basic', 'door-bronze'], lock: true },
-    { id: C.annaBetaAccepted, reseller: 'beta', model: 'saimaa-garden-house', customer: annaBeta, name: 'Saimaa garden house',
+    { id: C.betaLocked, reseller: 'beta', model: 'saimaa-garden-house', staff: betaOwner, name: 'Saimaa garden house',
       options: ['aspen', 'heater-9kw', 'control-wifi', 'door-clear', 'star-ceiling', 'led-backrest', 'audio', 'salt-wall'], lock: true },
-    { id: C.annaBetaDraft, reseller: 'beta', model: 'espoo-compact', customer: annaBeta, name: 'Small one',
+    { id: C.betaDraft, reseller: 'beta', model: 'espoo-compact', staff: betaOwner, name: 'Small one',
       options: ['aspen'], lock: false },
   ];
   for (const c of configs) await writeConfiguration(db, c);
@@ -696,47 +645,6 @@ async function seedConfigurations(db: Db): Promise<void> {
                VALUES ($1, $2, 'DESKTOP', now() - interval '2 days'), ($1, $2, 'MOBILE', now() - interval '1 day')`,
     [SEED.shareLinkId, SEED.resellers.alpha]);
 
-  // Requests (each sent by its customer; transitions by staff or customer, via the triggers).
-  const send = async (id: string, configId: string, reseller: string, customer: string, message: string) => {
-    await setActor(db, { customer });
-    await q(db, `INSERT INTO configuration_requests (id, reseller_id, customer_id, configuration_id, message) VALUES ($1, $2, $3, $4, $5)`,
-      [id, reseller, customer, configId, message]);
-  };
-  const move = async (id: string, to: string, actor: { staff?: string; customer?: string }, note = '') => {
-    await setActor(db, actor, note);
-    await q(db, `UPDATE configuration_requests SET status_code = $2 WHERE id = $1`, [id, to]);
-  };
-  const quote = async (id: string, reseller: string, currency: string, amount: number, staff: string, note: string) => {
-    await setActor(db, { staff });
-    await q(db, `INSERT INTO request_quotes (request_id, reseller_id, amount_minor, currency_code, valid_until, note, created_by_staff_id)
-                 VALUES ($1, $2, $3, $4, now() + interval '21 days', $5, $6)`, [id, reseller, amount, currency, note, staff]);
-  };
-
-  const rInReview = seedId('request:alpha:anna-in-review');
-  await send(rInReview, C.annaInReview, SEED.resellers.alpha, annaAlpha, 'Could you deliver in May? We have a level gravel base.');
-  await move(rInReview, 'IN_REVIEW', { staff: alphaOwner }, 'Checking delivery slots for May.');
-  await setActor(db, { staff: alphaOwner });
-  await q(db, `INSERT INTO request_notes (request_id, reseller_id, author_staff_id, body) VALUES ($1, $2, $3, $4)`,
-    [rInReview, SEED.resellers.alpha, alphaOwner, 'Customer prefers delivery in week 19; crane access via the north gate.']);
-
-  const rQuoted = seedId('request:alpha:anna-quoted');
-  await send(rQuoted, C.annaQuoted, SEED.resellers.alpha, annaAlpha, 'Please include installation on our lakeside terrace.');
-  await move(rQuoted, 'IN_REVIEW', { staff: alphaOwner });
-  await quote(rQuoted, SEED.resellers.alpha, 'EUR', 1650000, alphaOwner, 'First draft including transport.');
-  await move(rQuoted, 'QUOTED', { staff: alphaOwner });
-  await move(rQuoted, 'IN_REVIEW', { staff: alphaOwner }, 'Revising: installation added.');
-  await quote(rQuoted, SEED.resellers.alpha, 'EUR', 1790000, alphaOwner, 'Including installation and transport.');
-  await move(rQuoted, 'QUOTED', { staff: alphaOwner }, 'Quote with installation sent.');
-
-  await send(seedId('request:alpha:ben-submitted'), C.benSubmitted, SEED.resellers.alpha, benAlpha, 'Is a green roof kit available?');
-
-  const rAccepted = seedId('request:beta:anna-accepted');
-  await send(rAccepted, C.annaBetaAccepted, SEED.resellers.beta, annaBeta, 'For our chalet in Graubünden.');
-  await move(rAccepted, 'IN_REVIEW', { staff: betaOwner });
-  await quote(rAccepted, SEED.resellers.beta, 'CHF', 2150000, betaOwner, 'Delivery to Graubünden included.');
-  await move(rAccepted, 'QUOTED', { staff: betaOwner });
-  await move(rAccepted, 'ACCEPTED', { customer: annaBeta });
-  await setActor(db, {});
 }
 
 /**
@@ -757,9 +665,7 @@ async function seedOptionSettings(db: Db): Promise<void> {
 }
 
 async function seedIdpUsers(db: Db): Promise<number> {
-  const users: { sub: string; pool: 'CUSTOMER' | 'STAFF'; username: string; email: string; attributes: Record<string, unknown> }[] = [
-    ...CUSTOMERS.map(c => ({ sub: c.id, pool: 'CUSTOMER' as const, username: c.id, email: c.email,
-      attributes: { resellerId: SEED.resellers[c.reseller], given_name: c.first, family_name: c.last, locale: c.locale } })),
+  const users: { sub: string; pool: 'STAFF'; username: string; email: string; attributes: Record<string, unknown> }[] = [
     ...RESELLERS.map(r => ({ sub: seedId(`idp:${r.owner.email}`), pool: 'STAFF' as const, username: r.owner.email.toLowerCase(), email: r.owner.email,
       attributes: { name: r.owner.name } })),
     { sub: seedId('idp:admin@alpha.test'), pool: 'STAFF', username: 'admin@alpha.test', email: 'admin@alpha.test', attributes: { name: 'Alma Arnold' } },
@@ -796,10 +702,9 @@ export async function seed(url: string, options: SeedOptions = {}): Promise<{ se
     if (seeded) {
       await seedCatalog(db);
       await seedTenants(db);
-      await seedCustomers(db);
       await seedConfigurations(db);
       await seedOptionSettings(db);
-      log('seeded catalog, resellers alpha/beta/gamma, staff, customers, configurations and requests');
+      log('seeded catalog, resellers alpha/beta/gamma, staff and configurations');
     } else {
       log('seed data already present');
     }

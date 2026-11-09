@@ -1,6 +1,6 @@
 /**
- * Infrastructure ports. Every adapter has a local implementation (Postgres `idp` schema,
- * dev mailbox, filesystem, HMAC "edge") and an AWS one (Cognito, SES, S3, CloudFront).
+ * Infrastructure ports, implemented locally: Postgres `idp` schema, dev mailbox or Resend,
+ * filesystem object store and HMAC asset signing.
  */
 
 // ---------------------------------------------------------------------------
@@ -26,10 +26,9 @@ export interface Queryable {
 export type TxRunner = <T>(fn: (db: Queryable) => Promise<T>) => Promise<T>;
 
 // ---------------------------------------------------------------------------
-// Identity provider (modelled on Cognito user pools).
+// Identity provider (staff only).
 
-export type Pool = 'CUSTOMER' | 'STAFF';
-export const POOLS: readonly Pool[] = ['CUSTOMER', 'STAFF'];
+export type Pool = 'STAFF';
 
 /**
  * Branding passed with every call that sends a message, like Cognito `ClientMetadata`
@@ -39,7 +38,7 @@ export interface ClientMetadata {
   resellerId?: string;
   brandName: string;
   primaryColor?: string;
-  /** Storefront (customer pool) or admin URL (staff pool) used for links in mails. */
+  /** Admin URL used for links in mails. */
   storefrontUrl: string;
   supportEmail?: string;
   locale?: string;
@@ -57,15 +56,6 @@ export type ChallengeName = 'SOFTWARE_TOKEN_MFA' | 'MFA_SETUP' | 'NEW_PASSWORD_R
 export type AuthResult =
   | { kind: 'TOKENS'; tokens: Tokens }
   | { kind: 'CHALLENGE'; challenge: ChallengeName; session: string };
-
-export interface SignUpInput {
-  pool: Pool;
-  username: string;
-  email: string;
-  password: string;
-  attributes?: Record<string, string>;
-  clientMetadata: ClientMetadata;
-}
 
 export interface AdminCreateUserInput {
   username: string;
@@ -94,9 +84,6 @@ export interface SoftwareTokenAssociation {
 }
 
 export interface IdentityProvider {
-  signUp(input: SignUpInput): Promise<{ sub: string }>;
-  confirmSignUp(pool: Pool, username: string, code: string): Promise<void>;
-  resendConfirmationCode(pool: Pool, username: string, clientMetadata: ClientMetadata): Promise<void>;
   initiateAuth(pool: Pool, username: string, password: string): Promise<AuthResult>;
   respondMfa(pool: Pool, session: string, code: string): Promise<Tokens>;
   associateSoftwareToken(pool: Pool, session: string): Promise<SoftwareTokenAssociation>;
@@ -104,10 +91,7 @@ export interface IdentityProvider {
   respondNewPassword(pool: Pool, session: string, newPassword: string): Promise<AuthResult>;
   refresh(pool: Pool, refreshToken: string): Promise<Tokens>;
   revoke(pool: Pool, refreshToken: string): Promise<void>;
-  forgotPassword(pool: Pool, username: string, clientMetadata: ClientMetadata): Promise<void>;
-  confirmForgotPassword(pool: Pool, username: string, code: string, newPassword: string): Promise<void>;
   adminCreateUser(pool: Pool, input: AdminCreateUserInput): Promise<{ sub: string; temporaryPassword: string }>;
-  adminDeleteUser(pool: Pool, username: string): Promise<void>;
   adminDisableUser(pool: Pool, username: string): Promise<void>;
   adminEnableUser(pool: Pool, username: string): Promise<void>;
   verifyAccessToken(pool: Pool, token: string): Promise<VerifiedAccessToken>;
@@ -182,21 +166,4 @@ export interface ObjectStore {
   put(key: string, body: Uint8Array, contentType: string, cacheControl?: string): Promise<void>;
   delete(key: string): Promise<void>;
   head(key: string): Promise<ObjectHead | null>;
-}
-
-// ---------------------------------------------------------------------------
-// Edge tenant directory (CloudFront KeyValueStore read by the viewer-request function)
-
-export type EdgeTenantStatus = 'ACTIVE' | 'SUSPENDED';
-
-export interface EdgeTenantStore {
-  put(slug: string, status: EdgeTenantStatus): Promise<void>;
-  delete(slug: string): Promise<void>;
-}
-
-// ---------------------------------------------------------------------------
-// Queue
-
-export interface Queue {
-  send(message: unknown, options?: { delaySeconds?: number }): Promise<void>;
 }

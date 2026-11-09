@@ -3,30 +3,20 @@
  *
  * Business-rule triggers raise SQLSTATE P0001 with message `<CODE>: text`, HINT `<CODE>` and an
  * optional DETAIL sub-reason (see 0001 raise_rule). Constraint and privilege errors map to
- * generic codes; the constraint name tells the API which one (e.g. customers_reseller_email_key).
+ * generic codes; the constraint name tells the API which one (e.g. resellers_slug_key).
  */
 
 /** Codes raised by the database's rule triggers. */
 export const DB_RULE_CODES = [
   'APPEND_ONLY',
-  'ACTOR_AMBIGUOUS',
   'ASSET_NOT_CATALOG',
   'ASSET_TIER_MISMATCH',
   'ATTRIBUTE_TYPE_MISMATCH',
   'CONFIGURATION_IMMUTABLE_FIELD',
   'CONFIGURATION_LOCKED',
   'CONFIGURATION_NOT_LOCKED',
-  'CUSTOMER_ANONYMISED',
-  'CUSTOMER_IMMUTABLE_FIELD',
   'DISCOUNT_EXCEEDS_CAP',
-  'INVALID_TRANSITION',
   'OPTION_RULES_VIOLATED',
-  'QUOTE_EXPIRED',
-  'QUOTE_IMMUTABLE',
-  'QUOTE_MISSING',
-  'REQUEST_IMMUTABLE',
-  'REQUEST_NOT_OWNER',
-  'REQUEST_NOT_QUOTABLE',
   'RESELLER_IMMUTABLE_FIELD',
   'RETENTION_TABLE_NOT_ALLOWED',
   'ROOM_NOT_ASSIGNABLE',

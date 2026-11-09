@@ -100,9 +100,8 @@ TypeScript (`services/api`), PostgreSQL 16 with row-level security and migration
 (`packages/db`), and a shared Zod contract (`packages/shared`). Prices are computed on the server
 in integer minor units. Contacts, quotes and invoices are migrations `0016` to `0018`.
 
-This repository is a copy of the multi-reseller SaunaKlar platform, run here as a single shop, so
-the code still contains platform parts David does not use (manufacturer admin, customer accounts,
-the Terraform in `infra/`). The server deploy files are in `deploy/holz_sauna/`.
+This repository began as a copy of the multi-reseller SaunaKlar platform and runs here as a single
+shop. The server deploy files are in `deploy/holz_sauna/`.
 
 More: [docs/david-fork-plan.md](docs/david-fork-plan.md) (the plan), [docs/api.md](docs/api.md) and
 the generated [docs/openapi.json](docs/openapi.json) (`npm run openapi`),

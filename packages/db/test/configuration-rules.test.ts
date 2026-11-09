@@ -7,26 +7,17 @@ let env: Env;
 beforeAll(async () => { env = await setupEnv(); });
 afterAll(async () => { await env?.close(); });
 
-const anna = SEED.customers.annaAlpha;
+const owner = SEED.staff.alphaOwner;
 const alphaTx = <T>(fn: (c: pg.PoolClient) => Promise<T>) => tenant(env, ALPHA, fn, { actorStaffId: SEED.staff.alphaOwner });
 
 describe('rule 4: configurations', () => {
-  it('accepts a configuration for an offered sauna and a customer of the same reseller', async () => {
-    const id = await alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: VALID_ESPOO }));
+  it('accepts a configuration for an offered sauna', async () => {
+    const id = await alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: VALID_ESPOO }));
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it('rejects a sauna the reseller does not offer', async () => {
-    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'saimaa-garden-house', customer: anna, options: [] })), 'FOREIGN_KEY_VIOLATION');
-  });
-
-  it('rejects a customer of another reseller', async () => {
-    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: SEED.customers.annaBeta, options: [] })),
-      'FOREIGN_KEY_VIOLATION');
-  });
-
-  it('requires an owner (customer or staff)', async () => {
-    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', options: [] })), 'CHECK_VIOLATION');
+    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'saimaa-garden-house', staff: owner, options: [] })), 'FOREIGN_KEY_VIOLATION');
   });
 
   it('accepts a staff-prepared draft only by an admin of the reseller', async () => {
@@ -36,37 +27,37 @@ describe('rule 4: configurations', () => {
   });
 
   it('rejects a configuration created already locked', async () => {
-    await expectCode(alphaTx(c => c.query(`INSERT INTO configurations (reseller_id, sauna_model_id, customer_id, locked_at) VALUES ($1, $2, $3, now())`,
-      [ALPHA, M('espoo-compact'), anna])), 'SNAPSHOT_MISSING');
+    await expectCode(alphaTx(c => c.query(`INSERT INTO configurations (reseller_id, sauna_model_id, created_by_staff_id, locked_at) VALUES ($1, $2, $3, now())`,
+      [ALPHA, M('espoo-compact'), owner])), 'SNAPSHOT_MISSING');
   });
 });
 
 describe('rule 5: selections', () => {
   it('rejects an option the model does not offer', async () => {
     // espoo-compact has no 9 kW heater
-    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: ['heater-9kw'] })), 'FOREIGN_KEY_VIOLATION');
+    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: ['heater-9kw'] })), 'FOREIGN_KEY_VIOLATION');
   });
 
   it('rejects a selection whose model differs from the configuration model', async () => {
     await expectCode(alphaTx(async c => {
-      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: [] });
+      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: [] });
       await c.query(`INSERT INTO configuration_selections (configuration_id, sauna_model_id, option_id) VALUES ($1, $2, $3)`,
         [id, M('kelo-barrel'), O('heater-9kw')]);
     }), 'FOREIGN_KEY_VIOLATION');
   });
 
   it('allows one option per SINGLE group', async () => {
-    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: ['spruce', 'aspen'] })),
+    await expectCode(alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: ['spruce', 'aspen'] })),
       'OPTION_RULES_VIOLATED', 'SINGLE_GROUP_MULTIPLE');
   });
 
   it('allows several options in a MULTI group', async () => {
-    await alphaTx(c => draft(c, { reseller: ALPHA, model: 'kelo-barrel', customer: anna, options: ['led-backrest', 'led-underbench', 'star-ceiling'] }));
+    await alphaTx(c => draft(c, { reseller: ALPHA, model: 'kelo-barrel', staff: owner, options: ['led-backrest', 'led-underbench', 'star-ceiling'] }));
   });
 
   it('lets a draft switch its SINGLE option by delete + insert', async () => {
     await alphaTx(async c => {
-      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: ['spruce'] });
+      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: ['spruce'] });
       await c.query(`DELETE FROM configuration_selections WHERE configuration_id = $1 AND option_id = $2`, [id, O('spruce')]);
       await c.query(`INSERT INTO configuration_selections VALUES ($1, $2, $3)`, [id, M('espoo-compact'), O('aspen')]);
     });
@@ -76,31 +67,31 @@ describe('rule 5: selections', () => {
 describe('rule 6: locking', () => {
   it('requires a price snapshot', async () => {
     await expectCode(alphaTx(async c => {
-      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: VALID_ESPOO });
+      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: VALID_ESPOO });
       await c.query(`UPDATE configurations SET locked_at = now() WHERE id = $1`, [id]);
     }), 'SNAPSHOT_MISSING');
   });
 
   it('requires every required group to be filled', async () => {
     await expectCode(alphaTx(async c => {
-      lockLater = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: ['spruce', 'heater-6kw'] }); // no door
+      lockLater = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: ['spruce', 'heater-6kw'] }); // no door
       await lock(c, lockLater);
     }), 'OPTION_RULES_VIOLATED', 'REQUIRED_GROUP_EMPTY');
   });
 
   it('requires "requires" rules to be satisfied', async () => {
-    await expectCode(alphaTx(async c => lock(c, await draft(c, { reseller: ALPHA, model: 'kelo-barrel', customer: anna,
+    await expectCode(alphaTx(async c => lock(c, await draft(c, { reseller: ALPHA, model: 'kelo-barrel', staff: owner,
       options: ['spruce', 'heater-9kw', 'door-clear', 'audio'] }))), 'OPTION_RULES_VIOLATED', 'REQUIRES_MISSING');
   });
 
   it('rejects excluded pairs', async () => {
-    await expectCode(alphaTx(async c => lock(c, await draft(c, { reseller: ALPHA, model: 'kelo-barrel', customer: anna,
+    await expectCode(alphaTx(async c => lock(c, await draft(c, { reseller: ALPHA, model: 'kelo-barrel', staff: owner,
       options: ['aspen', 'heater-wood', 'control-basic', 'door-clear'] }))), 'OPTION_RULES_VIOLATED', 'EXCLUDED_PAIR');
   });
 
   it('rejects a snapshot whose lines do not match the selections', async () => {
     await expectCode(alphaTx(async c => {
-      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: VALID_ESPOO });
+      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: VALID_ESPOO });
       await writeSnapshot(c, id);
       await c.query(`DELETE FROM configuration_price_snapshot_lines WHERE configuration_id = $1 AND option_id = $2`, [id, O('spruce')]);
       await c.query(`UPDATE configurations SET locked_at = now() WHERE id = $1`, [id]);
@@ -109,7 +100,7 @@ describe('rule 6: locking', () => {
 
   it('rejects a snapshot with a stale or fabricated list price', async () => {
     await expectCode(alphaTx(async c => {
-      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: VALID_ESPOO });
+      const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: VALID_ESPOO });
       await writeSnapshot(c, id);
       await c.query(`UPDATE configuration_price_snapshots SET list_price_minor = list_price_minor - 1000, final_price_minor = final_price_minor - 1000
                      WHERE configuration_id = $1`, [id]);
@@ -121,7 +112,7 @@ describe('rule 6: locking', () => {
   let lockLater = '';
   it('locks a complete, rule-valid configuration with a matching snapshot', async () => {
     locked = await alphaTx(async c => {
-      const id = await draft(c, { reseller: ALPHA, model: 'kelo-barrel', customer: anna, options: ['aspen', 'heater-9kw', 'door-clear', 'led-backrest', 'audio'] });
+      const id = await draft(c, { reseller: ALPHA, model: 'kelo-barrel', staff: owner, options: ['aspen', 'heater-9kw', 'door-clear', 'led-backrest', 'audio'] });
       await c.query(`INSERT INTO configuration_room_placements (configuration_id, reseller_id, room_scene_id, position_x_mm) VALUES ($1, $2, $3, 500)`,
         [id, ALPHA, SEED.rooms('garden-deck')]);
       await lock(c, id);
@@ -148,22 +139,15 @@ describe('rule 6: locking', () => {
   });
 
   it('allows deleting a draft (with its selections)', async () => {
-    const id = await alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: VALID_ESPOO }));
+    const id = await alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: VALID_ESPOO }));
     await alphaTx(c => c.query('DELETE FROM configurations WHERE id = $1', [id]));
     expect(await count(env.owner, 'SELECT 1 FROM configuration_selections WHERE configuration_id = $1', [id])).toBe(0);
-  });
-
-  it('keeps clones inside the tenant', async () => {
-    await alphaTx(c => c.query(`INSERT INTO configurations (reseller_id, sauna_model_id, customer_id, source_configuration_id)
-      VALUES ($1, $2, $3, $4)`, [ALPHA, M('kelo-barrel'), anna, locked]));
-    await expectCode(tenant(env, BETA, c => c.query(`INSERT INTO configurations (reseller_id, sauna_model_id, customer_id, source_configuration_id)
-      VALUES ($1, $2, $3, $4)`, [BETA, M('espoo-compact'), SEED.customers.annaBeta, locked])), 'FOREIGN_KEY_VIOLATION');
   });
 
   it('only places a sauna in a room the reseller offers', async () => {
     // beta does not offer basement-spa
     await expectCode(tenant(env, BETA, async c => {
-      const id = await draft(c, { reseller: BETA, model: 'espoo-compact', customer: SEED.customers.annaBeta, options: [] });
+      const id = await draft(c, { reseller: BETA, model: 'espoo-compact', staff: SEED.staff.betaOwner, options: [] });
       await c.query(`INSERT INTO configuration_room_placements (configuration_id, reseller_id, room_scene_id) VALUES ($1, $2, $3)`,
         [id, BETA, SEED.rooms('basement-spa')]);
     }), 'FOREIGN_KEY_VIOLATION');
@@ -172,7 +156,7 @@ describe('rule 6: locking', () => {
 
 describe('rule 8: snapshot and share-link checks', () => {
   const snapshot = (fields: Record<string, unknown>) => alphaTx(async c => {
-    const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: [] });
+    const id = await draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: [] });
     const row = { list_price_minor: 1000, options_total_minor: 0, discount_amount_minor: 0, final_price_minor: 1000,
       discount_source: 'NONE', discount_type: null, discount_value: null, max_discount_bps: 1000, ...fields };
     await c.query(`INSERT INTO configuration_price_snapshots (configuration_id, currency_code, list_price_minor, options_total_minor,
@@ -202,7 +186,7 @@ describe('rule 8: snapshot and share-link checks', () => {
     [ALPHA, configurationId, fields.hash ?? createHash('sha256').update(randomBytes(32)).digest(), SEED.staff.alphaOwner, fields.expires ?? '30 days']));
 
   it('shares only locked configurations', async () => {
-    const id = await alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', customer: anna, options: [] }));
+    const id = await alphaTx(c => draft(c, { reseller: ALPHA, model: 'espoo-compact', staff: owner, options: [] }));
     await expectCode(link(id), 'CONFIGURATION_NOT_LOCKED');
   });
 

@@ -213,25 +213,6 @@ describe('rule 9: catalog_version bumps only affected resellers', () => {
   });
 });
 
-describe('rule 10: TENANT_SYNC outbox', () => {
-  const syncs = (c: Queryable, id: string) =>
-    c.query<{ payload: Record<string, unknown> }>(`SELECT payload FROM notification_outbox WHERE event_type = 'TENANT_SYNC' AND reseller_id = $1 ORDER BY id`, [id]);
-
-  it('writes TENANT_SYNC on create, status change and slug change, but not on other changes', async () => {
-    const { id } = await platform(env, c => one<{ id: string }>(c,
-      `INSERT INTO resellers (manufacturer_id, slug, name, currency_code) VALUES ($1, 'epsilon', 'Epsilon', 'NOK') RETURNING id`, [SEED.manufacturerId]));
-    await platform(env, c => c.query(`UPDATE resellers SET name = 'Epsilon AS' WHERE id = $1`, [id]));
-    await platform(env, c => c.query(`UPDATE resellers SET status = 'SUSPENDED' WHERE id = $1`, [id]));
-    await platform(env, c => c.query(`UPDATE resellers SET slug = 'epsilon-spa' WHERE id = $1`, [id]));
-    const { rows } = await syncs(env.owner, id);
-    expect(rows.map(r => r.payload)).toEqual([
-      { resellerId: id, slug: 'epsilon', previousSlug: null, status: 'ACTIVE' },
-      { resellerId: id, slug: 'epsilon', previousSlug: null, status: 'SUSPENDED' },
-      { resellerId: id, slug: 'epsilon-spa', previousSlug: 'epsilon', status: 'SUSPENDED' },
-    ]);
-  });
-});
-
 describe('rule 11: audit trail', () => {
   it('records price changes with the acting staff user and old/new values', async () => {
     await platform(env, c => c.query(`UPDATE sauna_model_prices SET max_discount_bps = 1300 WHERE sauna_model_id = $1 AND currency_code = 'EUR'`, [M('kelo-barrel')]));
@@ -265,7 +246,7 @@ describe('rule 11: audit trail', () => {
 describe('catalog_admin', () => {
   it('writes catalog tables but cannot read tenant data', async () => {
     await as(env, 'catalog_admin', {}, c => c.query(`INSERT INTO option_translations (option_id, locale, name) VALUES ($1, 'sv', 'Gran')`, [O('spruce')]));
-    await expectCode(as(env, 'catalog_admin', {}, c => c.query('SELECT * FROM customers')), 'INSUFFICIENT_PRIVILEGE');
+    await expectCode(as(env, 'catalog_admin', {}, c => c.query('SELECT * FROM configurations')), 'INSUFFICIENT_PRIVILEGE');
     await expectCode(as(env, 'catalog_admin', {}, c => c.query('SELECT * FROM configurations')), 'INSUFFICIENT_PRIVILEGE');
     await expectCode(as(env, 'catalog_admin', {}, c => c.query('SELECT * FROM resellers')), 'INSUFFICIENT_PRIVILEGE');
     await expectCode(as(env, 'catalog_admin', {}, c => c.query(

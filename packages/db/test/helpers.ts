@@ -42,12 +42,11 @@ export const platform = <T>(env: Env, fn: (c: pg.PoolClient) => Promise<T>, acto
   as(env, 'app_platform', actor, fn);
 
 /** Superuser transaction with optional actor settings. */
-export async function ownerTx<T>(env: Env, fn: (c: pg.PoolClient) => Promise<T>, actor: { staff?: string; customer?: string } = {}): Promise<T> {
+export async function ownerTx<T>(env: Env, fn: (c: pg.PoolClient) => Promise<T>, actor: { staff?: string } = {}): Promise<T> {
   const c = await env.owner.connect();
   try {
     await c.query('BEGIN');
-    await c.query(`SELECT set_config('app.actor_staff_id', $1, true), set_config('app.actor_customer_id', $2, true)`,
-      [actor.staff ?? '', actor.customer ?? '']);
+    await c.query(`SELECT set_config('app.actor_staff_id', $1, true)`, [actor.staff ?? '']);
     const out = await fn(c);
     await c.query('COMMIT');
     return out;
@@ -84,10 +83,10 @@ export async function one<T = Record<string, unknown>>(c: Queryable, sql: string
 }
 
 /** Creates a draft configuration with selections (as the tenant, so RLS and triggers apply). */
-export async function draft(c: Queryable, o: { reseller: string; model: string; customer?: string | null; staff?: string | null; options: string[] }): Promise<string> {
+export async function draft(c: Queryable, o: { reseller: string; model: string; staff?: string | null; options: string[] }): Promise<string> {
   const { id } = await one<{ id: string }>(c,
-    `INSERT INTO configurations (reseller_id, sauna_model_id, customer_id, created_by_staff_id, name)
-     VALUES ($1, $2, $3, $4, 'test') RETURNING id`, [o.reseller, M(o.model), o.customer ?? null, o.staff ?? null]);
+    `INSERT INTO configurations (reseller_id, sauna_model_id, created_by_staff_id, name)
+     VALUES ($1, $2, $3, 'test') RETURNING id`, [o.reseller, M(o.model), o.staff ?? null]);
   for (const code of o.options) {
     await c.query(`INSERT INTO configuration_selections (configuration_id, sauna_model_id, option_id) VALUES ($1, $2, $3)`, [id, M(o.model), O(code)]);
   }

@@ -1,23 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { escapeHtml, safeUrl, singleLine } from '../../../src/adapters/mail/escape.ts';
 import { formatFromAddress } from '../../../src/adapters/mail/from-address.ts';
-import { MAIL_LOCALES, formatDate, formatMoney, resolveMailLocale, statusLabel, templates } from '../../../src/adapters/mail/templates.ts';
-import { MAIL_STRINGS } from '../../../src/adapters/mail/i18n.ts';
+import { MAIL_LOCALES, formatDate, formatMoney, resolveMailLocale, templates } from '../../../src/adapters/mail/templates.ts';
 
 const brand = { brandName: 'Alpha Spa', primaryColor: '#2a6f4e', storefrontUrl: 'https://alpha.example.com', supportEmail: 'help@alpha.example.com' };
 const evil = '<script>alert("x")</script>&\'';
 
 const samples = {
-  signupCode: { code: '123456', firstName: 'Anna' },
-  resetCode: { code: '654321' },
   staffInvite: { email: 'staff@example.com', temporaryPassword: 'Temp-Pass-42x', adminUrl: 'https://alpha.example.com/admin' },
-  requestSubmittedCustomer: { firstName: 'Anna', reference: 'R-1001', saunaName: 'Nordic 200', price: { amountMinor: 1234550, currency: 'CHF' }, requestUrl: 'https://alpha.example.com/account/requests/1' },
-  requestSubmittedStaff: { reference: 'R-1001', customerName: 'Anna Muster', saunaName: 'Nordic 200', price: { amountMinor: 1234550, currency: 'EUR' }, message: 'Please call me.', adminUrl: 'https://alpha.example.com/admin/requests/1' },
-  requestStatusChanged: { reference: 'R-1001', status: 'IN_REVIEW', note: 'Looking at it.', requestUrl: 'https://alpha.example.com/account/requests/1' },
-  quoteAdded: { reference: 'R-1001', amount: { amountMinor: 999900, currency: 'CHF' }, validUntil: '2026-12-31T12:00:00Z', requestUrl: 'https://alpha.example.com/account/requests/1' },
-  shareLinkCreated: { saunaName: 'Nordic 200', shareUrl: 'https://alpha.example.com/s/abc', expiresAt: '2026-11-30T12:00:00Z' },
-  accountExists: { firstName: 'Anna', loginUrl: 'https://alpha.example.com/login', resetUrl: 'https://alpha.example.com/forgot' },
-  accountDeleted: { firstName: 'Anna' },
   offerSent: { firstName: 'Anna', label: 'Q-1024', saunaName: 'Espoo Compact', total: { amountMinor: 664000, currency: 'CHF' }, validUntil: '2026-12-31T12:00:00Z', comment: 'Delivery in six weeks.', viewUrl: 'https://alpha.example.com/s/abc' },
   enquiry: { name: 'Anna Muster', email: 'anna@example.com', phone: '+41 79 000 00 00', message: 'Can you deliver in March?', saunaName: 'Espoo Compact', linkUrl: 'https://alpha.example.com/s/abc' },
 } as const;
@@ -54,14 +44,14 @@ describe('mail templates', () => {
   });
 
   it('falls back to English for unknown locales and accepts region suffixes', () => {
-    expect(render('resetCode', brand, 'xx').subject).toBe(render('resetCode', brand, 'en').subject);
-    expect(render('resetCode', brand, 'de-CH').subject).toBe(render('resetCode', brand, 'de').subject);
+    expect(render('staffInvite', brand, 'xx').subject).toBe(render('staffInvite', brand, 'en').subject);
+    expect(render('staffInvite', brand, 'de-CH').subject).toBe(render('staffInvite', brand, 'de').subject);
     expect(resolveMailLocale(undefined)).toBe('en');
     expect(resolveMailLocale('IT_ch')).toBe('it');
   });
 
   it('uses the single brand colour and only shades of it', () => {
-    const html = render('signupCode').html;
+    const html = render('staffInvite').html;
     const colours = new Set(html.match(/#[0-9a-f]{6}\b/gi)?.map((c) => c.toLowerCase()));
     expect(colours.has('#2a6f4e')).toBe(true);
   });
@@ -80,20 +70,12 @@ describe('mail templates', () => {
   });
 
   it('neutralises javascript: links and CSS injection through the colour', () => {
-    const mail = templates.accountExists(
+    const mail = templates.offerSent(
       { ...brand, primaryColor: 'red;background:url(x)', storefrontUrl: 'javascript:alert(1)' },
-      { loginUrl: 'javascript:alert(1)', resetUrl: 'data:text/html,x' },
+      { ...samples.offerSent, viewUrl: 'javascript:alert(1)' },
     );
     expect(mail.html).not.toContain('javascript:');
-    expect(mail.html).not.toContain('data:text');
     expect(mail.html).not.toContain('url(x)');
-  });
-
-  it('localises request status labels', () => {
-    expect(statusLabel('IN_REVIEW', 'de')).toBe('In Prüfung');
-    expect(statusLabel('QUOTED', 'fr')).toBe(MAIL_STRINGS.fr.status.QUOTED);
-    expect(statusLabel('SOMETHING', 'it')).toBe('SOMETHING');
-    expect(render('requestStatusChanged', brand, 'de').subject).toContain('In Prüfung');
   });
 });
 

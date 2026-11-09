@@ -1,4 +1,4 @@
-export { createPool, withTx, setStatusNote, sql, SqlQuery, query, queryOne, typeParsers, DB_ROLES } from './client.ts';
+export { createPool, withTx, sql, SqlQuery, query, queryOne, typeParsers, DB_ROLES } from './client.ts';
 export type { DbRole, TxContext, Queryable } from './client.ts';
 export { dbErrorCode, dbErrorInfo, DB_RULE_CODES, DB_SQLSTATE_CODES } from './errors.ts';
 export type { DbErrorCode, DbErrorInfo, DbRuleCode, DbSqlstateCode } from './errors.ts';
