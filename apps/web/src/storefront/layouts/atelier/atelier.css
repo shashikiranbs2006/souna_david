@@ -7,7 +7,7 @@ html[data-layout='atelier'] {
 
 /* Shared header: lighter, centred nav. */
 html[data-layout='atelier'] .header {
-  background: color-mix(in oklab, var(--paper) 92%, transparent);
+  background: var(--paper);
 }
 
 /* Shared cards: no frame, serif names, a hairline above the price. */

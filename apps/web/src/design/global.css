@@ -1,36 +1,40 @@
 /*
  * Global foundation. Colour tokens (--ink, --paper, ...) are injected at
  * runtime by applyTheme() from the tenant's single brand colour; the values
- * below are the platform default (slate #5a6b7b) so the first paint is already correct.
+ * below are the platform default (ember copper #9a4a24) so the first paint is
+ * already correct: a white page, warm near-neutral ink and greys, and the one
+ * accent for actions, links and small highlights.
  */
 :root {
-  --ink: #0a1016;
-  --ink-2: #1b242c;
-  --ink-3: #47525c;
-  --ink-4: #74808b;
-  --ink-5: #b4bdc6;
-  --ink-6: #e3e7eb;
-  --paper: #f3f5f7;
-  --paper-2: #e9edf1;
-  --paper-3: #e3e7eb;
+  --ink: #1c1411;
+  --ink-2: #3d332f;
+  --ink-3: #6d605b;
+  --ink-4: #9b8f8a;
+  --ink-5: #c3bcb9;
+  --ink-6: #e9e1de;
+  --paper: #fffdfc;
+  --paper-2: #faf6f5;
+  --paper-3: #f5efed;
   --card: #ffffff;
-  --line: #d8dfe5;
-  --line-strong: #b4bdc6;
-  --on-ink: #f3f5f7;
-  --accent: #5a6b7b;
-  --night: #0a1016;
-  --night-2: #1b242c;
-  --on-night: #f3f5f7;
-  --night-muted: #8d99a4;
-  --night-line: #2a333c;
-  --brand: #5a6b7b;
-  --primary: #5a6b7b;
-  --primary-hover: #495a6a;
-  --on-primary: #f3f5f7;
-  --highlight: #dce8f3;
+  --line: #e9e2df;
+  --line-strong: #d0c9c6;
+  --on-ink: #fffdfc;
+  --accent: #9a4a24;
+  --accent-soft: #ffe5da;
+  --accent-on-night: #cf8260;
+  --night: #1a120e;
+  --night-2: #281e19;
+  --on-night: #faf6f4;
+  --night-muted: #b4a8a3;
+  --night-line: #3a302c;
+  --brand: #9a4a24;
+  --primary: #9a4a24;
+  --primary-hover: #87390f;
+  --on-primary: #fffdfc;
+  --highlight: #ffede5;
   --surface: #ffffff;
-  --frame: #dadfe3;
-  --focus: #5a6b7b;
+  --frame: #efeae8;
+  --focus: #9a4a24;
   color-scheme: light dark;
 
   --font-display: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -64,10 +68,14 @@
   --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
   --max: 1440px;
   --measure: 62ch;
-  --radius: 2px;
-  --radius-lg: 6px;
+  /* Radius scale: chips and small controls (sm), inputs and buttons (base), cards and media (lg, xl). */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 22px;
+  --radius-btn: 10px;
   --hair: 1px;
-  --header-h: 4.25rem;
+  --header-h: 4rem;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -82,39 +90,43 @@
   --icon-lg: 24px;
   --icon-stroke: 1.5;
 
-  --shadow-1: 0 1px 0 color-mix(in oklab, var(--ink) 6%, transparent), 0 8px 24px -12px color-mix(in oklab, var(--ink) 22%, transparent);
-  --shadow-2: 0 24px 64px -24px color-mix(in oklab, var(--ink) 40%, transparent);
+  /* Shadows: soft and low; white surfaces separate by hairline first, shadow second. */
+  --shadow-0: 0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent);
+  --shadow-1: 0 1px 2px color-mix(in oklab, var(--ink) 5%, transparent), 0 6px 20px -10px color-mix(in oklab, var(--ink) 16%, transparent);
+  --shadow-2: 0 2px 6px color-mix(in oklab, var(--ink) 5%, transparent), 0 24px 56px -24px color-mix(in oklab, var(--ink) 26%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ink: #edf1f4;
-    --ink-2: #ccd2d7;
-    --ink-3: #a3acb5;
-    --ink-4: #77828c;
-    --ink-5: #47515a;
-    --ink-6: #272f36;
-    --paper: #0b1117;
-    --paper-2: #121920;
-    --paper-3: #1b232a;
-    --card: #151d24;
-    --line: #293139;
-    --line-strong: #4a545d;
-    --on-ink: #0b1117;
-    --accent: #8a9aaa;
-    --night: #03080d;
-    --night-2: #0f171e;
-    --on-night: #edf1f4;
-    --night-muted: #8f9aa4;
-    --night-line: #1f272f;
-    --brand: #5a6b7b;
-    --primary: #6e7f90;
-    --primary-hover: #8091a2;
-    --on-primary: #0b1117;
-    --highlight: #1f2730;
-    --surface: #151d24;
-    --frame: #1c2023;
-    --focus: #6e7f90;
+    --ink: #f8eeea;
+    --ink-2: #ddcdc7;
+    --ink-3: #bca59c;
+    --ink-4: #937a6f;
+    --ink-5: #5e4b43;
+    --ink-6: #392a24;
+    --paper: #170e0a;
+    --paper-2: #201511;
+    --paper-3: #2b1e19;
+    --card: #241914;
+    --line: #3a2d27;
+    --line-strong: #614e45;
+    --on-ink: #170e0a;
+    --accent: #cc8464;
+    --accent-soft: #432518;
+    --accent-on-night: #dd8e6c;
+    --night: #0e0503;
+    --night-2: #1f130e;
+    --on-night: #f8eeea;
+    --night-muted: #ac9287;
+    --night-line: #30231e;
+    --brand: #9a4a24;
+    --primary: #bb6842;
+    --primary-hover: #cf7a54;
+    --on-primary: #170e0a;
+    --highlight: #352118;
+    --surface: #241914;
+    --frame: #231e1c;
+    --focus: #bb6842;
   }
 }
 
@@ -147,8 +159,8 @@ body {
 }
 
 ::selection {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--accent-soft);
+  color: var(--ink);
 }
 
 img,
@@ -311,6 +323,14 @@ hr {
   color: var(--ink-3);
 }
 
+/* Scrambled and flipped text: mono glyphs keep a fixed advance, and ligatures off
+   keep the width of each frame equal to the final text, so nothing reflows while it runs. */
+.scramble,
+.flip-text {
+  font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -376,7 +396,17 @@ hr {
   content: '—';
   position: absolute;
   left: 0;
-  color: var(--ink-4);
+  color: var(--accent);
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  transition: text-decoration-color var(--dur-2) var(--ease-out);
+}
+
+.prose a:hover {
+  text-decoration-color: currentColor;
 }
 
 .rule {

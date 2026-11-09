@@ -137,7 +137,7 @@ export default function Shared() {
                 </div>
               ))}
             </dl>
-            <div className="pricecard">
+            <div className="pricecard pricecard--boxed">
               <Price minor={d.snapshot.finalPriceMinor} currency={d.snapshot.currency} listMinor={d.snapshot.discountMinor > 0 ? d.snapshot.subtotalMinor : null} size="lg" />
               <p className="pricecard__vat">{t('shared.priceAsOf', { date: fmt.date(d.snapshot.computedAt) })} · {t('shared.validUntil', { date: fmt.date(d.snapshot.priceValidUntil) })}</p>
               <p className="pricecard__vat">{t('shared.expires', { date: fmt.date(d.expiresAt) })}</p>

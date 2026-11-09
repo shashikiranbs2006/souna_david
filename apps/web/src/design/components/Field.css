@@ -32,7 +32,7 @@
 
 .field__error {
   font-size: var(--step--1);
-  color: var(--ink);
+  color: var(--primary);
   font-weight: 600;
   display: flex;
   gap: 0.4em;
@@ -50,41 +50,49 @@
   align-items: center;
 }
 
+/* Boxed inputs: a white well with a hairline, the accent ring on focus. */
 .control__input {
   width: 100%;
-  min-height: 3rem;
-  padding: 0.75rem 0;
-  border: 0;
-  border-bottom: var(--hair) solid var(--line-strong);
-  border-radius: 0;
-  background: transparent;
+  min-height: 2.875rem;
+  padding: 0.65rem 0.9rem;
+  border: var(--hair) solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--card);
   color: var(--ink);
   font-size: var(--step-0);
+  line-height: 1.4;
+  box-shadow: var(--shadow-0);
   transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   appearance: none;
 }
 
 .control__input::placeholder {
-  color: var(--ink-3);
+  color: var(--ink-4);
 }
 
 .control__input:hover {
-  border-bottom-color: var(--ink-3);
+  border-color: var(--ink-4);
 }
 
 .control__input:focus {
   outline: none;
-  border-bottom-color: var(--ink);
-  box-shadow: 0 1px 0 0 var(--ink);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
 }
 
 .control__input:focus-visible {
   outline: none;
 }
 
+.control__input:disabled,
+.control__input[readonly] {
+  background: var(--paper-2);
+  box-shadow: none;
+}
+
 .control__input[aria-invalid='true'] {
-  border-bottom-color: var(--ink);
-  border-bottom-style: dashed;
+  border-color: var(--primary);
+  border-style: dashed;
 }
 
 .control__input--area {
@@ -94,20 +102,20 @@
 }
 
 .control--select .control__input {
-  padding-right: 2rem;
+  padding-right: 2.5rem;
   cursor: pointer;
 }
 
 .control__chevron {
   position: absolute;
-  right: 0.25rem;
+  right: 0.85rem;
   pointer-events: none;
   color: var(--ink-3);
 }
 
 .control__affix {
   position: absolute;
-  right: 0;
+  right: 0.2rem;
   display: grid;
   place-items: center;
   width: 2.5rem;
@@ -156,8 +164,9 @@
   width: 1.25rem;
   height: 1.25rem;
   margin-top: 0.05rem;
-  border: var(--hair) solid var(--ink-3);
-  border-radius: var(--radius);
+  border: var(--hair) solid var(--ink-4);
+  border-radius: var(--radius-sm);
+  background: var(--card);
   color: transparent;
   transition: background-color var(--dur-1), border-color var(--dur-1), color var(--dur-1);
 }

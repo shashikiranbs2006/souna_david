@@ -86,14 +86,14 @@
   border-top: var(--hair) solid var(--ink);
 }
 
-.kv > dt,
-.kv > dd {
-  padding: 0.85rem 0;
+.kv dt,
+.kv dd {
+  padding: 0.6rem 0;
   border-bottom: var(--hair) solid var(--line);
   font-size: var(--step--1);
 }
 
-.kv > dt {
+.kv dt {
   font-family: var(--font-mono);
   font-size: var(--step--2);
   letter-spacing: 0.1em;
@@ -104,7 +104,7 @@
   align-items: center;
 }
 
-.kv > dd {
+.kv dd {
   font-variant-numeric: tabular-nums;
 }
 

@@ -601,10 +601,20 @@
   letter-spacing: -0.01em;
 }
 
+.psum__panel > * {
+  min-width: 0;
+}
+
 .psum__lines {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   max-height: 22rem;
   overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.psum__row dt {
+  min-width: 0;
 }
 
 .psum__row {
@@ -825,4 +835,15 @@
 .pricecard__claimed-title {
   font-weight: 600;
   color: var(--ink);
+}
+
+/* Shared link: the price sits in a white card beside the 3D view. */
+.pricecard--boxed {
+  margin-top: var(--space-2);
+  padding: var(--space-5);
+  border: var(--hair) solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-1);
 }

@@ -385,7 +385,7 @@ const RESELLERS: ResellerDef[] = [
   // The single-shop edition's shop (SINGLE_SHOP=holzsauna): our six kit models with their
   // catalogue prices and options unchanged, CHF. Contact details are placeholders.
   { key: 'holzsauna', name: 'Holzbau Boscheri GmbH', currency: 'CHF', status: 'ACTIVE',
-    branding: { display: 'Holzsauna', tagline: 'Your sauna, configured together', color: '#5a6b7b', email: 'support@holzsauna.test', phone: '+41 52 000 00 00', legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40, 8507 Hörhausen, Switzerland', layout: 'nordic' },
+    branding: { display: 'Holzsauna', tagline: 'Your sauna, configured together', color: '#9a4a24', email: 'support@holzsauna.test', phone: '+41 52 000 00 00', legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40, 8507 Hörhausen, Switzerland', layout: 'nordic' },
     saunas: [
       { slug: 'espoo-compact' }, { slug: 'kelo-barrel' }, { slug: 'fjord-panorama' },
       { slug: 'lappi-corner' }, { slug: 'aurora-hex' }, { slug: 'saimaa-garden-house' },

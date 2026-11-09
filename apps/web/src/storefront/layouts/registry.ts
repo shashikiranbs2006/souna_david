@@ -33,7 +33,8 @@ export const LAYOUT_META: Record<LayoutId, LayoutMeta> = {
   // Every layout follows the brand colour in the visitor's scheme; showroom keeps
   // its dark look only in the home hero band, so inner pages never switch theme.
   showroom: { flavour: 'default' },
-  nordic: { flavour: 'warm', font: 'Fraunces:opsz,wght@9..144,300..600' },
+  // Nordic uses Newsreader (preloaded with the app), so its headings never swap fonts after first paint.
+  nordic: { flavour: 'warm' },
   catalogue: { flavour: 'default' },
   journal: { flavour: 'default', font: 'Instrument+Serif:ital@0;1' },
 };

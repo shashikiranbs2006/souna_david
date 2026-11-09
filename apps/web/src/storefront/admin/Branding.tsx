@@ -6,7 +6,7 @@ import { api, isApiError } from '../../api/client.ts';
 import { tenantQuery, useSession, useTenantData } from '../../api/queries.ts';
 import { useT, type TKey } from '../../i18n/i18n.ts';
 import { errorText } from '../../i18n/errorText.ts';
-import { applyTheme, deriveTheme } from '../../design/theme.ts';
+import { applyTheme, deriveTheme, DEFAULT_PRIMARY } from '../../design/theme.ts';
 import { Button } from '../../design/components/Button.tsx';
 import { Input, Select, Textarea } from '../../design/components/Field.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
@@ -117,7 +117,7 @@ function BrandingForm({ branding }: { branding: Branding }) {
             </div>
           </Panel>
           <Panel title={t('admin.branding.layout')} lede={t('admin.branding.layoutHint')}>
-            <LayoutPicker value={isLayoutId(draft.storefrontLayout) ? draft.storefrontLayout : 'atelier'} color={HEX.test(draft.primaryColor) ? draft.primaryColor : '#5a6b7b'} onChange={id => set('storefrontLayout', id)} />
+            <LayoutPicker value={isLayoutId(draft.storefrontLayout) ? draft.storefrontLayout : 'atelier'} color={HEX.test(draft.primaryColor) ? draft.primaryColor : DEFAULT_PRIMARY} onChange={id => set('storefrontLayout', id)} />
           </Panel>
           <Panel title={t('admin.branding.contactTitle')}>
             <div className="staff-form">

@@ -46,9 +46,9 @@ function blockHtml(block: Block, c: ReturnType<typeof palette>): string {
     case 'quote':
       return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 20px;"><tr><td style="border-left:2px solid ${c.accent};padding:4px 0 4px 16px;font-family:${FONT};font-size:15px;line-height:22px;color:${c.ink};white-space:pre-line;">${escapeHtml(block.text)}</td></tr></table>`;
     case 'code':
-      return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;"><tr><td style="border:1px solid ${c.rule};padding:16px 24px;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:32px;line-height:36px;letter-spacing:8px;font-weight:600;color:${c.accent};">${escapeHtml(block.code)}</td></tr></table>`;
+      return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;"><tr><td style="border:1px solid ${c.rule};border-radius:10px;padding:16px 24px;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:32px;line-height:36px;letter-spacing:8px;font-weight:600;color:${c.accent};">${escapeHtml(block.code)}</td></tr></table>`;
     case 'button':
-      return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;"><tr><td style="background:${c.accent};"><a href="${escapeHtml(safeUrl(block.url))}" style="display:inline-block;padding:14px 28px;font-family:${FONT};font-size:15px;font-weight:600;letter-spacing:0.2px;color:${c.onAccent};text-decoration:none;">${escapeHtml(block.label)}</a></td></tr></table>`;
+      return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;"><tr><td style="background:${c.accent};border-radius:10px;"><a href="${escapeHtml(safeUrl(block.url))}" style="display:inline-block;padding:14px 28px;font-family:${FONT};font-size:15px;font-weight:600;letter-spacing:0.2px;color:${c.onAccent};text-decoration:none;">${escapeHtml(block.label)}</a></td></tr></table>`;
     case 'facts': {
       const rows = block.rows
         .map(
@@ -105,8 +105,8 @@ export function renderMail(
 <body style="margin:0;padding:0;background:${c.canvas};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(input.preheader)}</div>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${c.canvas};"><tr><td align="center" style="padding:32px 16px;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;background:${c.paper};border-top:4px solid ${c.accent};">
-<tr><td style="padding:28px 40px 20px;border-bottom:1px solid ${c.rule};"><a href="${escapeHtml(home)}" style="font-family:${FONT};font-size:18px;font-weight:700;letter-spacing:-0.2px;color:${c.accent};text-decoration:none;">${escapeHtml(brand.brandName)}</a></td></tr>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;background:${c.paper};border:1px solid ${c.rule};border-top:3px solid ${c.accent};border-radius:12px;">
+<tr><td style="padding:28px 40px 20px;border-bottom:1px solid ${c.rule};"><a href="${escapeHtml(home)}" style="font-family:${FONT};font-size:18px;font-weight:700;letter-spacing:-0.2px;color:${c.ink};text-decoration:none;">${escapeHtml(brand.brandName)}</a></td></tr>
 <tr><td style="padding:36px 40px 20px;">
 ${input.blocks.map((b) => blockHtml(b, c)).join('\n')}
 </td></tr>

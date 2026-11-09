@@ -95,6 +95,8 @@ export function AdminShell({ brand, area, nav, session, extra, children }: { bra
         <main id="main" tabIndex={-1} className="staff-shell__content" ref={content}>
           {children ?? <Outlet />}
         </main>
+        {/* Phones and tablets: the credit closes the page instead of crowding the top bar. */}
+        <Credit quiet copyright={false} className="staff-shell__credit staff-shell__credit--end" />
       </div>
       </div>
       <Toaster />

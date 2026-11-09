@@ -849,3 +849,287 @@
 .staff-login__credit {
   margin-top: var(--space-7);
 }
+
+/* ==========================================================================
+   Product polish: a white sidebar, a quiet warm-white canvas, white cards for
+   panels and tables, and the one accent for the active item, charts and
+   primary actions only.
+   ========================================================================== */
+
+.staff-shell {
+  background: var(--paper-2);
+}
+
+.staff-shell__side {
+  background: color-mix(in oklab, var(--card) 94%, transparent);
+}
+
+.staff-shell__logo {
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variation-settings: normal;
+}
+
+.staff-shell__area {
+  margin-top: 0.2rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+}
+
+.staff-shell__link {
+  color: var(--ink-2);
+  font-weight: 450;
+}
+
+.staff-shell__link > svg,
+.staff-shell__link > .icon {
+  color: var(--ink-4);
+  transition: color var(--dur-1);
+}
+
+.staff-shell__link:hover {
+  background: var(--paper-2);
+}
+
+.staff-shell__link:hover > svg,
+.staff-shell__link.is-active > svg {
+  color: var(--primary);
+}
+
+.staff-shell__link.is-active {
+  color: var(--ink);
+  font-weight: 550;
+}
+
+.staff-shell__link.is-active::after {
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+.staff-shell__avatar {
+  background: var(--accent-soft);
+  color: var(--primary);
+  font-size: var(--step--1);
+}
+
+@media (min-width: 1000px) {
+  .staff-shell__side {
+    background: var(--card);
+  }
+
+  .staff-shell__link.is-active {
+    background: var(--highlight);
+    box-shadow: none;
+  }
+
+  .staff-shell__link.is-active::after {
+    left: calc(-1 * var(--space-2));
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 3px;
+  }
+
+  .staff-shell__content {
+    padding-top: var(--space-7);
+  }
+}
+
+/* Page head: a confident title, not a poster. */
+.staff-head {
+  padding-bottom: var(--space-5);
+}
+
+.staff-head__title {
+  font-size: var(--step-4);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  font-variation-settings: normal;
+}
+
+.staff-head__lede {
+  color: var(--ink-3);
+}
+
+/* Panels are white cards. */
+.staff-panel {
+  padding: var(--space-5);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-0);
+}
+
+.staff-panel .staff-panel {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  padding-top: var(--space-4);
+  border-top: var(--hair) solid var(--line);
+}
+
+.staff-panel__title {
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Tables outside a panel get their own card. */
+.staff-shell__content .table-wrap:not(.staff-panel .table-wrap) {
+  padding: 0 var(--space-4);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-0);
+}
+
+.staff-shell__content .table th {
+  border-bottom-color: var(--line);
+  padding-top: 0.9rem;
+}
+
+.staff-shell__content .table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.staff-shell__content .table tbody tr.is-clickable:hover {
+  background: var(--highlight);
+}
+
+/* Command box: a search-like field across the top of every page. */
+.staff-command .field__label {
+  font-size: 0.6875rem;
+}
+
+.staff-command .control__input {
+  min-height: 2.75rem;
+  font-size: var(--step--1);
+}
+
+/* Toolbars (search and filters) sit on the canvas above the card. */
+.staff-toolbar {
+  gap: var(--space-3) var(--space-4);
+}
+
+/* Stats: white tiles with a big tabular number. */
+.stat-grid {
+  gap: var(--space-3);
+  border-top: 0;
+}
+
+.stat {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+.staff-panel .stat {
+  background: var(--paper-2);
+  border-color: transparent;
+}
+
+.stat__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+.stat__value {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+/* Charts: tints of the one accent; the hovered bar takes the full colour. */
+.bars__plot {
+  border-bottom-color: var(--line-strong);
+}
+
+.bars__bar {
+  background: color-mix(in oklab, var(--accent) 45%, var(--card));
+}
+
+.bars__plot:hover .bars__bar {
+  background: color-mix(in oklab, var(--accent) 22%, var(--card));
+}
+
+.bars__slot.is-active .bars__bar {
+  background: var(--accent);
+}
+
+.hbars__track {
+  background: var(--paper-3);
+}
+
+.hbars__fill {
+  background: var(--accent);
+}
+
+.timeline__item:first-child::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.once-box .btn--ghost {
+  background: transparent;
+  color: var(--on-ink);
+  border-color: color-mix(in oklab, var(--on-ink) 50%, transparent);
+  box-shadow: none;
+}
+
+/* Sign-in */
+.staff-login {
+  background: var(--paper);
+}
+
+.staff-login__panel {
+  padding: var(--space-6);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  box-shadow: var(--shadow-1);
+}
+
+.staff-login__title {
+  font-size: var(--step-3);
+}
+
+.staff-login__lede {
+  color: var(--ink-3);
+}
+
+.staff-login__error {
+  background: var(--highlight);
+  color: var(--ink);
+  border-left: 3px solid var(--primary);
+}
+
+@media (max-width: 900px) {
+  .staff-login__panel {
+    padding: var(--space-5) var(--space-4);
+    box-shadow: none;
+  }
+}
+
+/* The canvas continues below short pages. */
+body:has(.staff-shell) {
+  background: var(--paper-2);
+}
+
+/* Credit: in the sidebar on desktop; at the end of the page below 1000px. */
+.staff-shell__credit--end {
+  display: none;
+}
+
+@media (max-width: 999px) {
+  .staff-shell__foot > .staff-shell__credit {
+    display: none;
+  }
+
+  .staff-shell__credit--end {
+    display: flex;
+    margin: 0 16px;
+    padding-block: var(--space-4) var(--space-6);
+  }
+}

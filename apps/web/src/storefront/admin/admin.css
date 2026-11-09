@@ -93,7 +93,7 @@
   padding: var(--space-3) var(--space-4);
   background: var(--paper-2);
   border-radius: var(--radius);
-  border-left: 2px solid var(--ink);
+  border-left: 2px solid var(--accent);
   white-space: pre-line;
 }
 
@@ -185,7 +185,8 @@
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: var(--hair) solid var(--ink);
+  border: var(--hair) solid var(--line-strong);
+  background: var(--card);
   border-radius: var(--radius);
 }
 
@@ -227,7 +228,7 @@
   padding: 0;
   margin: 0;
   list-style: none;
-  border-top: var(--hair) solid var(--ink);
+  border-top: var(--hair) solid var(--line);
 }
 
 .sauna-admin.is-dragging {
@@ -246,7 +247,7 @@
   gap: var(--space-2) var(--space-3);
   padding: var(--space-3) 0;
   border-bottom: var(--hair) solid var(--line);
-  background: var(--paper);
+  background: var(--card);
   position: relative;
 }
 
@@ -339,9 +340,9 @@
 
 @media (min-width: 900px) {
   .sauna-admin__row {
-    grid-template-columns: auto 2rem 4rem minmax(9rem, 1fr) 8.5rem 8.5rem 11rem auto;
+    grid-template-columns: auto 1.75rem 3.5rem minmax(8rem, 1fr) 7.5rem 7.5rem 9rem auto;
     grid-template-areas: 'handle pos thumb name switch price discount arrows';
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
   .sauna-admin__pos {
     display: block;
@@ -524,7 +525,7 @@
 .brand-preview__button {
   justify-self: start;
   padding: 0.7rem 1.2rem;
-  border-radius: 999px;
+  border-radius: var(--radius-btn);
   background: var(--primary);
   color: var(--on-primary);
   font-size: var(--step--1);

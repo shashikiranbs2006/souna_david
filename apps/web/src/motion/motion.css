@@ -2,13 +2,42 @@
   font-variant-ligatures: none;
 }
 
+/* ScrambleText: the invisible ::before holds the final text and gives the box its size;
+   the animated copy sits on top of it. Same font, same width, same wrapping, so the
+   noisy frames (wider or narrower glyphs) never move the text around it. */
+.scramble-box {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
+}
+
+.scramble-box::before {
+  content: attr(data-text);
+  visibility: hidden;
+  font-variant-ligatures: none;
+}
+
+/* Noise frames replace spaces too, so a frame can be one long word: it may break
+   anywhere and is clipped to the final text's box (with room for accents and descenders). */
+.scramble-box > .scramble {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  overflow-clip-margin: 0.25em;
+  overflow-wrap: anywhere;
+}
+
 .flip-text {
   display: inline-block;
   white-space: nowrap;
 }
 
+/* Same line metrics before and after SplitText cuts the label into 1.2em rollers,
+   so hovering or mounting a flip label never nudges its neighbours. */
 .flip-text__visual {
   display: inline-block;
+  line-height: 1.2;
 }
 
 .flip-char {

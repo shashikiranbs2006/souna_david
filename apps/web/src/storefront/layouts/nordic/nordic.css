@@ -1,13 +1,13 @@
-/* Nordic: warm and crafted. Surfaces lean towards wood (theme flavour
-   "warm"); Fraunces for headings; soft, rounded shapes. */
+/* Nordic: warm and crafted. A white page with a warm-white quiet band (theme
+   flavour "warm"); Newsreader for headings, Geist for text; soft, rounded shapes. */
 
 html[data-layout='nordic'] {
-  --font-craft: 'Fraunces', var(--font-serif);
-  --radius-soft: 22px;
+  --font-craft: var(--font-serif);
+  --radius-soft: var(--radius-xl);
 }
 
 html[data-layout='nordic'] .header {
-  background: color-mix(in oklab, var(--paper) 90%, transparent);
+  background: var(--paper);
 }
 
 html[data-layout='nordic'] .scard__media {
@@ -17,15 +17,22 @@ html[data-layout='nordic'] .scard__media {
 
 html[data-layout='nordic'] .scard__name,
 html[data-layout='nordic'] .page-title,
-html[data-layout='nordic'] .sh__title {
+html[data-layout='nordic'] .sh__title,
+html[data-layout='nordic'] .detail__title,
+html[data-layout='nordic'] .cfg__title {
   font-family: var(--font-craft);
   font-weight: 450;
   letter-spacing: -0.02em;
   font-variation-settings: 'opsz' 72;
 }
 
-html[data-layout='nordic'] .btn {
-  border-radius: 14px;
+html[data-layout='nordic'] .detail__title {
+  font-weight: 400;
+  line-height: 1;
+}
+
+html[data-layout='nordic'] .btn:not(.btn--icon) {
+  border-radius: var(--radius-btn);
 }
 
 /* ---- home ---- */
@@ -62,11 +69,24 @@ html[data-layout='nordic'] .btn {
 }
 
 .nd-badge {
-  padding: 0.4rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.7rem;
+  border: var(--hair) solid var(--line);
   border-radius: 999px;
-  background: var(--paper-3);
+  background: var(--card);
   font-size: var(--step--1);
   color: var(--ink-2);
+}
+
+.nd-badge::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
 }
 
 .nd-hero__title {
@@ -152,8 +172,9 @@ html[data-layout='nordic'] .btn {
 .nd-wood {
   margin-top: clamp(5rem, 3rem + 5vw, 8rem);
   padding-block: clamp(4rem, 3rem + 4vw, 6.5rem);
-  background: var(--paper-3);
-  border-radius: 36px;
+  background: var(--paper-2);
+  border: var(--hair) solid var(--line);
+  border-radius: 32px;
   margin-inline: var(--space-3);
 }
 
@@ -187,8 +208,10 @@ html[data-layout='nordic'] .btn {
   align-content: start;
   gap: var(--space-2);
   padding: var(--space-4);
+  border: var(--hair) solid var(--line);
   border-radius: var(--radius-soft);
-  background: var(--paper);
+  background: var(--card);
+  box-shadow: var(--shadow-0);
 }
 
 .nd-wood__swatch {
@@ -237,10 +260,11 @@ html[data-layout='nordic'] .btn {
   width: 2.6rem;
   height: 2.6rem;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--paper);
-  font-family: var(--font-craft);
-  font-size: var(--step-1);
+  background: var(--accent-soft);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Visit */
@@ -257,24 +281,32 @@ html[data-layout='nordic'] .btn {
   gap: var(--space-4);
   padding: var(--space-7);
   border-radius: 28px;
-  /* A brand-coloured card: --on-primary clears 4.5:1 on --primary by construction. */
-  background: var(--primary);
-  color: var(--on-primary);
-  --focus: var(--on-primary);
+  /* A deep ink card (the night band): the accent stays for the button only. */
+  background: var(--night);
+  color: var(--on-night);
+  --focus: var(--on-night);
 }
 
 .nd-visit__card .eyebrow {
-  color: var(--on-primary);
+  color: var(--night-muted);
 }
 
 .nd-visit__card .btn--ghost {
-  color: var(--on-primary);
-  border-color: var(--on-primary);
+  background: var(--on-night);
+  box-shadow: none;
+  color: var(--night);
+  border-color: var(--on-night);
 }
 
-.nd-visit__card .btn--ghost:hover {
-  background: var(--on-primary);
-  color: var(--primary);
+.nd-visit__card .btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  color: var(--on-night);
+  border-color: var(--on-night);
+}
+
+.nd-visit__card p:not(.eyebrow) {
+  color: color-mix(in oklab, var(--on-night) 80%, var(--night));
+  max-width: 44ch;
 }
 
 .nd-visit__trust {

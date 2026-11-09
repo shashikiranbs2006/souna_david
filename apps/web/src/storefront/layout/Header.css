@@ -2,15 +2,17 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: color-mix(in oklab, var(--paper) 86%, transparent);
-  backdrop-filter: saturate(1.2) blur(14px);
-  -webkit-backdrop-filter: saturate(1.2) blur(14px);
+  /* Solid: the dark footer waits (sticky) behind the page, and a translucent,
+     blurred header would smear it into a grey band at the top of every page. */
+  background: var(--paper);
   border-bottom: var(--hair) solid transparent;
-  transition: border-color var(--dur-3) var(--ease-out);
+  transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 
+/* Compact only adds a hairline: the height never changes, so the page never jumps under it. */
 .header.is-compact {
   border-bottom-color: var(--line);
+  box-shadow: var(--shadow-0);
 }
 
 .header__inner {
@@ -19,11 +21,23 @@
   align-items: center;
   gap: var(--space-5);
   height: var(--header-h);
-  transition: height var(--dur-3) var(--ease-out);
 }
 
-.is-compact .header__inner {
-  height: 3.4rem;
+.header__nav .tlink--nav {
+  color: var(--ink-2);
+  transition: color var(--dur-2) var(--ease-out);
+}
+
+.header__nav .tlink--nav:hover,
+.header__nav .tlink--nav.is-active {
+  color: var(--ink);
+}
+
+.header__nav .tlink--nav::after {
+  background: var(--primary);
+  height: 2px;
+  bottom: -0.2em;
+  border-radius: 2px;
 }
 
 .brand {
