@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import type { LambdaFunction } from '@saunaklar/shared';
 import type { AppEnv, Deps } from './context.ts';
 import { notFoundHandler, onError, originLock, requestContext, securityHeaders } from './middleware/core.ts';
 import { rateLimit } from './middleware/rateLimit.ts';
@@ -15,14 +14,8 @@ import { registerCatalog } from './routes/catalog.ts';
 import { registerPricing } from './routes/pricing.ts';
 import { registerStaffAuth } from './routes/staffAuth.ts';
 
-export const ALL_FUNCTIONS: readonly LambdaFunction[] = ['public-catalog', 'reseller-admin', 'asset-signer'];
-
-/**
- * Builds the API. In AWS each Lambda function mounts only its own routes
- * (separate IAM role and DB user per function, design 4.2); locally and in
- * tests one process mounts all of them.
- */
-export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL_FUNCTIONS, tenantCache = new TenantCache()): Hono<AppEnv> {
+/** Builds the API: every route group is mounted in this one process. */
+export function createApp(deps: Deps, tenantCache = new TenantCache()): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
   app.use('*', async (c, next) => {
     c.set('deps', deps);
@@ -35,22 +28,15 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
   app.use('/api/shared/:token/enquiry', rateLimit({ group: 'enquiry', windowMs: 600_000, max: 5 }));
   app.use('/api/assets/*', rateLimit({ group: 'assets', windowMs: 60_000, max: 120 }));
 
-  const has = (f: LambdaFunction) => functions.includes(f);
-  if (has('public-catalog')) {
-    registerCatalog(app);
-    registerAuth(app);
-  }
-  if (has('reseller-admin')) {
-    registerStaffAuth(app);
-    registerAdmin(app);
-    registerQuotes(app);
-    registerInvoices(app);
-    registerPricing(app);
-  }
-  if (has('asset-signer')) {
-    registerAssets(app);
-    registerSharedAr(app);
-  }
+  registerCatalog(app);
+  registerAuth(app);
+  registerStaffAuth(app);
+  registerAdmin(app);
+  registerQuotes(app);
+  registerInvoices(app);
+  registerPricing(app);
+  registerAssets(app);
+  registerSharedAr(app);
 
   app.get('/api/health', c => c.json({ ok: true }));
   // Readiness: the database answers. No detail in the body, errors go to the log only.

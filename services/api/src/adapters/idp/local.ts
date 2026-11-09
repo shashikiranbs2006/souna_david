@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import type { ErrorCode } from '@saunaklar/shared';
 import { IdpError } from '../errors.ts';
@@ -12,14 +12,13 @@ import type {
   Mailer,
   Pool,
   Queryable,
-  SignUpInput,
   SoftwareTokenAssociation,
   Tokens,
   TxRunner,
   VerifiedAccessToken,
 } from '../types.ts';
 import { base32Decode, base32Encode } from './base32.ts';
-import { ATTR_STATUS_BEFORE_DISABLE, ATTR_TOTP_LAST_STEP, isUniqueViolation, store, type CodePurpose, type UserRow, type UserStatus } from './local-store.ts';
+import { ATTR_STATUS_BEFORE_DISABLE, ATTR_TOTP_LAST_STEP, isUniqueViolation, store, type UserRow, type UserStatus } from './local-store.ts';
 import { checkPasswordPolicy, generateTemporaryPassword, getDummyHash, hashPassword, verifyPassword } from './password.ts';
 import { generateTotpSecret, otpauthUri, verifyTotp } from './totp.ts';
 import { ATTR_REFRESH_GRACE, addGrace, findGrace, graceKey } from './refresh-grace.ts';
@@ -29,10 +28,7 @@ export const LOCAL_IDP_ISSUER = 'saunaklar-local-idp';
 const ACCESS_TTL_SECONDS = 15 * 60;
 const REFRESH_TTL_MS = 30 * 24 * 3600 * 1000;
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
-const SIGNUP_CODE_TTL_MS = 24 * 3600 * 1000;
-const RESET_CODE_TTL_MS = 3600 * 1000;
 const TEMP_PASSWORD_TTL_MS = 7 * 24 * 3600 * 1000;
-const MAX_CODE_ATTEMPTS = 5;
 const MAX_MFA_ATTEMPTS = 5;
 
 export interface LocalIdentityProviderConfig {
@@ -58,18 +54,12 @@ const unwrap = <T>(o: Outcome<T>): T => {
 
 const sha256 = (value: string) => createHash('sha256').update(value).digest();
 const randomToken = () => randomBytes(32).toString('base64url');
-const sixDigits = () => randomInt(0, 1_000_000).toString().padStart(6, '0');
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** Customers use their customers.id as username and sub (design 6.1); staff get a fresh sub. */
-const subFor = (pool: Pool, username: string) => (pool === 'CUSTOMER' && UUID_RE.test(username) ? username.toLowerCase() : randomUUID());
 /** Public attributes only: internal `idp:` bookkeeping keys never leave the store. */
 const publicAttributes = (attrs: Record<string, string> | undefined) =>
   Object.fromEntries(Object.entries(attrs ?? {}).filter(([k]) => !k.startsWith('idp:')));
 
-/**
- * Cognito-compatible identity provider backed by the local `idp` schema. Behaviour mirrors the
- * Cognito adapter closely enough that the API cannot tell them apart.
- */
+/** Staff identity provider backed by the local `idp` schema (password, TOTP, rotating refresh tokens). */
 export class LocalIdentityProvider implements IdentityProvider {
   private readonly key: Uint8Array;
   private readonly graceKey: Buffer;
@@ -80,54 +70,6 @@ export class LocalIdentityProvider implements IdentityProvider {
     this.key = new TextEncoder().encode(config.jwtSecret);
     this.graceKey = graceKey(this.key);
     this.now = config.now ?? (() => new Date());
-  }
-
-  // ---- sign-up ------------------------------------------------------------
-
-  async signUp(input: SignUpInput): Promise<{ sub: string }> {
-    checkPasswordPolicy(input.password);
-    const passwordHash = await hashPassword(input.password);
-    return this.config.tx(async (db) => {
-      const sub = subFor(input.pool, input.username);
-      try {
-        await store.insertUser(db, {
-          sub,
-          pool: input.pool,
-          username: input.username,
-          email: input.email,
-          passwordHash,
-          status: 'UNCONFIRMED',
-          attributes: publicAttributes(input.attributes),
-        });
-      } catch (e) {
-        if (isUniqueViolation(e)) throw new IdpError('CONFLICT', 'Username already exists');
-        throw e;
-      }
-      await this.sendCode(db, { sub, email: input.email, attributes: publicAttributes(input.attributes) }, 'SIGNUP', input.clientMetadata);
-      return { sub };
-    });
-  }
-
-  async confirmSignUp(pool: Pool, username: string, code: string): Promise<void> {
-    unwrap(
-      await this.config.tx(async (db) => {
-        const user = await store.findUser(db, pool, username, true);
-        if (!user) return fail('CODE_INVALID');
-        const checked = await this.checkCode(db, user.sub, 'SIGNUP', code);
-        if (!checked.ok) return checked;
-        await store.updateUser(db, user.sub, { email_verified: true, ...(user.status === 'UNCONFIRMED' ? { status: 'CONFIRMED' as const } : {}) });
-        return ok(undefined);
-      }),
-    );
-  }
-
-  async resendConfirmationCode(pool: Pool, username: string, clientMetadata: ClientMetadata): Promise<void> {
-    await this.config.tx(async (db) => {
-      const user = await store.findUser(db, pool, username, true);
-      // Unknown or already confirmed: succeed silently (no enumeration).
-      if (!user || user.status !== 'UNCONFIRMED') return;
-      await this.sendCode(db, user, 'SIGNUP', clientMetadata);
-    });
   }
 
   // ---- sign-in ------------------------------------------------------------
@@ -295,34 +237,6 @@ export class LocalIdentityProvider implements IdentityProvider {
     }
   }
 
-  // ---- password reset -------------------------------------------------------
-
-  async forgotPassword(pool: Pool, username: string, clientMetadata: ClientMetadata): Promise<void> {
-    await this.config.tx(async (db) => {
-      const user = await store.findUser(db, pool, username, true);
-      // Unknown, disabled or never-confirmed users: succeed silently (no enumeration).
-      if (!user || user.status !== 'CONFIRMED') return;
-      await this.sendCode(db, user, 'RESET', clientMetadata);
-    });
-  }
-
-  async confirmForgotPassword(pool: Pool, username: string, code: string, newPassword: string): Promise<void> {
-    checkPasswordPolicy(newPassword);
-    const passwordHash = await hashPassword(newPassword);
-    unwrap(
-      await this.config.tx(async (db) => {
-        const user = await store.findUser(db, pool, username, true);
-        if (!user) return fail('CODE_INVALID');
-        const checked = await this.checkCode(db, user.sub, 'RESET', code);
-        if (!checked.ok) return checked;
-        await store.updateUser(db, user.sub, { password_hash: passwordHash });
-        await store.revokeAllForUser(db, user.sub);
-        await store.deleteChallengesOf(db, user.sub);
-        return ok(undefined);
-      }),
-    );
-  }
-
   // ---- administration -------------------------------------------------------
 
   async adminCreateUser(pool: Pool, input: AdminCreateUserInput): Promise<{ sub: string; temporaryPassword: string }> {
@@ -330,7 +244,7 @@ export class LocalIdentityProvider implements IdentityProvider {
     checkPasswordPolicy(temporaryPassword);
     const passwordHash = await hashPassword(temporaryPassword);
     return this.config.tx(async (db) => {
-      const sub = subFor(pool, input.username);
+      const sub = randomUUID();
       try {
         await store.insertUser(db, {
           sub,
@@ -355,13 +269,6 @@ export class LocalIdentityProvider implements IdentityProvider {
         await this.config.mailer.send({ to: input.email, ...mail, ...senderOf(meta) });
       }
       return { sub, temporaryPassword };
-    });
-  }
-
-  async adminDeleteUser(pool: Pool, username: string): Promise<void> {
-    await this.config.tx(async (db) => {
-      const user = await store.findUser(db, pool, username, true);
-      if (user) await store.deleteUser(db, user.sub);
     });
   }
 
@@ -405,7 +312,7 @@ export class LocalIdentityProvider implements IdentityProvider {
 
   private async nextStep(db: Queryable, user: UserRow): Promise<AuthResult> {
     if (user.mfa_enabled && user.mfa_secret) return this.challenge(db, user.sub, 'SOFTWARE_TOKEN_MFA');
-    if (user.pool === 'STAFF' && this.config.staffMfa === 'REQUIRED') return this.challenge(db, user.sub, 'MFA_SETUP');
+    if (this.config.staffMfa === 'REQUIRED') return this.challenge(db, user.sub, 'MFA_SETUP');
     return { kind: 'TOKENS', tokens: await this.issueTokens(db, user) };
   }
 
@@ -456,37 +363,6 @@ export class LocalIdentityProvider implements IdentityProvider {
     return { accessToken, refreshToken, expiresIn: ACCESS_TTL_SECONDS };
   }
 
-  private async sendCode(
-    db: Queryable,
-    user: Pick<UserRow, 'sub' | 'email' | 'attributes'>,
-    purpose: Exclude<CodePurpose, 'INVITE'>,
-    meta: ClientMetadata,
-  ): Promise<void> {
-    const code = sixDigits();
-    const ttl = purpose === 'SIGNUP' ? SIGNUP_CODE_TTL_MS : RESET_CODE_TTL_MS;
-    await store.replaceCode(db, user.sub, purpose, sha256(code).toString('hex'), new Date(this.now().getTime() + ttl));
-    const firstName = user.attributes?.given_name ?? null;
-    const mail =
-      purpose === 'SIGNUP'
-        ? templates.signupCode(brandOf(meta), { code, firstName }, meta.locale)
-        : templates.resetCode(brandOf(meta), { code, firstName }, meta.locale);
-    await this.config.mailer.send({ to: user.email, ...mail, ...senderOf(meta) });
-  }
-
-  private async checkCode(db: Queryable, sub: string, purpose: CodePurpose, code: string): Promise<Outcome<void>> {
-    const row = await store.activeCode(db, sub, purpose);
-    if (!row) return fail('CODE_INVALID');
-    if (new Date(row.expires_at).getTime() <= this.now().getTime()) return fail('CODE_EXPIRED');
-    if (row.attempts >= MAX_CODE_ATTEMPTS) return fail('CODE_INVALID');
-    const given = sha256(code.trim());
-    const stored = Buffer.from(row.code_hash, 'hex');
-    if (stored.length !== given.length || !timingSafeEqual(given, stored)) {
-      await store.failCodeAttempt(db, sub, purpose, MAX_CODE_ATTEMPTS);
-      return fail('CODE_INVALID');
-    }
-    await store.deleteCode(db, sub, purpose);
-    return ok(undefined);
-  }
 }
 
 const brandOf = (m: ClientMetadata) => ({

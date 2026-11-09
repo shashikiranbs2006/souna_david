@@ -1,9 +1,7 @@
-import { drain, retention, type WorkerDeps } from './handler.ts';
+import { runRetention, type RetentionOptions } from './retention.ts';
 import { errorKind } from './sanitize.ts';
 
 export interface LocalWorkerOptions {
-  /** Outbox sweep interval. */
-  intervalMs?: number;
   /** Retention interval; 0 disables it. */
   retentionIntervalMs?: number;
   /** Run retention once at start-up. */
@@ -11,70 +9,36 @@ export interface LocalWorkerOptions {
 }
 
 export interface LocalWorker {
-  /** Drain now (e.g. from the in-process queue after a request was submitted). */
-  nudge(): void;
-  /** Stops the timers and waits for a running drain/retention to finish. */
+  /** Stops the timer and waits for a running retention job to finish. */
   stop(): Promise<void>;
 }
 
-/**
- * Local development stand-in for the worker Lambda and its schedules: drains the
- * outbox every `intervalMs` and immediately on `nudge()`, runs retention hourly.
- * Drains never overlap; a nudge during a drain triggers one more pass afterwards.
- */
-export function startLocalWorker(deps: WorkerDeps, opts: LocalWorkerOptions = {}): LocalWorker {
-  const intervalMs = opts.intervalMs ?? 2000;
+/** Background retention for the single local server process: runs hourly, never overlapping. */
+export function startLocalWorker(deps: Pick<RetentionOptions, 'pool' | 'log' | 'now'>, opts: LocalWorkerOptions = {}): LocalWorker {
   const retentionMs = opts.retentionIntervalMs ?? 3_600_000;
   let stopped = false;
   let running: Promise<void> | null = null;
-  let again = false;
-  let retentionRun: Promise<void> | null = null;
 
-  const runDrain = (): void => {
-    if (stopped) return;
-    if (running) {
-      again = true;
-      return;
-    }
-    running = (async () => {
-      do {
-        again = false;
-        try {
-          await drain(deps);
-        } catch (err) {
-          deps.log.error('worker.local_drain_failed', { error: errorKind(err) });
-        }
-      } while (again && !stopped);
-    })().finally(() => {
-      running = null;
-    });
-  };
-
-  const runRetention = (): void => {
-    if (stopped || retentionRun) return;
-    retentionRun = retention(deps)
+  const run = (): void => {
+    if (stopped || running) return;
+    running = runRetention(deps)
       .then(() => undefined)
       .catch(err => deps.log.error('worker.local_retention_failed', { error: errorKind(err) }))
       .finally(() => {
-        retentionRun = null;
+        running = null;
       });
   };
 
-  const drainTimer = setInterval(runDrain, intervalMs);
-  drainTimer.unref?.();
-  const retentionTimer = retentionMs > 0 ? setInterval(runRetention, retentionMs) : null;
-  retentionTimer?.unref?.();
-  runDrain();
-  if (opts.retentionOnStart) runRetention();
-  deps.log.info('worker.local_started', { intervalMs, retentionIntervalMs: retentionMs });
+  const timer = retentionMs > 0 ? setInterval(run, retentionMs) : null;
+  timer?.unref?.();
+  if (opts.retentionOnStart) run();
+  deps.log.info('worker.local_started', { retentionIntervalMs: retentionMs });
 
   return {
-    nudge: runDrain,
     async stop() {
       stopped = true;
-      clearInterval(drainTimer);
-      if (retentionTimer) clearInterval(retentionTimer);
-      await Promise.all([running, retentionRun]);
+      if (timer) clearInterval(timer);
+      await running;
     },
   };
 }

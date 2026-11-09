@@ -1,6 +1,4 @@
-import { generateKeyPairSync, createVerify } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { CloudFrontAssetSigner } from '../../../src/adapters/assets/cloudfront.ts';
 import { LocalAssetSigner, verifyLocalAssetRequest } from '../../../src/adapters/assets/local.ts';
 import { cfBase64, cfBase64Decode, resourceMatches } from '../../../src/adapters/assets/policy.ts';
 import type { SignedCookie } from '../../../src/adapters/types.ts';
@@ -92,32 +90,5 @@ describe('policy wildcard matching', () => {
     expect(resourceMatches('https://a.ch/assets/lo/*', 'https://a.ch/assets/low/x.glb')).toBe(false);
     expect(resourceMatches('https://a.ch/assets/?.glb', 'https://a.ch/assets/x.glb')).toBe(true);
     expect(resourceMatches('https://a.ch/assets/*', 'https://aXch/assets/x')).toBe(false);
-  });
-});
-
-describe('CloudFrontAssetSigner', () => {
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  const pem = privateKey.export({ type: 'pkcs1', format: 'pem' }).toString();
-
-  it('signs a host-bound custom policy with RSA', async () => {
-    const cf = new CloudFrontAssetSigner({ keyPairId: 'K2ABC', privateKey: async () => pem });
-    const { cookies } = await cf.issueCookies({ host: 'alpha.saunas.example.com', tier: 'LOW', ttlSeconds: 600 });
-    const c = jar(cookies);
-    expect(c['CloudFront-Key-Pair-Id']).toBe('K2ABC');
-    const policyJson = cfBase64Decode(c['CloudFront-Policy']!).toString();
-    expect(JSON.parse(policyJson).Statement[0].Resource).toBe('https://alpha.saunas.example.com/assets/lo/*');
-    const v = createVerify('RSA-SHA1');
-    v.update(policyJson);
-    expect(v.verify(publicKey, cfBase64Decode(c['CloudFront-Signature']!))).toBe(true);
-  });
-
-  it('signs AR URLs for exactly one file', async () => {
-    const cf = new CloudFrontAssetSigner({ keyPairId: 'K2ABC', privateKey: pem });
-    const { url } = await cf.signUrl({ host: 'alpha.saunas.example.com', path: '/assets/ar/m.glb', ttlSeconds: 300 });
-    const u = new URL(url);
-    expect(u.origin + u.pathname).toBe('https://alpha.saunas.example.com/assets/ar/m.glb');
-    const policy = JSON.parse(cfBase64Decode(u.searchParams.get('Policy')!).toString());
-    expect(policy.Statement[0].Resource).toBe('https://alpha.saunas.example.com/assets/ar/m.glb');
-    expect(u.searchParams.get('Key-Pair-Id')).toBe('K2ABC');
   });
 });

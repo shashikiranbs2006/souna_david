@@ -8,7 +8,6 @@ import type { Queryable, QueryResultLike, TxRunner } from '../../../src/adapters
  */
 interface State {
   users: Map<string, Record<string, any>>;
-  codes: Map<string, Record<string, any>>;
   challenges: Map<string, Record<string, any>>;
   refresh: Map<string, Record<string, any>>;
 }
@@ -16,13 +15,12 @@ interface State {
 const hex = (b: unknown) => (Buffer.isBuffer(b) ? b.toString('hex') : String(b));
 const clone = (s: State): State => ({
   users: new Map([...s.users].map(([k, v]) => [k, structuredClone(v)])),
-  codes: new Map([...s.codes].map(([k, v]) => [k, structuredClone(v)])),
   challenges: new Map([...s.challenges].map(([k, v]) => [k, structuredClone(v)])),
   refresh: new Map([...s.refresh].map(([k, v]) => [k, { ...v }])),
 });
 
 export class FakeIdpDb implements Queryable {
-  state: State = { users: new Map(), codes: new Map(), challenges: new Map(), refresh: new Map() };
+  state: State = { users: new Map(), challenges: new Map(), refresh: new Map() };
   statements: string[] = [];
 
   constructor(private readonly now: () => Date = () => new Date()) {}
@@ -83,28 +81,7 @@ export class FakeIdpDb implements Queryable {
     }
     if (sql === 'DELETE FROM idp.users WHERE sub = $1') {
       s.users.delete(v[0]);
-      for (const map of [s.codes, s.challenges, s.refresh]) for (const [k, r] of map) if (r.sub === v[0]) map.delete(k);
-      return rows([]);
-    }
-
-    // ---- codes
-    if (sql.startsWith('INSERT INTO idp.codes')) {
-      s.codes.set(`${v[0]}:${v[1]}`, { sub: v[0], purpose: v[1], code_hash: v[2], expires_at: v[3], attempts: 0 });
-      return rows([]);
-    }
-    if (sql.startsWith('SELECT code_hash')) {
-      const c = s.codes.get(`${v[0]}:${v[1]}`);
-      return rows(c ? [{ ...c }] : []);
-    }
-    if (sql.startsWith('UPDATE idp.codes SET attempts')) {
-      const c = s.codes.get(`${v[0]}:${v[1]}`);
-      if (c) c.attempts++;
-      return rows([]);
-    }
-    if (sql.startsWith('DELETE FROM idp.codes')) {
-      const key = `${v[0]}:${v[1]}`;
-      const c = s.codes.get(key);
-      if (c && (v.length < 3 || c.attempts >= v[2])) s.codes.delete(key);
+      for (const map of [s.challenges, s.refresh]) for (const [k, r] of map) if (r.sub === v[0]) map.delete(k);
       return rows([]);
     }
 

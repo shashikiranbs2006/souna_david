@@ -9,7 +9,6 @@ import { ApiError } from '../lib/problem.ts';
 
 const BROWSER_ID_MAX_AGE = 400 * 24 * 3600;
 const REFRESH_MAX_AGE = 30 * 24 * 3600;
-const POOLS: Record<string, Pool> = { CUSTOMER: 'CUSTOMER', STAFF: 'STAFF' };
 
 /**
  * Backend-for-frontend session (design 6.1): the browser only ever holds
@@ -30,7 +29,7 @@ export const session: MiddlewareHandler<AppEnv> = async (c, next) => {
   c.set('principal', { kind: 'anonymous' });
   c.set('sessionExpired', false);
 
-  const pool = POOLS[readCookie(c, config, 'pool') ?? ''];
+  const pool: Pool | undefined = readCookie(c, config, 'pool') === 'STAFF' ? 'STAFF' : undefined;
   const accessToken = readCookie(c, config, 'at');
   if (pool && accessToken) {
     try {

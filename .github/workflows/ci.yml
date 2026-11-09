@@ -16,7 +16,6 @@ concurrency:
 env:
   # Postgres service containers below create the superuser `sauna` (migrations and tests only).
   DATABASE_URL: postgres://sauna:sauna@localhost:5432/sauna
-  TF_VERSION: 1.16.7
 
 jobs:
   # ------------------------------------------------------------------------------------------
@@ -71,7 +70,7 @@ jobs:
 
   # ------------------------------------------------------------------------------------------
   build:
-    name: Build (web + Lambda bundles)
+    name: Build (web + API bundle)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -87,13 +86,7 @@ jobs:
       - name: Bundle sizes
         run: |
           {
-            echo '### Lambda bundles'
-            echo '| Function | Size |'
-            echo '|---|---|'
-            for f in services/api/dist/lambda/*/index.mjs; do
-              echo "| $(basename "$(dirname "$f")") | $(du -h "$f" | cut -f1) |"
-            done
-            echo
+            echo "API bundle: $(du -h services/api/dist/local.js | cut -f1)"
             echo "Web build: $(du -sh apps/web/dist | cut -f1)"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -138,32 +131,6 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
-
-  # ------------------------------------------------------------------------------------------
-  terraform:
-    name: Terraform fmt / validate / offline plan
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-          terraform_wrapper: false
-      - name: Format
-        run: terraform fmt -check -recursive -diff infra
-      - name: Validate environments and bootstrap
-        run: |
-          for dir in infra/envs/dev infra/envs/staging infra/envs/prod infra/bootstrap; do
-            echo "::group::$dir"
-            terraform -chdir="$dir" init -backend=false -input=false -lockfile=readonly
-            terraform -chdir="$dir" validate
-            echo "::endgroup::"
-          done
-      - name: Offline plan with mocked providers (cycles, for_each, validations)
-        run: |
-          terraform -chdir=infra/modules/platform init -backend=false -input=false
-          terraform -chdir=infra/modules/platform test
 
   # ------------------------------------------------------------------------------------------
   audit:

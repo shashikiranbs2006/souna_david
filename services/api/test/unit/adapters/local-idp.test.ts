@@ -6,7 +6,6 @@ import { totp } from '../../../src/adapters/idp/totp.ts';
 import type { AuthResult, ClientMetadata, MailMessage, Mailer, Tokens } from '../../../src/adapters/types.ts';
 import { FakeIdpDb } from './fake-idp-db.ts';
 
-const CUSTOMER_ID = '6f1c1b1e-0c4e-4c8e-9a39-6a3b2f6d9e01';
 const meta: ClientMetadata = {
   resellerId: '0b9a0f7e-1111-4222-8333-944455556666',
   brandName: 'Alpha Spa',
@@ -21,11 +20,6 @@ class CapturingMailer implements Mailer {
   async send(m: MailMessage) {
     this.sent.push(m);
     return { messageId: String(this.sent.length) };
-  }
-  lastCode(): string {
-    const m = /^ {4}(\S+)$/m.exec(this.sent.at(-1)?.text ?? '');
-    if (!m) throw new Error('no code in last mail');
-    return m[1]!;
   }
 }
 
@@ -65,206 +59,107 @@ beforeEach(() => {
   idp = make();
 });
 
-async function signUpCustomer() {
-  await idp.signUp({
-    pool: 'CUSTOMER',
-    username: CUSTOMER_ID,
-    email: 'anna@example.com',
-    password: 'Sauna-Lover-2026',
-    attributes: { given_name: 'Anna' },
-    clientMetadata: meta,
-  });
+const STAFF_EMAIL = 'owner@alpha.example.com';
+const STAFF_PASSWORD = 'Staff-Secret-123';
+
+/** Creates a staff user and walks the first sign-in (the policy must be OPTIONAL for plain tokens). */
+async function signInStaff(): Promise<Tokens> {
+  const { temporaryPassword } = await idp.adminCreateUser('STAFF', { username: STAFF_EMAIL, email: STAFF_EMAIL, clientMetadata: meta });
+  const np = sessionOf(await idp.initiateAuth('STAFF', STAFF_EMAIL, temporaryPassword), 'NEW_PASSWORD_REQUIRED');
+  return tokensOf(await idp.respondNewPassword('STAFF', np, STAFF_PASSWORD));
 }
 
-describe('LocalIdentityProvider: customer sign-up', () => {
-  it('uses the customer id as sub and mails a branded, localised code', async () => {
-    const { sub } = await idp.signUp({ pool: 'CUSTOMER', username: CUSTOMER_ID, email: 'anna@example.com', password: 'Sauna-Lover-2026', clientMetadata: meta });
-    expect(sub).toBe(CUSTOMER_ID);
-    const mail = mailer.sent[0]!;
-    expect(mail).toMatchObject({ to: 'anna@example.com', fromName: 'Alpha Spa', replyTo: 'help@alpha.example.com', resellerId: meta.resellerId });
-    expect(mail.subject).toBe('Ihr Bestätigungscode für Alpha Spa');
-    expect(mail.html).toContain('#2a6f4e');
-    expect(mailer.lastCode()).toMatch(/^\d{6}$/);
-    // Only the hash is stored.
-    const stored = [...db.state.codes.values()][0]!;
-    expect(stored.code_hash).not.toContain(mailer.lastCode());
+describe('LocalIdentityProvider: sessions', () => {
+  let tokens: Tokens;
+  beforeEach(async () => {
+    idp = make('OPTIONAL');
+    tokens = await signInStaff();
   });
 
-  it('enforces the password policy and rejects duplicate usernames', async () => {
-    expect(await codeOf(idp.signUp({ pool: 'CUSTOMER', username: CUSTOMER_ID, email: 'a@b.ch', password: 'short', clientMetadata: meta }))).toBe('PASSWORD_POLICY');
-    await signUpCustomer();
-    expect(await codeOf(idp.signUp({ pool: 'CUSTOMER', username: CUSTOMER_ID, email: 'a@b.ch', password: 'Sauna-Lover-2026', clientMetadata: meta }))).toBe('CONFLICT');
-  });
-
-  it('rolls back the user when the mail cannot be sent', async () => {
-    mailer.send = async () => {
-      throw new Error('smtp down');
-    };
-    await expect(signUpCustomer()).rejects.toThrow('smtp down');
-    expect(db.state.users.size).toBe(0);
-  });
-
-  it('blocks sign-in until confirmed, then issues tokens', async () => {
-    await signUpCustomer();
-    expect(await codeOf(idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'))).toBe('EMAIL_NOT_VERIFIED');
-    await idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, mailer.lastCode());
-    const tokens = tokensOf(await idp.initiateAuth('CUSTOMER', CUSTOMER_ID.toUpperCase(), 'Sauna-Lover-2026'));
+  it('issues short-lived access tokens that only verify as STAFF', async () => {
     expect(tokens.expiresIn).toBe(900);
-    expect(await idp.verifyAccessToken('CUSTOMER', tokens.accessToken)).toEqual({
-      sub: CUSTOMER_ID,
-      pool: 'CUSTOMER',
-      username: CUSTOMER_ID,
-      exp: Math.floor(clock.getTime() / 1000) + 900,
-    });
-    expect(await codeOf(idp.verifyAccessToken('STAFF', tokens.accessToken))).toBe('SESSION_EXPIRED');
-    expect(await codeOf(idp.verifyAccessToken('CUSTOMER', `${tokens.accessToken}x`))).toBe('SESSION_EXPIRED');
+    const verified = await idp.verifyAccessToken('STAFF', tokens.accessToken);
+    expect(verified).toMatchObject({ pool: 'STAFF', username: STAFF_EMAIL, exp: Math.floor(clock.getTime() / 1000) + 900 });
+    expect(await codeOf(idp.verifyAccessToken('STAFF', `${tokens.accessToken}x`))).toBe('SESSION_EXPIRED');
   });
 
   it('never reveals whether a user exists', async () => {
-    await signUpCustomer();
-    await idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, mailer.lastCode());
-    expect(await codeOf(idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Wrong-Password-1'))).toBe('INVALID_CREDENTIALS');
-    expect(await codeOf(idp.initiateAuth('CUSTOMER', 'nobody', 'Wrong-Password-1'))).toBe('INVALID_CREDENTIALS');
-    const before = mailer.sent.length;
-    await expect(idp.forgotPassword('CUSTOMER', 'nobody', meta)).resolves.toBeUndefined();
-    await expect(idp.resendConfirmationCode('CUSTOMER', 'nobody', meta)).resolves.toBeUndefined();
-    await expect(idp.resendConfirmationCode('CUSTOMER', CUSTOMER_ID, meta)).resolves.toBeUndefined(); // already confirmed
-    expect(mailer.sent.length).toBe(before);
-  });
-
-  it('invalidates a code after 5 wrong attempts (attempts survive the failed call)', async () => {
-    await signUpCustomer();
-    const code = mailer.lastCode();
-    const wrong = code === '000000' ? '111111' : '000000';
-    for (let i = 0; i < 5; i++) expect(await codeOf(idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, wrong))).toBe('CODE_INVALID');
-    expect(await codeOf(idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, code))).toBe('CODE_INVALID');
-    await idp.resendConfirmationCode('CUSTOMER', CUSTOMER_ID, meta);
-    expect(await codeOf(idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, mailer.lastCode()))).toBe('OK');
-  });
-
-  it('expires sign-up codes after 24 hours', async () => {
-    await signUpCustomer();
-    advance(24 * 3600 * 1000 + 1);
-    expect(await codeOf(idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, mailer.lastCode()))).toBe('CODE_EXPIRED');
-  });
-
-  it('a resent code replaces the previous one', async () => {
-    await signUpCustomer();
-    const first = mailer.lastCode();
-    await idp.resendConfirmationCode('CUSTOMER', CUSTOMER_ID, meta);
-    const second = mailer.lastCode();
-    if (first !== second) expect(await codeOf(idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, first))).toBe('CODE_INVALID');
-    expect(await codeOf(idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, second))).toBe('OK');
-  });
-});
-
-describe('LocalIdentityProvider: refresh tokens', () => {
-  let tokens: Tokens;
-  beforeEach(async () => {
-    await signUpCustomer();
-    await idp.confirmSignUp('CUSTOMER', CUSTOMER_ID, mailer.lastCode());
-    tokens = tokensOf(await idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'));
+    expect(await codeOf(idp.initiateAuth('STAFF', STAFF_EMAIL, 'Wrong-Password-1'))).toBe('INVALID_CREDENTIALS');
+    expect(await codeOf(idp.initiateAuth('STAFF', 'nobody', 'Wrong-Password-1'))).toBe('INVALID_CREDENTIALS');
   });
 
   it('rotates, and reuse of a rotated token revokes the whole family', async () => {
-    const second = await idp.refresh('CUSTOMER', tokens.refreshToken);
+    const second = await idp.refresh('STAFF', tokens.refreshToken);
     expect(second.refreshToken).not.toBe(tokens.refreshToken);
-    const third = await idp.refresh('CUSTOMER', second.refreshToken);
-    expect(await codeOf(idp.refresh('CUSTOMER', tokens.refreshToken))).toBe('SESSION_EXPIRED');
-    expect(await codeOf(idp.refresh('CUSTOMER', third.refreshToken))).toBe('SESSION_EXPIRED');
+    const third = await idp.refresh('STAFF', second.refreshToken);
+    expect(await codeOf(idp.refresh('STAFF', tokens.refreshToken))).toBe('SESSION_EXPIRED');
+    expect(await codeOf(idp.refresh('STAFF', third.refreshToken))).toBe('SESSION_EXPIRED');
   });
 
   it('two tabs refreshing with the same token within 15 s both get the same successor', async () => {
-    const first = await idp.refresh('CUSTOMER', tokens.refreshToken);
+    const first = await idp.refresh('STAFF', tokens.refreshToken);
     advance(14_000);
-    const second = await idp.refresh('CUSTOMER', tokens.refreshToken);
+    const second = await idp.refresh('STAFF', tokens.refreshToken);
     expect(second).toEqual(first);
     // The successor stays usable and rotates normally.
-    const third = await idp.refresh('CUSTOMER', first.refreshToken);
+    const third = await idp.refresh('STAFF', first.refreshToken);
     expect(third.refreshToken).not.toBe(first.refreshToken);
   });
 
   it('keeps successors only encrypted', async () => {
-    const next = await idp.refresh('CUSTOMER', tokens.refreshToken);
-    const attrs = JSON.stringify(db.state.users.get(CUSTOMER_ID)!.attributes);
+    const next = await idp.refresh('STAFF', tokens.refreshToken);
+    const attrs = JSON.stringify([...db.state.users.values()][0]!.attributes);
     expect(attrs).toContain('idp:refresh_grace');
     expect(attrs).not.toContain(next.refreshToken);
     expect(attrs).not.toContain(next.accessToken);
   });
 
   it('outside the window reuse still revokes the family', async () => {
-    const next = await idp.refresh('CUSTOMER', tokens.refreshToken);
+    const next = await idp.refresh('STAFF', tokens.refreshToken);
     advance(15_001);
-    expect(await codeOf(idp.refresh('CUSTOMER', tokens.refreshToken))).toBe('SESSION_EXPIRED');
-    expect(await codeOf(idp.refresh('CUSTOMER', next.refreshToken))).toBe('SESSION_EXPIRED');
+    expect(await codeOf(idp.refresh('STAFF', tokens.refreshToken))).toBe('SESSION_EXPIRED');
+    expect(await codeOf(idp.refresh('STAFF', next.refreshToken))).toBe('SESSION_EXPIRED');
   });
 
   it('the window does not revive a logged-out or disabled session', async () => {
-    const next = await idp.refresh('CUSTOMER', tokens.refreshToken);
-    await idp.revoke('CUSTOMER', next.refreshToken);
-    expect(await codeOf(idp.refresh('CUSTOMER', tokens.refreshToken))).toBe('SESSION_EXPIRED');
+    const next = await idp.refresh('STAFF', tokens.refreshToken);
+    await idp.revoke('STAFF', next.refreshToken);
+    expect(await codeOf(idp.refresh('STAFF', tokens.refreshToken))).toBe('SESSION_EXPIRED');
 
-    const fresh = tokensOf(await idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'));
-    await idp.refresh('CUSTOMER', fresh.refreshToken);
-    await idp.adminDisableUser('CUSTOMER', CUSTOMER_ID);
-    expect(await codeOf(idp.refresh('CUSTOMER', fresh.refreshToken))).toBe('SESSION_EXPIRED');
+    const fresh = tokensOf(await idp.initiateAuth('STAFF', STAFF_EMAIL, STAFF_PASSWORD));
+    await idp.refresh('STAFF', fresh.refreshToken);
+    await idp.adminDisableUser('STAFF', STAFF_EMAIL);
+    expect(await codeOf(idp.refresh('STAFF', fresh.refreshToken))).toBe('SESSION_EXPIRED');
   });
 
   it('a stale grace entry for a successor that was rotated again counts as reuse', async () => {
-    const second = await idp.refresh('CUSTOMER', tokens.refreshToken);
-    const third = await idp.refresh('CUSTOMER', second.refreshToken);
-    expect(await codeOf(idp.refresh('CUSTOMER', tokens.refreshToken))).toBe('SESSION_EXPIRED');
-    expect(await codeOf(idp.refresh('CUSTOMER', third.refreshToken))).toBe('SESSION_EXPIRED');
+    const second = await idp.refresh('STAFF', tokens.refreshToken);
+    const third = await idp.refresh('STAFF', second.refreshToken);
+    expect(await codeOf(idp.refresh('STAFF', tokens.refreshToken))).toBe('SESSION_EXPIRED');
+    expect(await codeOf(idp.refresh('STAFF', third.refreshToken))).toBe('SESSION_EXPIRED');
   });
 
-  it('only works in its own pool and expires after 30 days, not extended by rotation', async () => {
-    expect(await codeOf(idp.refresh('STAFF', tokens.refreshToken))).toBe('SESSION_EXPIRED');
+  it('expires after 30 days, not extended by rotation', async () => {
     advance(29 * 24 * 3600 * 1000);
-    const next = await idp.refresh('CUSTOMER', tokens.refreshToken);
+    const next = await idp.refresh('STAFF', tokens.refreshToken);
     advance(2 * 24 * 3600 * 1000);
-    expect(await codeOf(idp.refresh('CUSTOMER', next.refreshToken))).toBe('SESSION_EXPIRED');
+    expect(await codeOf(idp.refresh('STAFF', next.refreshToken))).toBe('SESSION_EXPIRED');
   });
 
   it('revoke ends the session family; unknown tokens are ignored', async () => {
-    const next = await idp.refresh('CUSTOMER', tokens.refreshToken);
-    await idp.revoke('CUSTOMER', next.refreshToken);
-    expect(await codeOf(idp.refresh('CUSTOMER', next.refreshToken))).toBe('SESSION_EXPIRED');
-    await expect(idp.revoke('CUSTOMER', 'nonsense')).resolves.toBeUndefined();
-  });
-
-  it('password reset changes the password and revokes every refresh token', async () => {
-    await idp.forgotPassword('CUSTOMER', CUSTOMER_ID, { ...meta, locale: 'fr' });
-    expect(mailer.sent.at(-1)!.subject).toBe('Réinitialisez votre mot de passe Alpha Spa');
-    const code = mailer.lastCode();
-    expect(await codeOf(idp.confirmForgotPassword('CUSTOMER', CUSTOMER_ID, code, 'weak'))).toBe('PASSWORD_POLICY');
-    await idp.confirmForgotPassword('CUSTOMER', CUSTOMER_ID, code, 'New-Sauna-Pass-9');
-    expect(await codeOf(idp.refresh('CUSTOMER', tokens.refreshToken))).toBe('SESSION_EXPIRED');
-    expect(await codeOf(idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'))).toBe('INVALID_CREDENTIALS');
-    tokensOf(await idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'New-Sauna-Pass-9'));
-    expect(await codeOf(idp.confirmForgotPassword('CUSTOMER', CUSTOMER_ID, code, 'Another-Pass-77'))).toBe('CODE_INVALID');
-  });
-
-  it('reset codes expire after 1 hour', async () => {
-    await idp.forgotPassword('CUSTOMER', CUSTOMER_ID, meta);
-    advance(3600 * 1000 + 1);
-    expect(await codeOf(idp.confirmForgotPassword('CUSTOMER', CUSTOMER_ID, mailer.lastCode(), 'New-Sauna-Pass-9'))).toBe('CODE_EXPIRED');
+    const next = await idp.refresh('STAFF', tokens.refreshToken);
+    await idp.revoke('STAFF', next.refreshToken);
+    expect(await codeOf(idp.refresh('STAFF', next.refreshToken))).toBe('SESSION_EXPIRED');
+    await expect(idp.revoke('STAFF', 'nonsense')).resolves.toBeUndefined();
   });
 
   it('disable blocks sign-in and refresh; enable restores the account', async () => {
-    await idp.adminDisableUser('CUSTOMER', CUSTOMER_ID);
-    expect(await codeOf(idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'))).toBe('ACCOUNT_DISABLED');
-    expect(await codeOf(idp.refresh('CUSTOMER', tokens.refreshToken))).toBe('SESSION_EXPIRED');
-    await idp.adminEnableUser('CUSTOMER', CUSTOMER_ID);
-    tokensOf(await idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'));
-    expect(await codeOf(idp.adminDisableUser('CUSTOMER', 'nobody'))).toBe('NOT_FOUND');
-  });
-
-  it('delete removes the user idempotently', async () => {
-    await idp.adminDeleteUser('CUSTOMER', CUSTOMER_ID);
-    await idp.adminDeleteUser('CUSTOMER', CUSTOMER_ID);
-    expect(db.state.users.size).toBe(0);
-    expect(db.state.refresh.size).toBe(0);
-    expect(await codeOf(idp.initiateAuth('CUSTOMER', CUSTOMER_ID, 'Sauna-Lover-2026'))).toBe('INVALID_CREDENTIALS');
+    await idp.adminDisableUser('STAFF', STAFF_EMAIL);
+    expect(await codeOf(idp.initiateAuth('STAFF', STAFF_EMAIL, STAFF_PASSWORD))).toBe('ACCOUNT_DISABLED');
+    expect(await codeOf(idp.refresh('STAFF', tokens.refreshToken))).toBe('SESSION_EXPIRED');
+    await idp.adminEnableUser('STAFF', STAFF_EMAIL);
+    tokensOf(await idp.initiateAuth('STAFF', STAFF_EMAIL, STAFF_PASSWORD));
+    expect(await codeOf(idp.adminDisableUser('STAFF', 'nobody'))).toBe('NOT_FOUND');
   });
 });
 
@@ -320,7 +215,6 @@ describe('LocalIdentityProvider: staff with TOTP', () => {
     const mfa = sessionOf(await idp.initiateAuth('STAFF', email, 'Staff-Secret-123'), 'SOFTWARE_TOKEN_MFA');
     const [id] = mfa.split('.');
     expect(await codeOf(idp.respondMfa('STAFF', `${id}.forged`, totp(secret, now())))).toBe('CHALLENGE_EXPIRED');
-    expect(await codeOf(idp.respondMfa('CUSTOMER', mfa, totp(secret, now())))).toBe('CHALLENGE_EXPIRED');
     for (let i = 0; i < 5; i++) await codeOf(idp.respondMfa('STAFF', mfa, '000000'));
     expect(await codeOf(idp.respondMfa('STAFF', mfa, totp(secret, now())))).toBe('CHALLENGE_EXPIRED');
     const late = sessionOf(await idp.initiateAuth('STAFF', email, 'Staff-Secret-123'), 'SOFTWARE_TOKEN_MFA');

@@ -35,17 +35,14 @@ describe('migrations and roles', () => {
   it('enables and forces RLS on every tenant table', async () => {
     const { rows } = await env.owner.query<{ relname: string; relrowsecurity: boolean; relforcerowsecurity: boolean }>(
       `SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
-       WHERE relname IN ('customers','customer_addresses','customer_consents','configurations','configuration_selections',
-                         'configuration_requests','request_notes','request_quotes','share_links','share_link_views','resellers')`);
-    expect(rows).toHaveLength(11);
+       WHERE relname IN ('configurations','configuration_selections','quotes','contacts','invoices','share_links','share_link_views','resellers')`);
+    expect(rows).toHaveLength(8);
     for (const r of rows) expect([r.relname, r.relrowsecurity, r.relforcerowsecurity]).toEqual([r.relname, true, true]);
   });
 
   it('loads reference data', async () => {
     expect(await count(env.owner, 'SELECT 1 FROM currencies')).toBe(8);
     expect(await count(env.owner, 'SELECT 1 FROM countries')).toBe(32);
-    expect(await count(env.owner, 'SELECT 1 FROM request_statuses WHERE is_terminal')).toBe(3);
-    expect(await count(env.owner, `SELECT 1 FROM request_status_transitions WHERE actor_kind = 'CUSTOMER'`)).toBe(4);
     expect(await count(env.owner, 'SELECT 1 FROM reserved_slugs')).toBe(17);
     const roles = await env.owner.query<{ code: string; tier: string; is_protected: boolean }>('SELECT code, tier, is_protected FROM asset_roles');
     expect(roles.rows).toHaveLength(13);
@@ -62,20 +59,17 @@ describe('dev seed', () => {
   });
 
   it('creates matching local IdP users with a verifiable scrypt hash', async () => {
-    const anna = await one<{ username: string; pool: string; password_hash: string; status: string }>(env.owner,
-      'SELECT username, pool, password_hash, status FROM idp.users WHERE sub = $1', [SEED.customers.annaAlpha]);
-    expect(anna).toMatchObject({ username: SEED.customers.annaAlpha, pool: 'CUSTOMER', status: 'CONFIRMED' });
-    expect(anna.password_hash).toMatch(/^scrypt\$16384\$8\$1\$/);
-    expect(await verifyPassword(SEED_PASSWORD, anna.password_hash)).toBe(true);
-    expect(await verifyPassword('wrong', anna.password_hash)).toBe(false);
+    const owner = await one<{ username: string; pool: string; password_hash: string; status: string }>(env.owner,
+      'SELECT username, pool, password_hash, status FROM idp.users WHERE username = $1', ['owner@alpha.test']);
+    expect(owner).toMatchObject({ pool: 'STAFF', status: 'CONFIRMED' });
+    expect(owner.password_hash).toMatch(/^scrypt\$16384\$8\$1\$/);
+    expect(await verifyPassword(SEED_PASSWORD, owner.password_hash)).toBe(true);
+    expect(await verifyPassword('wrong', owner.password_hash)).toBe(false);
+    expect(await count(env.owner, `SELECT 1 FROM idp.users WHERE pool <> 'STAFF'`)).toBe(0);
     const staff = await count(env.owner,
       `SELECT 1 FROM staff_users s JOIN idp.users u ON u.sub::text = s.idp_subject AND u.username = lower(s.email) AND u.pool = 'STAFF'
        WHERE NOT u.mfa_enabled`);
     expect(staff).toBe(5);
-  });
-
-  it('keeps the same e-mail as two customer accounts at alpha and beta', async () => {
-    expect(await count(env.owner, `SELECT 1 FROM customers WHERE lower(email) = 'anna@example.test'`)).toBe(2);
   });
 
   it('seeds translations (de, fr, it) for models, groups, options, rooms and attributes', async () => {
@@ -126,7 +120,7 @@ describe('client helpers', () => {
       const gamma = await one(c, `SELECT * FROM resolve_tenant('GAMMA')`);
       expect(gamma).toMatchObject({ slug: 'gamma', status: 'SUSPENDED', currency_code: 'SEK', manufacturer_id: SEED.manufacturerId });
       expect(await count(c, `SELECT * FROM resolve_tenant('nope')`)).toBe(0);
-      await expectCode(c.query('SELECT * FROM customers'), 'INSUFFICIENT_PRIVILEGE');
+      await expectCode(c.query('SELECT * FROM configurations'), 'INSUFFICIENT_PRIVILEGE');
     } finally {
       await c.end();
     }
@@ -134,8 +128,6 @@ describe('client helpers', () => {
 
   it('withTx validates its context and rolls back on error', async () => {
     await expect(withTx(env.api, { role: 'app_tenant', resellerId: 'not-a-uuid' }, async () => 1)).rejects.toThrow(TypeError);
-    await expect(withTx(env.api, { role: 'app_tenant', actorStaffId: SEED.staff.alphaOwner, actorCustomerId: SEED.customers.annaAlpha },
-      async () => 1)).rejects.toThrow(/not both/);
     await expect(withTx(env.api, { role: 'superuser' as never }, async () => 1)).rejects.toThrow(/unknown role/);
     await expect(tenant(env, ALPHA, async c => {
       await c.query(`UPDATE resellers SET default_share_expiry_days = 45 WHERE id = $1`, [ALPHA]);
