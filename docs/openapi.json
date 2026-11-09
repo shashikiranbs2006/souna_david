@@ -549,6 +549,106 @@
         }
       }
     },
+    "/api/shared/{token}/enquiry": {
+      "post": {
+        "operationId": "sharedEnquiry",
+        "summary": "POST /api/shared/:token/enquiry",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "tags": [
+          "public-catalog"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "public",
+        "x-lambda": "public-catalog",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {},
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharedEnquiryBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedActivityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Problem415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
     "/api/assets/session": {
       "post": {
         "operationId": "assetSession",
@@ -5274,6 +5374,109 @@
         }
       }
     },
+    "/api/admin/offers/{id}/send": {
+      "post": {
+        "operationId": "adminSendOffer",
+        "summary": "POST /api/admin/offers/:id/send",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "tags": [
+          "reseller-admin"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-staff",
+        "x-lambda": "reseller-admin",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminSendOfferBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCreateOfferResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Problem415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
     "/api/admin/offers/{id}/status": {
       "post": {
         "operationId": "adminOfferStatus",
@@ -6664,6 +6867,23 @@
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
           },
+          "opens": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "lastOpenedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "comment": {
             "type": [
               "string",
@@ -6785,6 +7005,8 @@
           "configuration",
           "quantity",
           "createdAt",
+          "opens",
+          "lastOpenedAt",
           "comment",
           "lines",
           "currency",
@@ -7353,6 +7575,23 @@
                   "type": "string",
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "opens": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "lastOpenedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -7364,7 +7603,9 @@
                 "contact",
                 "configuration",
                 "quantity",
-                "createdAt"
+                "createdAt",
+                "opens",
+                "lastOpenedAt"
               ],
               "additionalProperties": false
             }
@@ -8351,6 +8592,29 @@
           "defaultDiscount"
         ],
         "additionalProperties": false
+      },
+      "AdminSendOfferBody": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "de",
+              "fr",
+              "it"
+            ]
+          },
+          "expiresInDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          }
+        }
       },
       "AdminSettingsResponse": {
         "type": "object",
@@ -9389,6 +9653,36 @@
           "ok"
         ],
         "additionalProperties": false
+      },
+      "SharedEnquiryBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "message"
+        ]
       },
       "SharedResponse": {
         "type": "object",

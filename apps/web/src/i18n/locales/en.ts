@@ -598,6 +598,7 @@ const messages = {
       status: { ISSUED: 'Open', PAID: 'Paid', CANCELLED: 'Cancelled' },
     },
     contacts: {
+      opens: 'Link opened',
       sendQuote: 'Send quote by e-mail',
       sendQuoteTitle: 'Send this quote to the customer',
       sendQuoteBody: 'The customer receives an e-mail at {email} with the quote as a PDF and a link to see the sauna in 3D (view only).',

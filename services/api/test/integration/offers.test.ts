@@ -111,6 +111,10 @@ describe('contacts and quotes', () => {
 
     await h.client('alpha.localhost').get(`/api/shared/${token}`, { ...one, 'x-forwarded-for': '203.0.114.5' });
     expect(await opens()).toMatchObject({ opens: 2, visitors: 2 });
+    // The quotes list shows the same count and when the link was last opened.
+    const listed = await c.get(`/api/admin/offers?contactId=${contact.body.id}`);
+    expect(listed.body.items[0]).toMatchObject({ opens: 2 });
+    expect(listed.body.items[0].lastOpenedAt).not.toBeNull();
   });
 
   it('only lets an open quote change status, and only on its newest version', async () => {

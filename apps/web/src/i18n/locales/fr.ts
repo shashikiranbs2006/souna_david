@@ -620,6 +620,7 @@ export const fr: Messages = {
       status: { ISSUED: 'Ouverte', PAID: 'Payée', CANCELLED: 'Annulée' },
     },
     contacts: {
+      opens: 'Lien ouvert',
       sendQuote: 'Envoyer l’offre par e-mail',
       sendQuoteTitle: 'Envoyer cette offre au client',
       sendQuoteBody: 'Le client reçoit à {email} un e-mail avec l’offre en PDF et un lien pour voir le sauna en 3D (consultation seulement).',

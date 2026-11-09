@@ -68,6 +68,9 @@ export const offerSummarySchema = z.object({
   configuration: z.object({ id: uuid, name: z.string() }),
   quantity: z.number().int(),
   createdAt: isoDateTime,
+  /** Times the customer opened the newest link of this quote (bots and reloads are not counted). */
+  opens: z.number().int(),
+  lastOpenedAt: isoDateTime.nullable(),
 });
 export const offerSchema = offerSummarySchema.extend({
   comment: z.string().nullable(),

@@ -21,11 +21,16 @@ interface ContactRow {
 interface QuoteRow {
   id: string; number: number; version: number; unit_price_minor: string; status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'DECLINED'; quantity: number; comment: string | null;
   created_at: Date; contact_id: string; configuration_id: string; person_name: string; organisation: string | null; configuration_name: string | null;
+  opens: string; last_opened_at: Date | null;
 }
 
 const CONTACT_SQL = `select c.*, (select count(*) from quotes q where q.contact_id = c.id) as quotes from contacts c`;
-const QUOTE_SQL = `select q.*, c.person_name, c.organisation, cf.name as configuration_name
-  from quotes q join contacts c on c.id = q.contact_id join configurations cf on cf.id = q.configuration_id`;
+// opens / lastOpenedAt count the views of the newest customer link of the quote's configuration.
+const QUOTE_SQL = `select q.*, c.person_name, c.organisation, cf.name as configuration_name,
+    (select count(*) from share_link_views v where v.share_link_id = l.id) as opens,
+    (select max(v.viewed_at) from share_link_views v where v.share_link_id = l.id) as last_opened_at
+  from quotes q join contacts c on c.id = q.contact_id join configurations cf on cf.id = q.configuration_id
+  left join lateral (select s.id from share_links s where s.configuration_id = q.configuration_id order by s.created_at desc limit 1) l on true`;
 
 const contactDto = (r: ContactRow) => ({
   id: r.id, personName: r.person_name, organisation: r.organisation, email: r.email, mobile: r.mobile, notes: r.notes,
@@ -36,6 +41,7 @@ const quoteSummary = (r: QuoteRow) => ({
   contact: { id: r.contact_id, personName: r.person_name, organisation: r.organisation },
   configuration: { id: r.configuration_id, name: r.configuration_name ?? '' },
   quantity: r.quantity, createdAt: r.created_at.toISOString(),
+  opens: Number(r.opens), lastOpenedAt: r.last_opened_at ? r.last_opened_at.toISOString() : null,
 });
 
 /** Allowed status changes. ACCEPTED and DECLINED are final; a change after that is a new version. */

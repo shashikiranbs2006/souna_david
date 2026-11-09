@@ -36,6 +36,7 @@ export function QuotesList() {
     },
     { key: 'c', header: t('admin.nav.contacts'), cell: o => o.contact.personName, hideOnMobile: true },
     { key: 's', header: t('staff.status'), cell: o => <Badge tone={o.status === 'ACCEPTED' ? 'outline' : 'muted'}>{t(`admin.contacts.status.${o.status}` as TKey)}</Badge> },
+    { key: 'o', header: t('admin.contacts.opens'), align: 'end', cell: o => <span className="mono">{o.opens > 0 ? `${o.opens}${o.lastOpenedAt ? ' · ' + fmt.date(o.lastOpenedAt, 'short') : ''}` : '–'}</span>, sortValue: o => o.opens, hideOnMobile: true },
     { key: 'd', header: t('admin.contacts.since'), align: 'end', cell: o => <span className="mono staff-muted">{fmt.date(o.createdAt, 'short')}</span>, hideOnMobile: true },
   ];
   return (
