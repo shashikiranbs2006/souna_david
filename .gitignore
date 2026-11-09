@@ -24,3 +24,5 @@ output.log
 __pycache__/
 *.pyc
 .scratch/
+
+.claude/worktrees/
