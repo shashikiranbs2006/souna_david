@@ -1149,4 +1149,12 @@ export const fr: Messages = {
     openDoor: 'Ouvrir la porte',
     closeDoor: 'Fermer la porte',
   },
+  arRoom: {
+    button: 'Voir dans votre pièce',
+    open: 'Ouvrir dans votre pièce',
+    preparing: 'Préparation de votre sauna pour la RA…',
+    ready: 'Prêt. Touchez à nouveau pour placer le sauna en taille réelle dans votre pièce.',
+    error: 'La vue en RA n’a pas pu être préparée. Veuillez réessayer.',
+    notSupported: 'La RA fonctionne sur les smartphones et tablettes avec ARCore (Android) ou ARKit (iPhone, iPad). Ouvrez ce lien sur votre smartphone pour placer le sauna en taille réelle dans votre pièce.',
+  },
 };

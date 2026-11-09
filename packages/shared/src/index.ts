@@ -7,6 +7,7 @@ export * from './account.ts';
 export * from './configurations.ts';
 export * from './requests.ts';
 export * from './sharing.ts';
+export * from './ar.ts';
 export * from './admin.ts';
 export * from './manufacturer.ts';
 export * from './routes.ts';

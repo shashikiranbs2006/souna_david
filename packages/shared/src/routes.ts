@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import * as account from './account.ts';
 import * as admin from './admin.ts';
+import * as ar from './ar.ts';
 import * as auth from './auth.ts';
 import * as catalog from './catalog.ts';
 import { ok, page, pageQuery } from './common.ts';
@@ -31,6 +32,8 @@ export interface RouteDef {
   response: z.ZodType;
   /** 201 for creations, 202 for accepted async work. */
   status?: 200 | 201 | 202 | 204;
+  /** Largest JSON body this route accepts, when it needs more than the default 1 MB (file hand-offs). */
+  maxBodyBytes?: number;
 }
 
 const r = <const T extends RouteDef>(d: T) => d;
@@ -45,6 +48,7 @@ export const routes = {
   sharedActivity: r({ method: 'POST', path: '/api/shared/:token/activity', fn: 'public-catalog', access: 'public', host: 'storefront', body: quo.shareActivityRequest, response: ok }),
   assetSession: r({ method: 'POST', path: '/api/assets/session', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.assetSessionRequest, response: catalog.assetSessionResponse }),
   assetAr: r({ method: 'POST', path: '/api/assets/ar', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.arRequest, response: catalog.arResponse }),
+  sharedArFiles: r({ method: 'POST', path: '/api/shared/:token/ar-files', fn: 'asset-signer', access: 'public', host: 'storefront', body: ar.sharedArFilesRequest, response: ar.sharedArFilesResponse, maxBodyBytes: ar.AR_FILES_MAX_BODY_BYTES }),
 
   // ---- session (both hosts) -------------------------------------------
   session: r({ method: 'GET', path: '/api/auth/session', fn: 'customer', access: 'public', host: 'any', response: auth.sessionSchema }),

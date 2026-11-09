@@ -11,6 +11,7 @@ import { registerQuotes } from './routes/quotes.ts';
 import { registerInvoices } from './routes/invoices.ts';
 import { registerAssets } from './routes/assets.ts';
 import { registerAuth } from './routes/auth.ts';
+import { registerSharedAr } from './routes/sharedAr.ts';
 import { registerCatalog } from './routes/catalog.ts';
 import { registerConfigurations } from './routes/configurations.ts';
 import { registerManufacturer } from './routes/manufacturer.ts';
@@ -51,7 +52,10 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
     if (!has('reseller-admin')) registerStaffAuth(app);
     registerManufacturer(app);
   }
-  if (has('asset-signer')) registerAssets(app);
+  if (has('asset-signer')) {
+    registerAssets(app);
+    registerSharedAr(app);
+  }
 
   app.get('/api/health', c => c.json({ ok: true }));
   // Readiness: the database answers. No detail in the body, errors go to the log only.

@@ -1,0 +1,19 @@
+.ar-room__status {
+  margin: var(--space-2) 0 0;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  max-width: 44ch;
+}
+
+.ar-room__status.is-error {
+  color: var(--ink);
+}
+
+.ar-room__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}

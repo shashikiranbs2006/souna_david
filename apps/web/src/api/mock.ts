@@ -467,7 +467,20 @@ const handlers: Partial<Record<RouteName, Handler>> = {
   },
   assetSession: () => ({ tier: state.customer ? 'FULL' : 'LOW', expiresAt: new Date(Date.now() + 600_000).toISOString() }),
   assetAr: () => ({ glbUrl: null, usdzUrl: null, expiresAt: new Date(Date.now() + 300_000).toISOString() }),
+  // The real API stores the files and signs URLs; the mock keeps blob: URLs (they do not open on a phone).
+  sharedArFiles: ({ params, body }) => {
+    const b = (body ?? {}) as { glb?: string; usdz?: string };
+    const expiresAt = new Date(Date.now() + 300_000).toISOString();
+    const known = mockArFiles.get(params.token!);
+    if (known) return { ready: true, reused: true, ...known, expiresAt };
+    if (!b.glb || !b.usdz) return { ready: false, reused: false, glbUrl: null, usdzUrl: null, expiresAt: null };
+    const url = (data: string, type: string) => URL.createObjectURL(new Blob([Uint8Array.from(atob(data), c => c.charCodeAt(0))], { type }));
+    const files = { glbUrl: url(b.glb, 'model/gltf-binary'), usdzUrl: url(b.usdz, 'model/vnd.usdz+zip') };
+    mockArFiles.set(params.token!, files);
+    return { ready: true, reused: false, ...files, expiresAt };
+  },
 };
+const mockArFiles = new Map<string, { glbUrl: string; usdzUrl: string }>();
 
 // ---- reseller admin (mock) -------------------------------------------------------
 // Staff sign-in: any e-mail, password "wrong" fails, then any 6-digit code but 000000.

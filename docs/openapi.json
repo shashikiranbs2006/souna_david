@@ -747,6 +747,106 @@
         }
       }
     },
+    "/api/shared/{token}/ar-files": {
+      "post": {
+        "operationId": "sharedArFiles",
+        "summary": "POST /api/shared/:token/ar-files",
+        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "tags": [
+          "asset-signer"
+        ],
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "public",
+        "x-lambda": "asset-signer",
+        "servers": [
+          {
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
+            "variables": {
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
+              }
+            }
+          }
+        ],
+        "security": [
+          {},
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CsrfToken"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharedArFilesBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedArFilesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem401"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Problem410"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem413"
+          },
+          "415": {
+            "$ref": "#/components/responses/Problem415"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem422"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Problem500"
+          }
+        }
+      }
+    },
     "/api/auth/session": {
       "get": {
         "operationId": "session",
@@ -17481,6 +17581,66 @@
         },
         "required": [
           "ok"
+        ],
+        "additionalProperties": false
+      },
+      "SharedArFilesBody": {
+        "type": "object",
+        "properties": {
+          "glb": {
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 16777224,
+            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+          },
+          "usdz": {
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 16777224,
+            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+          }
+        }
+      },
+      "SharedArFilesResponse": {
+        "type": "object",
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "reused": {
+            "type": "boolean"
+          },
+          "glbUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "usdzUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ready",
+          "reused",
+          "glbUrl",
+          "usdzUrl",
+          "expiresAt"
         ],
         "additionalProperties": false
       },
