@@ -45,7 +45,7 @@ describe('single-shop edition', () => {
     const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'For Keller' });
     const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 7 });
     expect(link.status, JSON.stringify(link.body)).toBe(201);
-    const token = /\/s\/([A-Za-z0-9_-]{20,})$/.exec(link.body.url)![1]!;
+    const token = /\/s\/([A-Za-z0-9_-]{10})$/.exec(link.body.url)![1]!;
     const visitor = shop();
     const view = await visitor.get(`/api/shared/${token}`);
     expect(view.status).toBe(200);

@@ -70,7 +70,7 @@ describe('contacts and quotes', () => {
     expect(none.body).toMatchObject({ link: null, opens: 0, score: { level: 'NONE' } });
 
     const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 14 });
-    const token = /\/s\/([A-Za-z0-9_-]{20,})$/.exec(link.body.url)![1]!;
+    const token = /\/s\/([A-Za-z0-9_-]{10})$/.exec(link.body.url)![1]!;
     // The shop's own open does not count.
     expect((await c.get(`/api/shared/${token}`)).status).toBe(200);
     expect((await c.get(`/api/admin/offers/${offer.body.id}/tracking`)).body.opens).toBe(0);

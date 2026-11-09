@@ -12,7 +12,7 @@ import {
 } from '../domain/configurations.ts';
 import { loadModel } from '../domain/catalog.ts';
 import { buildRequestDto, customerTransition, listRequestSummaries, submitRequest } from '../domain/requests.ts';
-import { resolveShareToken } from '../domain/sharing.ts';
+import { resolveShareLink } from '../domain/sharing.ts';
 
 /** Drops the internal sort key the domain lists carry for cursors. */
 const strip = <T extends { _at: string }>({ _at, ...rest }: T) => rest;
@@ -129,7 +129,7 @@ export function registerConfigurations(app: Hono<AppEnv>): void {
     const locale = requestLocale(c);
     const now = c.get('deps').now();
     return tenantTx(c, async db => {
-      const link = await resolveShareToken(db, params.token!, now);
+      const link = await resolveShareLink(c, db, params.token!);
       const source = await getConfigRow(db, link.configuration_id, { staff: true });
       // Review C5: the copy is locked with a fresh price snapshot, so it can be requested as is
       // (and cloned again to edit).

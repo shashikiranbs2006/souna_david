@@ -38,6 +38,8 @@ const schema = z.object({
   AR_URL_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(300),
   /** In-process rate limits for auth and share routes; the WAF does this in AWS. */
   RATE_LIMIT: bool.default(true),
+  /** Optional Redis for the share-link cache (redis://:password@host:port). Unset = in-process cache. */
+  REDIS_URL: z.string().url().optional().or(z.literal('').transform(() => undefined)),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 

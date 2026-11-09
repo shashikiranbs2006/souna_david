@@ -139,7 +139,7 @@ describe('reseller admin: share links', () => {
     const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 7 });
     expect(link.status, JSON.stringify(link.body)).toBe(201);
     expect(link.headers.get('cache-control')).toBe('no-store');
-    const m = /^http:\/\/alpha\.localhost(?::\d+)?\/s\/([A-Za-z0-9_-]{20,})$/.exec(link.body.url);
+    const m = /^http:\/\/alpha\.localhost(?::\d+)?\/s\/([A-Za-z0-9_-]{10})$/.exec(link.body.url);
     expect(m, link.body.url).not.toBeNull();
     const token = m![1]!;
     expect(new Date(link.body.expiresAt).getTime() - Date.now()).toBeGreaterThan(6 * DAY);

@@ -8,6 +8,7 @@
 #
 # It only creates things of its own and refuses to continue if a port it needs is taken:
 #   - Docker container `holz-sauna-db` (Postgres 16, bound to 127.0.0.1:5433) and its own volume
+#   - Docker container `holz-sauna-redis` (Redis 7, bound to 127.0.0.1:6380, password-protected)
 #   - /opt/holz_sauna/.env and .env.deploy (generated secrets, mode 600, owner holz_sauna)
 #   - /etc/systemd/system/holz-sauna.service
 #   - /etc/nginx/sites-available/holz_sauna (+ symlink in sites-enabled)
@@ -24,6 +25,8 @@ PORT=3010
 DB_PORT=5433
 SERVICE=holz-sauna
 DB_CONTAINER=holz-sauna-db
+REDIS_PORT=6380
+REDIS_CONTAINER=holz-sauna-redis
 
 [ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
 id "$APP_USER" >/dev/null 2>&1 || { echo "user $APP_USER does not exist" >&2; exit 1; }
@@ -34,6 +37,9 @@ command -v nginx >/dev/null || { echo "nginx is not installed" >&2; exit 1; }
 port_taken() { ss -Hltn "sport = :$1" | grep -q .; }
 if ! docker ps -a --format '{{.Names}}' | grep -qx "$DB_CONTAINER"; then
   port_taken "$DB_PORT" && { echo "port $DB_PORT is already in use" >&2; exit 1; }
+fi
+if ! docker ps -a --format '{{.Names}}' | grep -qx "$REDIS_CONTAINER"; then
+  port_taken "$REDIS_PORT" && { echo "port $REDIS_PORT is already in use" >&2; exit 1; }
 fi
 if ! systemctl is-active --quiet "$SERVICE"; then
   port_taken "$PORT" && { echo "port $PORT is already in use" >&2; exit 1; }
@@ -80,6 +86,14 @@ ENV
 fi
 install -d -o "$APP_USER" -g "$APP_USER" -m 750 "$BASE/data" "$BASE/data/objects"
 DB_SUPER_PW=$(grep '^DATABASE_URL=' "$BASE/.env.deploy" | sed -E 's#.*://sauna:([^@]+)@.*#\1#')
+# Redis password: generated once; appended to an existing .env that predates Redis.
+if ! grep -q '^REDIS_URL=' "$BASE/.env"; then
+  echo "REDIS_URL=redis://:$(rand 24)@127.0.0.1:${REDIS_PORT}" >> "$BASE/.env"
+  chown "$APP_USER:$APP_USER" "$BASE/.env"
+  chmod 600 "$BASE/.env"
+  echo "added REDIS_URL to $BASE/.env"
+fi
+REDIS_PW=$(grep '^REDIS_URL=' "$BASE/.env" | sed -E 's#^REDIS_URL=redis://:([^@]+)@.*#\1#')
 ORIGIN_SECRET=$(grep '^ORIGIN_SECRET=' "$BASE/.env" | cut -d= -f2-)
 
 # ---- Postgres (own container, own volume, localhost only) --------------------------------
@@ -97,6 +111,17 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 docker exec "$DB_CONTAINER" pg_isready -U sauna >/dev/null
+
+# ---- Redis (own container, localhost only, share-link cache; the app also works without it) --
+if ! docker ps -a --format '{{.Names}}' | grep -qx "$REDIS_CONTAINER"; then
+  docker run -d --name "$REDIS_CONTAINER" --restart unless-stopped \
+    -p "127.0.0.1:${REDIS_PORT}:6379" -v holz_sauna_redisdata:/data \
+    redis:7-alpine redis-server --requirepass "$REDIS_PW" --save "" --appendonly no \
+    --maxmemory 64mb --maxmemory-policy allkeys-lru >/dev/null
+  echo "started container $REDIS_CONTAINER"
+else
+  docker start "$REDIS_CONTAINER" >/dev/null 2>&1 || true
+fi
 
 # ---- systemd service ----------------------------------------------------------------------
 cat > "/etc/systemd/system/${SERVICE}.service" <<UNIT

@@ -4,6 +4,7 @@ import type { HostKind } from '@saunaklar/shared';
 import type { Adapters } from './adapters/index.ts';
 import type { Config } from './config.ts';
 import type { Logger } from './lib/log.ts';
+import type { ShareLinkCache } from './lib/shareLinkCache.ts';
 
 export interface Deps {
   config: Config;
@@ -11,6 +12,8 @@ export interface Deps {
   adapters: Adapters;
   log: Logger;
   now: () => Date;
+  /** Share-link cache; absent = an in-process one is created on first use (see shareCacheOf). */
+  shareCache?: ShareLinkCache;
 }
 
 export interface TenantInfo {

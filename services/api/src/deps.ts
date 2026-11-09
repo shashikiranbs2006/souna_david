@@ -4,6 +4,7 @@ import { createAdapters } from './adapters/index.ts';
 import type { Deps } from './context.ts';
 import { loadConfig, type Config } from './config.ts';
 import { createLogger } from './lib/log.ts';
+import { createShareLinkCache } from './lib/shareLinkCache.ts';
 
 /**
  * Builds the database pool. In AWS the function's DB user authenticates with
@@ -35,5 +36,5 @@ export function buildDeps(env: Record<string, string | undefined> = process.env)
   const pool = createDbPool(config, env);
   const log = createLogger(config.LOG_LEVEL, { service: env.AWS_LAMBDA_FUNCTION_NAME ?? 'api' });
   const adapters = createAdapters(env, { pool, log });
-  return { config, pool, adapters, log, now: () => new Date() };
+  return { config, pool, adapters, log, now: () => new Date(), shareCache: createShareLinkCache(config.REDIS_URL, log) };
 }
