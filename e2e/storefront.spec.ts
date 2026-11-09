@@ -21,7 +21,7 @@ test.describe('storefront', () => {
 
   test('the language switcher changes the UI and the catalogue texts to French', async ({ page }) => {
     await page.goto('/saunas/espoo-compact');
-    await expect(page.getByText('A two-person indoor sauna', { exact: false }).first()).toBeVisible();
+    await expect(page.getByText('A compact two-person sauna', { exact: false }).first()).toBeVisible();
     await expect(page.getByText(/^Nordic spruce/).first()).toBeVisible();
 
     await page.getByRole('button', { name: new RegExp(`^${en.nav.language}`) }).first().click();
@@ -31,7 +31,7 @@ test.describe('storefront', () => {
     // UI strings come from fr.ts: the nav is now French, the English label is gone.
     expect(fr.nav.howItWorks).not.toBe(en.nav.howItWorks);
     await expect(page.getByRole('link', { name: fr.nav.howItWorks, exact: true }).first()).toBeVisible();
-    await expect(page.getByText('Sauna d’intérieur pour deux personnes', { exact: false }).first()).toBeVisible();
+    await expect(page.getByText('Sauna compact pour deux personnes', { exact: false }).first()).toBeVisible();
     await expect(page.getByText(/^Épicéa nordique/).first()).toBeVisible();
     await expect(page.getByText(/^Nordic spruce/)).toHaveCount(0);
 
