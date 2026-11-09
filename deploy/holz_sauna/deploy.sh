@@ -26,12 +26,17 @@ cd "$APP"
 # ---- Node (version from .nvmrc, installed with nvm under this user only) ------------------
 export NVM_DIR="$HOME/.nvm"
 if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash
+  # The installer warns about a missing shell profile and may exit non-zero; what counts is nvm.sh.
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE=/dev/null bash || true
 fi
+[ -s "$NVM_DIR/nvm.sh" ] || { echo "nvm could not be installed" >&2; exit 1; }
+# nvm is not written for `set -eu`: it returns non-zero in normal cases and would end the script.
+set +eu
 # shellcheck disable=SC1091
 . "$NVM_DIR/nvm.sh"
-nvm install >/dev/null
-nvm use >/dev/null
+nvm install || { echo "nvm install failed" >&2; exit 1; }
+nvm use || { echo "nvm use failed" >&2; exit 1; }
+set -eu
 ln -sfn "$(dirname "$(dirname "$(command -v node)")")" "$BASE/node"
 node --version
 
