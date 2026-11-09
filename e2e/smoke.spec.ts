@@ -48,7 +48,7 @@ test.describe('local server smoke', () => {
     test.use({ locale: 'fr-FR' });
     test('localises catalogue texts by Accept-Language', async ({ page }) => {
       const { body } = await getJson<Detail>(page, `${ALPHA}/api/catalog/saunas/espoo-compact`);
-      expect(body.description).toContain('Sauna d’intérieur pour deux personnes');
+      expect(body.description).toContain('Sauna compact pour deux personnes');
       const wood = body.groups.find(g => g.code === 'wood')!;
       expect(wood.options.map(o => o.name)).toContain('Épicéa nordique');
     });

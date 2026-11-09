@@ -73,13 +73,13 @@ const en: MailStrings = {
   status: {
     SUBMITTED: 'Submitted',
     IN_REVIEW: 'In review',
-    QUOTED: 'Quoted',
+    QUOTED: 'Offer sent',
     ACCEPTED: 'Accepted',
     CLOSED: 'Closed',
     REJECTED: 'Declined',
     CANCELLED: 'Cancelled',
   },
-  labels: { reference: 'Reference', sauna: 'Sauna', configuredPrice: 'Configured price', quotedPrice: 'Quoted price', validUntil: 'Valid until', email: 'E-mail' },
+  labels: { reference: 'Reference', sauna: 'Sauna', configuredPrice: 'Configured price', quotedPrice: 'Offer price', validUntil: 'Valid until', email: 'E-mail' },
   signupCode: {
     subject: (b) => `Your ${b} verification code`,
     preheader: (c) => `Your code is ${c}`,
@@ -107,7 +107,7 @@ const en: MailStrings = {
     subject: (r) => `We received your request ${r}`,
     preheader: (s) => `${s}: request received`,
     heading: 'Thank you for your request',
-    body: (s) => `We have received your request for the configured ${s}. Our team will review it and get back to you.`,
+    body: (s) => `We have received your request for the configured ${s}. We will review it and get back to you.`,
     view: 'View your request',
   },
   requestSubmittedStaff: {
@@ -125,10 +125,10 @@ const en: MailStrings = {
     view: 'View your request',
   },
   quoteAdded: {
-    subject: (r, a) => `Your quote for ${r}: ${a}`,
+    subject: (r, a) => `Your offer for ${r}: ${a}`,
     preheader: (d) => `Valid until ${d}`,
-    heading: 'Your quote is ready',
-    body: (r) => `We have prepared a quote for your request ${r}.`,
+    heading: 'Your offer is ready',
+    body: (r) => `We have prepared an offer for your request ${r}.`,
     cta: 'Review and accept',
   },
   shareLinkCreated: {

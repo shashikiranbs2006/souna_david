@@ -98,24 +98,24 @@ const GROUPS: GroupDef[] = [
   { code: 'bench-front', name: 'Bench front', description: 'The face under the benches.', type: 'SINGLE', required: false,
     tr: { de: ['Bankfront', 'Die Front unter den Bänken.'], fr: ['Façade des bancs', 'La façade sous les bancs.'], it: ['Frontale delle panche', 'Il frontale sotto le panche.'] } },
   { code: 'bench-end', name: 'Bench ends', description: 'How the open ends of the benches are finished.', type: 'SINGLE', required: false,
-    tr: { de: ['Bankabschluss', 'Wie die offenen Enden der Bänke abschließen.'], fr: ['Extrémités des bancs', 'La finition des extrémités ouvertes des bancs.'], it: ['Testate delle panche', 'La finitura delle estremità aperte delle panche.'] } },
+    tr: { de: ['Bankabschluss', 'Wie die offenen Enden der Bänke abschliessen.'], fr: ['Extrémités des bancs', 'La finition des extrémités ouvertes des bancs.'], it: ['Testate delle panche', 'La finitura delle estremità aperte delle panche.'] } },
   { code: 'bench-edge', name: 'Bench edge', description: 'The profile of the front edge of each seat.', type: 'SINGLE', required: false,
     tr: { de: ['Bankkante', 'Das Profil der Vorderkante jeder Sitzfläche.'], fr: ['Chant des bancs', 'Le profil du chant avant de chaque assise.'], it: ['Bordo delle panche', 'Il profilo del bordo anteriore di ogni seduta.'] } },
   { code: 'backrest', name: 'Backrest', description: 'Support for your back on the upper bench.', type: 'SINGLE', required: false,
     tr: { de: ['Rückenlehne', 'Halt für den Rücken auf der oberen Bank.'], fr: ['Dossier', 'Un appui pour le dos sur le banc supérieur.'], it: ['Schienale', 'Un sostegno per la schiena sulla panca superiore.'] } },
   { code: 'exterior', name: 'Exterior cladding', description: 'The outer skin of a free-standing sauna.', type: 'SINGLE', required: false,
-    tr: { de: ['Außenverkleidung', 'Die Außenhaut einer frei stehenden Sauna.'], fr: ['Bardage extérieur', 'L’enveloppe extérieure d’un sauna autonome.'], it: ['Rivestimento esterno', 'Il rivestimento esterno di una sauna indipendente.'] } },
+    tr: { de: ['Aussenverkleidung', 'Die Aussenhaut einer frei stehenden Sauna.'], fr: ['Bardage extérieur', 'L’enveloppe extérieure d’un sauna autonome.'], it: ['Rivestimento esterno', 'Il rivestimento esterno di una sauna indipendente.'] } },
   { code: 'lighting', name: 'Lighting', description: 'Light inside the cabin; combine as you like.', type: 'MULTI', required: false,
     tr: { de: ['Beleuchtung', 'Licht in der Kabine, frei kombinierbar.'], fr: ['Éclairage', 'L’éclairage de la cabine, à combiner librement.'], it: ['Illuminazione', 'Luce nella cabina, combinabile a piacere.'] } },
   { code: 'extras', name: 'Extras', description: 'Comfort and wellness additions.', type: 'MULTI', required: false,
     tr: { de: ['Extras', 'Zusätze für Komfort und Wohlbefinden.'], fr: ['Options supplémentaires', 'Compléments de confort et de bien-être.'], it: ['Extra', 'Accessori per comfort e benessere.'] } },
   // Size groups of parametric (model_source = reference) saunas; option codes carry millimetres.
   { code: 'width', name: 'Width', description: 'Outer width of the cabin along the long bench wall.', type: 'SINGLE', required: true,
-    tr: { de: ['Breite', 'Außenbreite der Kabine entlang der langen Bankwand.'], fr: ['Largeur', 'Largeur extérieure de la cabine le long de la paroi du grand banc.'], it: ['Larghezza', 'Larghezza esterna della cabina lungo la parete della panca lunga.'] } },
+    tr: { de: ['Breite', 'Aussenbreite der Kabine entlang der langen Bankwand.'], fr: ['Largeur', 'Largeur extérieure de la cabine le long de la paroi du grand banc.'], it: ['Larghezza', 'Larghezza esterna della cabina lungo la parete della panca lunga.'] } },
   { code: 'depth', name: 'Depth', description: 'Outer depth from the back wall to the glass front.', type: 'SINGLE', required: true,
-    tr: { de: ['Tiefe', 'Außentiefe von der Rückwand bis zur Glasfront.'], fr: ['Profondeur', 'Profondeur extérieure de la paroi du fond à la façade vitrée.'], it: ['Profondità', 'Profondità esterna dalla parete di fondo alla vetrata.'] } },
+    tr: { de: ['Tiefe', 'Aussentiefe von der Rückwand bis zur Glasfront.'], fr: ['Profondeur', 'Profondeur extérieure de la paroi du fond à la façade vitrée.'], it: ['Profondità', 'Profondità esterna dalla parete di fondo alla vetrata.'] } },
   { code: 'height', name: 'Height', description: 'Outer height; both bench levels follow it.', type: 'SINGLE', required: true,
-    tr: { de: ['Höhe', 'Außenhöhe; beide Bankebenen passen sich an.'], fr: ['Hauteur', 'Hauteur extérieure ; les deux niveaux de bancs suivent.'], it: ['Altezza', 'Altezza esterna; entrambi i livelli delle panche si adeguano.'] } },
+    tr: { de: ['Höhe', 'Aussenhöhe; beide Bankebenen passen sich an.'], fr: ['Hauteur', 'Hauteur extérieure ; les deux niveaux de bancs suivent.'], it: ['Altezza', 'Altezza esterna; entrambi i livelli delle panche si adeguano.'] } },
 ];
 
 /** Option codes use the words the 3D construction kit reads (apps/web/src/three/kit/spec.ts). */
@@ -143,9 +143,9 @@ const REFERENCE_ASPECT_RANGE = [0.78, 1.30] as const;
 
 function sizeOptions(): OptionDef[] {
   const words = {
-    width: { en: 'width', de: 'Außenbreite', fr: 'Largeur', it: 'Larghezza' },
-    depth: { en: 'depth', de: 'Außentiefe', fr: 'Profondeur', it: 'Profondità' },
-    height: { en: 'height', de: 'Außenhöhe', fr: 'Hauteur', it: 'Altezza' },
+    width: { en: 'width', de: 'Aussenbreite', fr: 'Largeur', it: 'Larghezza' },
+    depth: { en: 'depth', de: 'Aussentiefe', fr: 'Profondeur', it: 'Profondità' },
+    height: { en: 'height', de: 'Aussenhöhe', fr: 'Hauteur', it: 'Altezza' },
   };
   return (Object.keys(REFERENCE_SIZES) as (keyof typeof REFERENCE_SIZES)[]).flatMap(group =>
     REFERENCE_SIZES[group].map((size): OptionDef => {
@@ -157,7 +157,7 @@ function sizeOptions(): OptionDef[] {
         code: `${group}-${mm}`, group, name, eur, only: [REFERENCE_SLUG], isDefault: ref,
         description: `Outer ${w.en} ${mm} mm${ref ? ', the measured reference size' : ''}.`,
         tr: {
-          de: [name, `${w.de} ${mm} mm${ref ? ', gemessene Referenzgröße' : ''}.`],
+          de: [name, `${w.de} ${mm} mm${ref ? ', gemessene Referenzgrösse' : ''}.`],
           fr: [name, `${w.fr} extérieure ${mm} mm${ref ? ', taille de référence mesurée' : ''}.`],
           it: [name, `${w.it} esterna ${mm} mm${ref ? ', misura di riferimento rilevata' : ''}.`],
         },
@@ -189,11 +189,11 @@ const OPTIONS: OptionDef[] = [
   { code: 'heater-6kw', group: 'heater', name: 'Electric heater 6 kW', eur: 0, description: 'Compact electric heater for small cabins.',
     tr: { de: ['Elektroofen 6 kW', 'Kompakter Elektroofen für kleine Kabinen.'], fr: ['Poêle électrique 6 kW', 'Poêle électrique compact pour petites cabines.'], it: ['Stufa elettrica 6 kW', 'Stufa elettrica compatta per cabine piccole.'] } },
   { code: 'heater-9kw', group: 'heater', name: 'Electric heater 9 kW', eur: 39000, description: 'More output for larger cabins and a faster heat-up.',
-    tr: { de: ['Elektroofen 9 kW', 'Mehr Leistung für größere Kabinen und schnelleres Aufheizen.'], fr: ['Poêle électrique 9 kW', 'Plus de puissance pour les grandes cabines et une montée en température plus rapide.'], it: ['Stufa elettrica 9 kW', 'Più potenza per cabine grandi e un riscaldamento più rapido.'] } },
+    tr: { de: ['Elektroofen 9 kW', 'Mehr Leistung für grössere Kabinen und schnelleres Aufheizen.'], fr: ['Poêle électrique 9 kW', 'Plus de puissance pour les grandes cabines et une montée en température plus rapide.'], it: ['Stufa elettrica 9 kW', 'Più potenza per cabine grandi e un riscaldamento più rapido.'] } },
   { code: 'heater-wood', group: 'heater', name: 'Wood-fired stove', eur: 119000, description: 'Traditional wood-burning stove with a soft, crackling heat.',
     tr: { de: ['Holzofen', 'Traditioneller Holzofen mit weicher, knisternder Wärme.'], fr: ['Poêle à bois', 'Poêle à bois traditionnel à la chaleur douce et crépitante.'], it: ['Stufa a legna', 'Stufa a legna tradizionale dal calore morbido e scoppiettante.'] } },
   { code: 'heater-storage', group: 'heater', name: 'Storage heater', eur: 99000, description: 'A tall tower of stones that holds an even, gentle heat.',
-    tr: { de: ['Speicherofen', 'Ein hoher Steinturm, der eine gleichmäßige, sanfte Wärme hält.'], fr: ['Poêle à accumulation', 'Une haute tour de pierres qui garde une chaleur douce et régulière.'], it: ['Stufa ad accumulo', 'Un’alta torre di pietre che mantiene un calore dolce e uniforme.'] } },
+    tr: { de: ['Speicherofen', 'Ein hoher Steinturm, der eine gleichmässige, sanfte Wärme hält.'], fr: ['Poêle à accumulation', 'Une haute tour de pierres qui garde une chaleur douce et régulière.'], it: ['Stufa ad accumulo', 'Un’alta torre di pietre che mantiene un calore dolce e uniforme.'] } },
   { code: 'control-basic', group: 'control', name: 'Basic control panel', eur: 29000, description: 'Wall panel for temperature and timer.',
     tr: { de: ['Basis-Steuerung', 'Wandbedienteil für Temperatur und Zeitschaltung.'], fr: ['Commande de base', 'Panneau mural pour la température et la minuterie.'], it: ['Centralina base', 'Pannello a parete per temperatura e timer.'] } },
   { code: 'control-wifi', group: 'control', name: 'Wi-Fi control with app', eur: 59000, description: 'Wall panel plus an app to preheat the sauna from anywhere.',
@@ -203,7 +203,7 @@ const OPTIONS: OptionDef[] = [
   { code: 'door-bronze', group: 'door', name: 'Bronze glass door', eur: 19000, description: 'Bronze-tinted glass for a warmer light and more privacy.',
     tr: { de: ['Bronzeglastür', 'Bronzefarben getöntes Glas für wärmeres Licht und mehr Privatsphäre.'], fr: ['Porte en verre bronze', 'Verre teinté bronze pour une lumière plus chaude et plus d’intimité.'], it: ['Porta in vetro bronzato', 'Vetro bronzato per una luce più calda e più riservatezza.'] } },
   { code: 'door-satin', group: 'door', name: 'Satin glass door', eur: 21000, description: 'Frosted glass: lets the light in, keeps the view out.',
-    tr: { de: ['Satinierte Glastür', 'Mattiertes Glas: lässt Licht herein, hält Blicke draußen.'], fr: ['Porte en verre satiné', 'Verre dépoli : laisse passer la lumière, pas les regards.'], it: ['Porta in vetro satinato', 'Vetro satinato: lascia passare la luce, non gli sguardi.'] } },
+    tr: { de: ['Satinierte Glastür', 'Mattiertes Glas: lässt Licht herein, hält Blicke draussen.'], fr: ['Porte en verre satiné', 'Verre dépoli : laisse passer la lumière, pas les regards.'], it: ['Porta in vetro satinato', 'Vetro satinato: lascia passare la luce, non gli sguardi.'] } },
   { code: 'door-wood', group: 'door', name: 'Solid wood door', eur: 24000, description: 'A solid timber door that holds the heat best.',
     tr: { de: ['Massivholztür', 'Eine Massivholztür, die die Wärme am besten hält.'], fr: ['Porte en bois massif', 'Une porte en bois massif qui retient le mieux la chaleur.'], it: ['Porta in legno massiccio', 'Una porta in legno massiccio che trattiene meglio il calore.'] } },
   { code: 'bench-straight', group: 'bench-layout', name: 'Straight benches', eur: 0, description: 'Upper and lower bench along the back wall.',
@@ -219,7 +219,7 @@ const OPTIONS: OptionDef[] = [
   { code: 'bench-thermo-aspen', group: 'bench-wood', name: 'Thermo-aspen benches', eur: 49000, scales: true, swatch: '#8a5a3b', description: 'Heat-treated aspen in a deep caramel tone.',
     tr: { de: ['Bänke aus Thermo-Espe', 'Hitzebehandelte Espe in tiefem Karamellton.'], fr: ['Bancs en tremble thermotraité', 'Tremble traité thermiquement, d’un ton caramel profond.'], it: ['Panche in pioppo termotrattato', 'Pioppo tremulo termotrattato dal tono caramello intenso.'] } },
   { code: 'front-boards', group: 'bench-front', name: 'Closed board front', eur: 0, description: 'Horizontal boards close the space under the benches.',
-    tr: { de: ['Geschlossene Bretterfront', 'Waagrechte Bretter schließen den Raum unter den Bänken.'], fr: ['Façade en lames fermée', 'Des lames horizontales ferment l’espace sous les bancs.'], it: ['Frontale chiuso a doghe', 'Doghe orizzontali chiudono lo spazio sotto le panche.'] } },
+    tr: { de: ['Geschlossene Bretterfront', 'Waagrechte Bretter schliessen den Raum unter den Bänken.'], fr: ['Façade en lames fermée', 'Des lames horizontales ferment l’espace sous les bancs.'], it: ['Frontale chiuso a doghe', 'Doghe orizzontali chiudono lo spazio sotto le panche.'] } },
   { code: 'front-framed', group: 'bench-front', name: 'Framed panel front', eur: 19000, description: 'Vertical slats set in a mitred frame.',
     tr: { de: ['Rahmenfront', 'Senkrechte Leisten in einem auf Gehrung gefügten Rahmen.'], fr: ['Façade à cadre', 'Lattes verticales dans un cadre assemblé d’onglet.'], it: ['Frontale con cornice', 'Listelli verticali in una cornice tagliata a 45°.'] } },
   { code: 'front-open', group: 'bench-front', name: 'Open front', eur: 0, description: 'Open frames: lighter look, easier to clean underneath.',
@@ -227,9 +227,9 @@ const OPTIONS: OptionDef[] = [
   { code: 'end-waterfall', group: 'bench-end', name: 'Waterfall ends', eur: 14000, description: 'Vertical slats run from the seat to the floor.',
     tr: { de: ['Wasserfall-Abschluss', 'Senkrechte Leisten laufen von der Sitzfläche bis zum Boden.'], fr: ['Extrémités en cascade', 'Des lattes verticales descendent de l’assise jusqu’au sol.'], it: ['Testate a cascata', 'Listelli verticali scendono dalla seduta fino al pavimento.'] } },
   { code: 'end-framed', group: 'bench-end', name: 'Framed ends', eur: 9000, description: 'A framed panel closes each bench end.',
-    tr: { de: ['Gerahmter Abschluss', 'Ein gerahmtes Paneel schließt jedes Bankende ab.'], fr: ['Extrémités encadrées', 'Un panneau encadré ferme chaque extrémité de banc.'], it: ['Testate con cornice', 'Un pannello con cornice chiude ogni estremità della panca.'] } },
+    tr: { de: ['Gerahmter Abschluss', 'Ein gerahmtes Paneel schliesst jedes Bankende ab.'], fr: ['Extrémités encadrées', 'Un panneau encadré ferme chaque extrémité de banc.'], it: ['Testate con cornice', 'Un pannello con cornice chiude ogni estremità della panca.'] } },
   { code: 'end-plain', group: 'bench-end', name: 'Plain ends', eur: 0, description: 'A simple board finishes each bench end.',
-    tr: { de: ['Einfacher Abschluss', 'Ein schlichtes Brett schließt jedes Bankende ab.'], fr: ['Extrémités simples', 'Une simple planche termine chaque extrémité de banc.'], it: ['Testate semplici', 'Una semplice tavola rifinisce ogni estremità della panca.'] } },
+    tr: { de: ['Einfacher Abschluss', 'Ein schlichtes Brett schliesst jedes Bankende ab.'], fr: ['Extrémités simples', 'Une simple planche termine chaque extrémité de banc.'], it: ['Testate semplici', 'Una semplice tavola rifinisce ogni estremità della panca.'] } },
   { code: 'edge-rounded', group: 'bench-edge', name: 'Rounded front edge', eur: 0, description: 'A softly rounded front edge, comfortable behind the knees.',
     tr: { de: ['Abgerundete Vorderkante', 'Sanft gerundete Vorderkante, angenehm in der Kniekehle.'], fr: ['Chant avant arrondi', 'Chant avant légèrement arrondi, confortable sous les genoux.'], it: ['Bordo anteriore arrotondato', 'Bordo anteriore leggermente arrotondato, comodo sotto le ginocchia.'] } },
   { code: 'edge-square', group: 'bench-edge', name: 'Square front edge', eur: 0, description: 'A crisp square front edge for a clean, modern line.',
@@ -245,15 +245,15 @@ const OPTIONS: OptionDef[] = [
   { code: 'exterior-thermo', group: 'exterior', name: 'Thermowood cladding', eur: 89000, scales: true, description: 'Dark heat-treated timber, stable and weather-resistant.',
     tr: { de: ['Thermoholz-Verkleidung', 'Dunkles, hitzebehandeltes Holz, formstabil und wetterfest.'], fr: ['Bardage bois thermotraité', 'Bois sombre traité thermiquement, stable et résistant aux intempéries.'], it: ['Rivestimento in legno termotrattato', 'Legno scuro termotrattato, stabile e resistente alle intemperie.'] } },
   { code: 'exterior-slate', group: 'exterior', name: 'Slate cladding', eur: 149000, scales: true, description: 'Natural slate tiles for a stone look outside.',
-    tr: { de: ['Schieferverkleidung', 'Natürliche Schieferplatten für eine Steinoptik außen.'], fr: ['Bardage en ardoise', 'Ardoises naturelles pour un aspect pierre à l’extérieur.'], it: ['Rivestimento in ardesia', 'Lastre di ardesia naturale per un aspetto in pietra all’esterno.'] } },
+    tr: { de: ['Schieferverkleidung', 'Natürliche Schieferplatten für eine Steinoptik aussen.'], fr: ['Bardage en ardoise', 'Ardoises naturelles pour un aspect pierre à l’extérieur.'], it: ['Rivestimento in ardesia', 'Lastre di ardesia naturale per un aspetto in pietra all’esterno.'] } },
   { code: 'led-backrest', group: 'lighting', name: 'LED backrest lighting', eur: 24000, description: 'A warm LED strip behind the backrest.',
-    tr: { de: ['LED-Rückenlehnenbeleuchtung', 'Warmweißes LED-Band hinter der Rückenlehne.'], fr: ['Éclairage LED du dossier', 'Bande LED chaude derrière le dossier.'], it: ['Illuminazione LED dello schienale', 'Striscia LED calda dietro lo schienale.'] } },
+    tr: { de: ['LED-Rückenlehnenbeleuchtung', 'Warmweisses LED-Band hinter der Rückenlehne.'], fr: ['Éclairage LED du dossier', 'Bande LED chaude derrière le dossier.'], it: ['Illuminazione LED dello schienale', 'Striscia LED calda dietro lo schienale.'] } },
   { code: 'led-underbench', group: 'lighting', name: 'LED under-bench lighting', eur: 21000, description: 'Indirect LED light under the benches.',
     tr: { de: ['LED-Unterbankbeleuchtung', 'Indirektes LED-Licht unter den Bänken.'], fr: ['Éclairage LED sous les bancs', 'Éclairage LED indirect sous les bancs.'], it: ['Illuminazione LED sotto le panche', 'Luce LED indiretta sotto le panche.'] } },
   { code: 'star-ceiling', group: 'lighting', name: 'Starry-sky ceiling', eur: 69000, description: 'Fibre-optic points of light across the ceiling.',
     tr: { de: ['Sternenhimmel', 'Lichtpunkte aus Glasfaser an der ganzen Decke.'], fr: ['Plafond ciel étoilé', 'Points lumineux en fibre optique sur tout le plafond.'], it: ['Cielo stellato', 'Punti luce in fibra ottica su tutto il soffitto.'] } },
   { code: 'ceiling-panel', group: 'lighting', name: 'LED ceiling panel', eur: 26000, description: 'A flat LED panel for even light from above.',
-    tr: { de: ['LED-Deckenpaneel', 'Ein flaches LED-Paneel für gleichmäßiges Licht von oben.'], fr: ['Panneau LED au plafond', 'Un panneau LED plat pour une lumière homogène venue d’en haut.'], it: ['Pannello LED a soffitto', 'Un pannello LED piatto per una luce uniforme dall’alto.'] } },
+    tr: { de: ['LED-Deckenpaneel', 'Ein flaches LED-Paneel für gleichmässiges Licht von oben.'], fr: ['Panneau LED au plafond', 'Un panneau LED plat pour une lumière homogène venue d’en haut.'], it: ['Pannello LED a soffitto', 'Un pannello LED piatto per una luce uniforme dall’alto.'] } },
   { code: 'audio', group: 'extras', name: 'Bluetooth audio system', eur: 49000, description: 'Heat-proof Bluetooth speakers; needs the backrest lighting.',
     tr: { de: ['Bluetooth-Audiosystem', 'Hitzefeste Bluetooth-Lautsprecher; setzt die Rückenlehnenbeleuchtung voraus.'], fr: ['Système audio Bluetooth', 'Haut-parleurs Bluetooth résistants à la chaleur ; nécessite l’éclairage du dossier.'], it: ['Impianto audio Bluetooth', 'Altoparlanti Bluetooth resistenti al calore; richiede l’illuminazione dello schienale.'] } },
   { code: 'aroma', group: 'extras', name: 'Aroma dispenser', eur: 18000, description: 'Releases essential oils into the steam.',
@@ -296,11 +296,11 @@ interface ModelDef {
   excludes?: [string, string][];
 }
 const MODELS: ModelDef[] = [
-  { slug: 'espoo-compact', sku: 'NL-ESP-140', name: 'Espoo Compact', description: 'A two-person indoor sauna that fits where a shower cubicle would, with a full-height glass front.',
-    tr: { de: ['Espoo Compact', 'Innensauna für zwei Personen, passt dorthin, wo sonst die Dusche steht, mit raumhoher Glasfront.'], fr: ['Espoo Compact', 'Sauna d’intérieur pour deux personnes, à la place d’une cabine de douche, avec façade entièrement vitrée.'], it: ['Espoo Compact', 'Sauna da interno per due persone, al posto di un box doccia, con vetrata a tutta altezza.'] },
+  { slug: 'espoo-compact', sku: 'NL-ESP-140', name: 'Espoo Compact', description: 'A compact two-person sauna in Finnish style, built from 45 mm solid Nordic spruce, with a tempered-glass door and a window.',
+    tr: { de: ['Espoo Compact', 'Kompakte Sauna für zwei Personen im finnischen Stil, aus 45 mm starker massiver nordischer Fichte, mit Ganzglastür und Fenster.'], fr: ['Espoo Compact', 'Sauna compact pour deux personnes, de style finlandais, en épicéa nordique massif de 45 mm, avec porte entièrement vitrée et fenêtre.'], it: ['Espoo Compact', 'Sauna compatta per due persone in stile finlandese, in abete nordico massiccio da 45 mm, con porta interamente in vetro e finestra.'] },
     w: 1400, d: 1200, h: 2000, persons: 2, kw: 4.5, kg: 240, eur: 699000, capBps: 1500, size: 0.8, form: 'box', without: ['heater-9kw', 'salt-wall', 'star-ceiling', 'bench-u', 'end-waterfall', 'end-framed', 'end-plain', 'exterior-wood', 'exterior-thermo', 'exterior-slate'] },
-  { slug: 'kelo-barrel', sku: 'NL-KEL-240', name: 'Kelo Barrel', description: 'The classic outdoor barrel: thick pine staves held by stainless bands, warm even in January.',
-    tr: { de: ['Kelo Barrel', 'Die klassische Fasssauna: dicke Kieferndauben mit Edelstahlbändern, warm selbst im Januar.'], fr: ['Kelo Barrel', 'Le sauna tonneau classique : douelles de pin épaisses cerclées d’inox, chaud même en janvier.'], it: ['Kelo Barrel', 'La classica sauna a botte: doghe di pino spesse con fasce in acciaio, calda anche a gennaio.'] },
+  { slug: 'kelo-barrel', sku: 'NL-KEL-240', name: 'Kelo Barrel', description: 'The classic outdoor barrel sauna: thick wooden staves and a round cabin for the garden.',
+    tr: { de: ['Kelo Barrel', 'Die klassische Fasssauna für draussen: dicke Holzdauben und eine runde Kabine für den Garten.'], fr: ['Kelo Barrel', 'Le sauna tonneau classique pour l’extérieur : épaisses douelles en bois et cabine ronde pour le jardin.'], it: ['Kelo Barrel', 'La classica sauna a botte da esterno: doghe di legno spesse e cabina rotonda per il giardino.'] },
     w: 2000, d: 2400, h: 2050, persons: 6, kw: 9, kg: 780, eur: 949000, capBps: 1200, size: 1.0, form: 'barrel', without: ['bench-straight', 'bench-l', 'bench-u', 'front-boards', 'front-framed', 'front-open', 'end-waterfall', 'end-framed', 'end-plain', 'backrest-continuous', 'backrest-panels', 'backrest-none', 'ir-panel', 'headrests', 'stone-floor', 'exterior-wood', 'exterior-thermo', 'exterior-slate'] },
   { slug: 'fjord-panorama', sku: 'NL-FJD-220', name: 'Fjord Panorama', description: 'Floor-to-ceiling glass on the long side and two bench levels in an L for four or five.',
     tr: { de: ['Fjord Panorama', 'Raumhohe Glasfront an der Längsseite und zwei Bankebenen in L-Form für vier bis fünf Personen.'], fr: ['Fjord Panorama', 'Vitrage du sol au plafond sur le grand côté et deux niveaux de bancs en L pour quatre ou cinq.'], it: ['Fjord Panorama', 'Vetrata a tutta altezza sul lato lungo e due livelli di panche a L per quattro o cinque persone.'] },
@@ -309,10 +309,10 @@ const MODELS: ModelDef[] = [
     tr: { de: ['Lappi Corner', 'Ecksauna für drei Personen mit abgeschrägter Glastür, die diagonal öffnet.'], fr: ['Lappi Corner', 'Sauna d’angle pour trois personnes avec porte vitrée en biais qui s’ouvre en diagonale.'], it: ['Lappi Corner', 'Sauna angolare per tre persone con porta in vetro smussata che si apre in diagonale.'] },
     w: 1600, d: 1600, h: 2050, persons: 3, kw: 6, kg: 330, eur: 829000, capBps: 2000, size: 0.9, form: 'corner', without: ['heater-wood', 'bench-u', 'salt-wall', 'exterior-wood', 'exterior-thermo', 'exterior-slate'] },
   { slug: 'aurora-hex', sku: 'NL-AUR-240', name: 'Aurora Hex', description: 'A six-sided outdoor pavilion with a lantern roof and a ring of benches for eight.',
-    tr: { de: ['Aurora Hex', 'Sechseckiger Außenpavillon mit Laternendach und einem Bankring für acht Personen.'], fr: ['Aurora Hex', 'Pavillon d’extérieur hexagonal avec toit lanterne et bancs en anneau pour huit personnes.'], it: ['Aurora Hex', 'Padiglione esagonale da esterno con tetto a lanterna e panche ad anello per otto persone.'] },
+    tr: { de: ['Aurora Hex', 'Sechseckiger Aussenpavillon mit Laternendach und einem Bankring für acht Personen.'], fr: ['Aurora Hex', 'Pavillon d’extérieur hexagonal avec toit lanterne et bancs en anneau pour huit personnes.'], it: ['Aurora Hex', 'Padiglione esagonale da esterno con tetto a lanterna e panche ad anello per otto persone.'] },
     w: 2400, d: 2100, h: 2600, persons: 8, kw: 9, kg: 1100, eur: 1199000, capBps: 1500, size: 1.1, form: 'hex', without: [] },
-  { slug: 'saimaa-garden-house', sku: 'NL-SAI-300', name: 'Saimaa Garden House', description: 'A garden sauna house for six with a covered porch, a changing room and a pitched roof.',
-    tr: { de: ['Saimaa Garden House', 'Gartensaunahaus für sechs Personen mit überdachter Veranda, Umkleide und Satteldach.'], fr: ['Saimaa Garden House', 'Maison-sauna de jardin pour six personnes avec porche couvert, vestiaire et toit à deux pans.'], it: ['Saimaa Garden House', 'Casetta sauna da giardino per sei persone con portico coperto, spogliatoio e tetto a due falde.'] },
+  { slug: 'saimaa-garden-house', sku: 'NL-SAI-300', name: 'Saimaa Garden House', description: 'A garden sauna house for six with a covered porch and a pitched roof.',
+    tr: { de: ['Saimaa Garden House', 'Gartensaunahaus für sechs Personen mit überdachter Veranda und Satteldach.'], fr: ['Saimaa Garden House', 'Maison-sauna de jardin pour six personnes avec porche couvert et toit à deux pans.'], it: ['Saimaa Garden House', 'Casetta sauna da giardino per sei persone con portico coperto e tetto a due falde.'] },
     w: 3000, d: 2400, h: 2600, persons: 6, kw: 9, kg: 1650, eur: 1899000, capBps: 800, size: 1.4, form: 'cabin', without: ['heater-6kw'] },
   // Parked: the six-sided reference model (REFERENCE_SLUG, renderer in apps/web/src/three/reference) is not seeded; the shop shows seven models.
   { slug: 'kide-glass-corner', sku: 'NL-KID-240', name: 'Kide Glass Corner', description: 'An indoor glass-corner sauna for four: a frameless glass front and side panel, solid knotty pine walls, an L of pale aspen benches with a lit backrest and room for an infrared panel.',
@@ -357,7 +357,7 @@ interface ResellerDef {
 }
 const RESELLERS: ResellerDef[] = [
   { key: 'alpha', name: 'Alpha Spa & Sauna GmbH', currency: 'EUR', status: 'ACTIVE',
-    branding: { display: 'Alpha Spa', tagline: 'Finnish saunas, built for your garden', color: '#1f2a24', email: 'support@alpha.test', phone: '+49 30 1234567', legalName: 'Alpha Spa & Sauna GmbH', legalAddress: 'Gartenstraße 12, 10115 Berlin, Germany', layout: 'atelier' },
+    branding: { display: 'Alpha Spa', tagline: 'Finnish saunas, built for your garden', color: '#1f2a24', email: 'support@alpha.test', phone: '+49 30 1234567', legalName: 'Alpha Spa & Sauna GmbH', legalAddress: 'Gartenstrasse 12, 10115 Berlin, Germany', layout: 'atelier' },
     saunas: [
       { slug: 'espoo-compact', discount: { type: 'FIXED', value: 50000 } },
       { slug: 'kelo-barrel', discount: { type: 'PERCENT', value: 800 } },
@@ -615,7 +615,7 @@ const CUSTOMERS: CustomerDef[] = [
   { id: SEED.customers.annaBeta, reseller: 'beta', email: 'anna@example.test', first: 'Anna', last: 'Virtanen', phone: '+41 79 123 45 67', locale: 'de', marketing: false,
     addresses: [{ type: 'BILLING', line1: 'Bahnhofstrasse 21', postal: '8001', city: 'Zürich', country: 'CH' }] },
   { id: SEED.customers.benAlpha, reseller: 'alpha', email: 'ben@example.test', first: 'Ben', last: 'Koskinen', phone: '+49 89 7654321', locale: 'en', marketing: false,
-    addresses: [{ type: 'BILLING', line1: 'Leopoldstraße 50', postal: '80802', city: 'München', country: 'DE' }] },
+    addresses: [{ type: 'BILLING', line1: 'Leopoldstrasse 50', postal: '80802', city: 'München', country: 'DE' }] },
 ];
 
 async function seedCustomers(db: Db): Promise<void> {
