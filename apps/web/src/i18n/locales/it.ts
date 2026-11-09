@@ -841,8 +841,8 @@ export const it: Messages = {
       expiresOn: 'Scade il {date}', opened: 'aperto', notOpened: 'non ancora aperto',
     },
     command: {
-      label: 'Comando', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
-      unknown: 'Comando sconosciuto. Prova: new quote, find <nome>, open Q-1024, list open quotes, list expiring links.',
+      label: 'Comando', placeholder: 'nuova offerta · cerca Müller · apri Q-1024 · offerte aperte · link in scadenza',
+      unknown: 'Comando sconosciuto. Prova: nuova offerta, cerca <nome>, apri Q-1024, offerte aperte, link in scadenza.',
       noQuote: 'Nessuna offerta con il numero {number}.', failed: 'Non ha funzionato. Riprova.',
     },
     invoices: {

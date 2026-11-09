@@ -25,11 +25,12 @@ describe('parseHost', () => {
 
 describe('single-shop edition', () => {
   const single = { platformDomain: 'offers.holzsauna.ch', adminHost: 'admin.example-admin.com', singleShop: 'holzsauna' };
-  it('serves the one shop on every host but the admin host', () => {
+  it('serves the one shop on every host but the (switched off) admin host', () => {
     for (const h of ['offers.holzsauna.ch', 'www.holzsauna.ch', 'localhost:5173', 'alpha.saunas.example.com']) {
       expect(parseHost(h, single)).toEqual({ kind: 'storefront', slug: 'holzsauna' });
     }
-    expect(parseHost('admin.example-admin.com', single)).toEqual({ kind: 'manufacturer' });
+    expect(parseHost('admin.example-admin.com', single)).toEqual({ kind: 'unknown' });
+    expect(parseHost('admin.example-admin.com', { ...single, singleShop: undefined })).toEqual({ kind: 'manufacturer' });
     expect(parseHost('', single).kind).toBe('unknown');
     expect(parseHost('x', { ...single, singleShop: 'Bad Slug' }).kind).toBe('unknown');
   });

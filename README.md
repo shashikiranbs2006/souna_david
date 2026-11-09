@@ -52,7 +52,7 @@ empty, and starts the API (port 8787) and the web app (port 5173). Ctrl+C stops 
 | http://localhost:5173/admin | David's admin |
 | http://localhost:8787/dev/mail | Dev mailbox: every mail sent locally |
 
-Sign in at `/admin` as `owner@holzsauna.test` with the password **`Sauna!2026`**. Staff sign-in
+Sign in at `/admin` as `info@holzsauna.ch` with the password **`Sauna!2026`**. Staff sign-in
 asks for an authenticator code by default. To skip it locally, run
 `STAFF_MFA=OPTIONAL npm run dev:david`.
 
@@ -70,10 +70,9 @@ in `/config.js`). API variables are listed in [services/api/.env.example](servic
 The edition runs on the Contabo server next to other projects, without touching them: user
 `holz_sauna`, folder `/opt/holz_sauna`, port 3010 behind a new nginx site, Postgres 16 in its own
 Docker container on localhost, one systemd service. Planned addresses:
-`sauna-configurator.klardatalabs.com` (the shop and `/admin`) and
-`admin.sauna-configurator.klardatalabs.com` (manufacturer admin).
+`sauna-configurator.89-117-57-40.sslip.io` (the shop and `/admin`; no separate admin host).
 
-1. Add two DNS A records for those names pointing to the server.
+1. No DNS record is needed for the sslip.io name (for a real domain, add one A record).
 2. As root, once: `deploy/holz_sauna/setup-root.sh` (database container, secrets, service, nginx,
    HTTPS).
 3. As `holz_sauna`: clone the repository to `/opt/holz_sauna/app`, then run
@@ -113,5 +112,5 @@ the generated [docs/openapi.json](docs/openapi.json) (`npm run openapi`),
 
 - David's VAT number and rate (invoices only say "includes VAT") and how his bank details read.
 - How long to keep tracking data, and a privacy note on the link page.
-- Final domain (the klardatalabs.com names above are for testing), e-mail sending (nothing is
+- Final domain (the sslip.io name above is for testing), e-mail sending (nothing is
   sent in production yet), and automatic backups.

@@ -383,15 +383,15 @@ const RESELLERS: ResellerDef[] = [
     defaultDiscount: { type: 'FIXED', value: 100000 }, rooms: ['basement-spa'],
     owner: { key: 'gammaOwner', email: 'owner@gamma.test', name: 'Gustav Gran' } },
   // The single-shop edition's shop (SINGLE_SHOP=holzsauna): our six kit models with their
-  // catalogue prices and options unchanged, CHF. Contact details are placeholders.
+  // catalogue prices and options unchanged, CHF. Contact details are the shop's real ones (holzsauna.ch).
   { key: 'holzsauna', name: 'Holzbau Boscheri GmbH', currency: 'CHF', status: 'ACTIVE',
-    branding: { display: 'Holzsauna', tagline: 'Your sauna, configured together', color: '#5a6b7b', email: 'support@holzsauna.test', phone: '+41 52 000 00 00', legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40, 8507 Hörhausen, Switzerland', layout: 'nordic' },
+    branding: { display: 'Holzsauna', tagline: 'Ihre Sauna, gemeinsam geplant', color: '#5a6b7b', email: 'info@holzsauna.ch', phone: '+41 52 552 43 23', legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40, 8507 Hörhausen, Switzerland', layout: 'nordic' },
     saunas: [
       { slug: 'espoo-compact' }, { slug: 'kelo-barrel' }, { slug: 'fjord-panorama' },
       { slug: 'lappi-corner' }, { slug: 'aurora-hex' }, { slug: 'saimaa-garden-house' },
     ],
     rooms: ['garden-deck', 'basement-spa', 'lakeside-terrace'],
-    owner: { key: 'holzsaunaOwner', email: 'owner@holzsauna.test', name: 'David Boscheri' } },
+    owner: { key: 'holzsaunaOwner', email: 'info@holzsauna.ch', name: 'David Boscheri' } },
 ];
 
 const modelBySlug = new Map(MODELS.map(m => [m.slug, m]));

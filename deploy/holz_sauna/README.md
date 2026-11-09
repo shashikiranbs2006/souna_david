@@ -20,17 +20,15 @@ dev mailbox is off in production), so password reset and invite mails do not exi
 
 | Host | What |
 |---|---|
-| `sauna-configurator.klardatalabs.com` | David's shop and `/admin` |
-| `admin.sauna-configurator.klardatalabs.com` | Manufacturer admin |
+| `sauna-configurator.89-117-57-40.sslip.io` | David's shop and `/admin` (the only host; there is no manufacturer admin) |
 
-Add two DNS **A** records for these names pointing to `89.117.57.40` before running the HTTPS
-step.
+sslip.io names resolve to the server by themselves, so no DNS record is needed. For a real domain,
+add one **A** record pointing to `89.117.57.40` before running the HTTPS step.
 
 ## 1. Once, as root
 
 ```sh
-SHOP_HOST=sauna-configurator.klardatalabs.com \
-ADMIN_HOST=admin.sauna-configurator.klardatalabs.com \
+SHOP_HOST=sauna-configurator.89-117-57-40.sslip.io \
 CERTBOT_EMAIL=<your e-mail for Let's Encrypt notices> \
 bash setup-root.sh
 ```
@@ -65,16 +63,16 @@ bash /opt/holz_sauna/app/deploy/holz_sauna/deploy.sh
 It updates to `main` (`BRANCH=<name>` for another branch), installs Node from `.nvmrc` via nvm,
 builds the API and the web app, migrates the database, restarts the service and checks that it
 answers. On the first run it seeds the shop (David's `holzsauna` with the six kit models) and
-then **replaces every seeded password**: `owner@holzsauna.test` and `admin@nordlicht.test` get a
-new random password that is printed once in the terminal, all other demo users get an unusable
-one. Copy the two passwords then; they are stored nowhere. Staff sign-in asks for an
+removes everything except David's shop (the other demo shops, the manufacturer admin and their
+logins) and **replaces the seeded password**: `info@holzsauna.ch` gets a new random password that
+is printed once in the terminal. Copy it then; it is stored nowhere. Staff sign-in asks for an
 authenticator code (`STAFF_MFA=REQUIRED`) and offers to set one up on the first sign-in.
 
 Change a password later (12 characters or more):
 
 ```sh
 cd /opt/holz_sauna/app && set -a && . ../.env.deploy && set +a
-NEW_PASSWORD='...' node deploy/holz_sauna/db-tasks.mjs set-password owner@holzsauna.test
+NEW_PASSWORD='...' node deploy/holz_sauna/db-tasks.mjs set-password info@holzsauna.ch
 ```
 
 ## Checks and logs
@@ -82,7 +80,7 @@ NEW_PASSWORD='...' node deploy/holz_sauna/db-tasks.mjs set-password owner@holzsa
 ```sh
 sudo systemctl status holz-sauna
 journalctl -u holz-sauna -n 100 --no-pager     # as root
-curl -I https://sauna-configurator.klardatalabs.com
+curl -I https://sauna-configurator.89-117-57-40.sslip.io
 ```
 
 ## Backups

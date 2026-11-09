@@ -1,4 +1,4 @@
-import { ADMIN, en, expect, loginWithForm, test } from './fixtures.ts';
+import { ADMIN, de, en, expect, loginWithForm, test } from './fixtures.ts';
 
 test('reseller admin logs in at /admin and sees the requests list', async ({ page }) => {
   await loginWithForm(page, '/admin', 'owner@alpha.test');
@@ -92,4 +92,24 @@ test('reseller admin sends a customer link, then makes a quote from the same con
   await page.getByRole('textbox', { name: new RegExp('^' + en.admin.contacts.personName) }).fill('E2E Link Changed');
   await page.getByRole('dialog').getByRole('button', { name: en.configure.makeQuote }).click();
   await expect(page.getByRole('heading', { level: 1, name: /^Q-\d+/ })).toBeVisible();
+});
+
+test('switching the language in the admin translates the whole menu and keeps the picker on screen', async ({ page }) => {
+  await loginWithForm(page, '/admin', 'owner@alpha.test');
+  const nav = page.getByRole('navigation').first();
+  await expect(nav).toContainText(en.admin.nav.requests);
+  await page.getByRole('button', { name: new RegExp(en.nav.language) }).first().click();
+  const menu = page.getByRole('menu');
+  const box = (await menu.boundingBox())!;
+  const view = page.viewportSize()!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(view.width);
+  expect(box.y + box.height).toBeLessThanOrEqual(view.height);
+  await menu.getByRole('menuitemradio', { name: /Deutsch/ }).click();
+  await expect(nav).toContainText(de.admin.nav.requests);
+  // Neither the visible label nor its screen-reader twin may keep the English text.
+  for (const key of ['dashboard', 'requests', 'contacts', 'quotes', 'invoices'] as const) {
+    if (de.admin.nav[key] !== en.admin.nav[key]) await expect(nav).not.toContainText(en.admin.nav[key]);
+  }
 });

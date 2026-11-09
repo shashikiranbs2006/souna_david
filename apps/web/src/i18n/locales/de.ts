@@ -851,8 +851,8 @@ export const de: Messages = {
       expiresOn: 'Läuft ab am {date}', opened: 'geöffnet', notOpened: 'noch nicht geöffnet',
     },
     command: {
-      label: 'Befehl', placeholder: 'new quote · find Müller · open Q-1024 · list open quotes · list expiring links',
-      unknown: 'Unbekannter Befehl. Versuchen Sie: new quote, find <Name>, open Q-1024, list open quotes, list expiring links.',
+      label: 'Befehl', placeholder: 'neue Offerte · suche Müller · öffne Q-1024 · offene Offerten · ablaufende Links',
+      unknown: 'Unbekannter Befehl. Versuchen Sie: neue Offerte, suche <Name>, öffne Q-1024, offene Offerten, ablaufende Links.',
       noQuote: 'Keine Offerte mit der Nummer {number}.', failed: 'Das hat nicht geklappt. Bitte erneut versuchen.',
     },
     invoices: {

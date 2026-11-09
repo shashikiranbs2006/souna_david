@@ -7,6 +7,10 @@
  *                         gives every local IdP user a random unusable password, except the
  *                         listed e-mails: those get a new random password, printed once.
  *   set-password <email>  sets the password of one user (read from NEW_PASSWORD)
+ *   keep-only-shop <slug> <email>...
+ *                         removes every other shop (and its staff, customers, quotes, links),
+ *                         the manufacturer admins and all sign-ins except the listed e-mails,
+ *                         so the David edition holds only David's shop. DRY_RUN=1 rolls back.
  */
 import { randomBytes } from 'node:crypto';
 import pg from 'pg';
@@ -43,6 +47,62 @@ try {
     console.log('\nNew logins (shown once, not stored anywhere; change them after the first sign-in):');
     for (const [email, pw] of issued) console.log(`  ${email}   ${pw}`);
     console.log(`Other demo users (${rows.length - issued.length}) now have unusable passwords.\n`);
+  } else if (cmd === 'keep-only-shop') {
+    const [slug, ...emails] = rest;
+    if (!slug || emails.length === 0) throw new Error('usage: db-tasks.mjs keep-only-shop <slug> <email>...');
+    const keep = emails.map((e) => e.toLowerCase());
+    await client.query('BEGIN');
+    try {
+      // Foreign keys are switched off for this one transaction: every table that carries a
+      // reseller_id loses all rows of the other shops, so nothing is left pointing at them.
+      await client.query('SET LOCAL session_replication_role = replica');
+      const shop = await client.query('SELECT id FROM resellers WHERE slug = $1', [slug]);
+      if (!shop.rows[0]) throw new Error(`no shop "${slug}"`);
+      const id = shop.rows[0].id;
+      const { rows: tables } = await client.query(
+        `SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+          WHERE c.table_schema = 'public' AND c.column_name = 'reseller_id' ORDER BY 1`);
+      const removed = {};
+      for (const { table_name: tn } of tables) {
+        const r = await client.query(`DELETE FROM "${tn}" WHERE reseller_id <> $1`, [id]);
+        if (r.rowCount) removed[tn] = r.rowCount;
+      }
+      removed.resellers = (await client.query('DELETE FROM resellers WHERE id <> $1', [id])).rowCount;
+      removed.manufacturer_admins = (await client.query('DELETE FROM manufacturer_admins')).rowCount;
+      removed.staff_users = (await client.query('DELETE FROM staff_users WHERE lower(email) <> ALL($1::text[])', [keep])).rowCount;
+      if ((await client.query("SELECT to_regclass('idp.users') AS t")).rows[0].t) {
+        removed.idp_users = (await client.query('DELETE FROM idp.users WHERE lower(email) <> ALL($1::text[])', [keep])).rowCount;
+      }
+      // Child rows without a reseller_id of their own (selections, price snapshots, ...) follow
+      // their parents: delete what points at a removed row (or clear the link for SET NULL keys),
+      // repeat until nothing is left dangling.
+      const { rows: fks } = await client.query(
+        `SELECT c.conname, c.confdeltype AS del, c.conrelid::regclass::text AS child, c.confrelid::regclass::text AS parent,
+                (SELECT array_agg(a.attname::text ORDER BY k.ord) FROM unnest(c.conkey) WITH ORDINALITY k(attnum, ord) JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum) AS ccols,
+                (SELECT array_agg(a.attname::text ORDER BY k.ord) FROM unnest(c.confkey) WITH ORDINALITY k(attnum, ord) JOIN pg_attribute a ON a.attrelid = c.confrelid AND a.attnum = k.attnum) AS pcols
+           FROM pg_constraint c WHERE c.contype = 'f' AND c.connamespace = 'public'::regnamespace`);
+      for (let pass = 0; pass < 20; pass++) {
+        let changed = 0;
+        for (const fk of fks) {
+          const on = fk.ccols.map((cc, i) => `p."${fk.pcols[i]}" = c."${cc}"`).join(' AND ');
+          const nn = fk.ccols.map((cc) => `c."${cc}" IS NOT NULL`).join(' AND ');
+          const dangling = `${nn} AND NOT EXISTS (SELECT 1 FROM ${fk.parent} p WHERE ${on})`;
+          const r = fk.del === 'n'
+            ? await client.query(`UPDATE ${fk.child} c SET ${fk.ccols.map((cc) => `"${cc}" = NULL`).join(', ')} WHERE ${dangling}`)
+            : await client.query(`DELETE FROM ${fk.child} c WHERE ${dangling}`);
+          if (r.rowCount) { removed[fk.child] = (removed[fk.child] ?? 0) + r.rowCount; changed += r.rowCount; }
+        }
+        if (changed === 0) break;
+        if (pass === 19) throw new Error('could not settle the references');
+      }
+      console.log('removed:', JSON.stringify(removed));
+      await client.query(process.env.DRY_RUN === '1' ? 'ROLLBACK' : 'COMMIT');
+      console.log(process.env.DRY_RUN === '1' ? 'dry run: rolled back' : `only the shop "${slug}" is left`);
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    }
   } else if (cmd === 'set-password') {
     const email = rest[0];
     const pw = process.env.NEW_PASSWORD;

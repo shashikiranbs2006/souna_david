@@ -60,7 +60,8 @@ export function FlipText({ text, as, className, trigger = 'parent', stagger = 0.
   return (
     <Tag className={['flip-text', className].filter(Boolean).join(' ')}>
       <span className="sr-only no-copy">{text}</span>
-      <span ref={ref} className="flip-text__visual" aria-hidden="true">
+      {/* keyed by the text: SplitText rewrites this element, so a new label needs a fresh one (else the cleanup restores the old label) */}
+      <span key={text} ref={ref} className="flip-text__visual" aria-hidden="true">
         {text}
       </span>
     </Tag>

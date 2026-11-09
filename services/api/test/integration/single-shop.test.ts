@@ -35,13 +35,13 @@ describe('single-shop edition', () => {
 
   it('keeps the session check and staff sign-in for the shop owner', async () => {
     expect((await shop().get('/api/auth/session')).status).toBe(200);
-    const r = await shop().post('/api/auth/staff/login', { email: 'owner@holzsauna.test', password: SEED_PASSWORD });
+    const r = await shop().post('/api/auth/staff/login', { email: 'info@holzsauna.ch', password: SEED_PASSWORD });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
   });
 
   it('shows a share link to anyone, but nobody can claim it into an account', async () => {
     const c = shop();
-    await c.staffLogin('owner@holzsauna.test', SEED_PASSWORD);
+    await c.staffLogin('info@holzsauna.ch', SEED_PASSWORD);
     const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'For Keller' });
     const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 7 });
     expect(link.status, JSON.stringify(link.body)).toBe(201);

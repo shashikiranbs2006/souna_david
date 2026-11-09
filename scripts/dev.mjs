@@ -23,7 +23,7 @@ const args = new Set(process.argv.slice(2));
 const isWindows = process.platform === 'win32';
 /** Single-shop edition: the one shop's slug, for both the API and the web app. */
 const SINGLE_SHOP = args.has('--david') ? 'holzsauna' : process.env.SINGLE_SHOP ?? '';
-const editionEnv = SINGLE_SHOP ? { SINGLE_SHOP, VITE_SINGLE_SHOP: SINGLE_SHOP, VITE_LOCALES: process.env.VITE_LOCALES ?? 'de,en' } : {};
+const editionEnv = SINGLE_SHOP ? { SINGLE_SHOP, VITE_SINGLE_SHOP: SINGLE_SHOP, VITE_LOCALES: process.env.VITE_LOCALES ?? 'de,en,fr,it' } : {};
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 
 const paint = (code, text) => (useColor ? `\x1b[${code}m${text}\x1b[0m` : text);
@@ -76,6 +76,15 @@ function runNpm(script, extraEnv = {}) {
     });
     child.on('error', reject);
     child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`npm run ${script} exited with ${code}`))));
+  });
+}
+
+/** Runs a Node script to completion with inherited output. */
+function runNode(script, scriptArgs = []) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [script, ...scriptArgs], { stdio: 'inherit', env: { ...process.env, DATABASE_URL } });
+    child.on('error', reject);
+    child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`${script} exited with ${code}`))));
   });
 }
 
@@ -186,6 +195,11 @@ async function main() {
       console.error(`  Reset the local database once: ${bold('LOCAL_IDP=1 npm run db:reset')} then run this again.`);
       process.exit(1);
     }
+    if (SINGLE_SHOP) {
+      // The David edition holds only David's shop: drop the other demo shops and their logins.
+      say('keeping only the shop "' + SINGLE_SHOP + '" (removing the other demo shops)…');
+      await runNode('deploy/holz_sauna/db-tasks.mjs', ['keep-only-shop', SINGLE_SHOP, 'info@holzsauna.ch']);
+    }
   }
 
   start('api', '36', '@saunaklar/api');
@@ -193,8 +207,7 @@ async function main() {
 
   const lines = SINGLE_SHOP ? [
     [`Shop (${SINGLE_SHOP})`, 'http://localhost:5173'],
-    ['Shop admin (owner@holzsauna.test)', 'http://localhost:5173/admin'],
-    ['Manufacturer admin', 'http://admin.localhost:5173'],
+    ['Shop admin (info@holzsauna.ch)', 'http://localhost:5173/admin'],
   ] : [
     ['Storefront (reseller alpha)', 'http://alpha.localhost:5173'],
     ['Reseller admin (alpha)', 'http://alpha.localhost:5173/admin'],

@@ -5,9 +5,10 @@
 import { expect, test as base, type Page } from '@playwright/test';
 import { SEED, SEED_PASSWORD, SEED_SHARE_TOKEN } from '@saunaklar/db/seed';
 import { en } from '../apps/web/src/i18n/locales/en.ts';
+import { de } from '../apps/web/src/i18n/locales/de.ts';
 import { fr } from '../apps/web/src/i18n/locales/fr.ts';
 
-export { expect, en, fr, SEED, SEED_PASSWORD, SEED_SHARE_TOKEN };
+export { expect, en, de, fr, SEED, SEED_PASSWORD, SEED_SHARE_TOKEN };
 
 export const PORT = Number(process.env.E2E_PORT ?? 8799);
 export const ALPHA = `http://alpha.localhost:${PORT}`;

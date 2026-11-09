@@ -36,7 +36,8 @@ export function parseHost(raw: string | null | undefined, cfg: HostConfig): Host
   if (!host) return { kind: 'unknown' };
   const admin = normaliseHost(cfg.adminHost);
   const domain = normaliseHost(cfg.platformDomain);
-  if (host === admin) return { kind: 'manufacturer' };
+  // The single-shop edition has no manufacturer admin: that host is not served at all.
+  if (host === admin) return cfg.singleShop ? { kind: 'unknown' } : { kind: 'manufacturer' };
   if (cfg.singleShop) return SLUG_PATTERN.test(cfg.singleShop) ? { kind: 'storefront', slug: cfg.singleShop } : { kind: 'unknown' };
   if (!domain) return { kind: 'unknown' };
   if (host === domain || host === `www.${domain}`) return { kind: 'platform' };

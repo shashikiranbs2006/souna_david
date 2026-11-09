@@ -92,7 +92,7 @@ export const MOCK_TENANTS: Record<string, MockTenant> = {
 // The single-shop edition's shop (VITE_SINGLE_SHOP=holzsauna): our six models, no discounts.
 MOCK_TENANTS.holzsauna = {
   slug: 'holzsauna', layout: 'nordic', name: 'Holzsauna', tagline: 'Your sauna, configured together',
-  primaryColor: '#5a6b7b', supportEmail: 'support@holzsauna.test', supportPhone: '+41 52 000 00 00',
+  primaryColor: '#5a6b7b', supportEmail: 'info@holzsauna.ch', supportPhone: '+41 52 552 43 23',
   legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40\n8507 Hörhausen\nSwitzerland',
   vatDisplay: 'INCLUDED', defaultDiscount: null, perSauna: {}, hidden: [], currency: 'CHF',
 };

@@ -2,7 +2,6 @@
 # One-time server setup for the David edition. Run as root on the Contabo server:
 #
 #   SHOP_HOST=sauna-configurator.klardatalabs.com \
-#   ADMIN_HOST=admin.sauna-configurator.klardatalabs.com \
 #   CERTBOT_EMAIL=you@example.com \
 #   bash setup-root.sh
 #
@@ -17,7 +16,6 @@
 set -euo pipefail
 
 : "${SHOP_HOST:?set SHOP_HOST, e.g. sauna-configurator.klardatalabs.com}"
-: "${ADMIN_HOST:?set ADMIN_HOST, e.g. admin.sauna-configurator.klardatalabs.com}"
 APP_USER=holz_sauna
 BASE=/opt/holz_sauna
 PORT=3010
@@ -50,14 +48,12 @@ if [ ! -f "$BASE/.env" ]; then
 DATABASE_URL=postgres://sauna:${DB_SUPER_PW}@127.0.0.1:${DB_PORT}/sauna
 API_DB_PASSWORD=${DB_API_PW}
 SHOP_HOST=${SHOP_HOST}
-ADMIN_HOST=${ADMIN_HOST}
 ENV
   cat > "$BASE/.env" <<ENV
 NODE_ENV=production
 PORT=${PORT}
 API_DATABASE_URL=postgres://sauna_api:${DB_API_PW}@127.0.0.1:${DB_PORT}/sauna
 PLATFORM_DOMAIN=${SHOP_HOST}
-ADMIN_HOST=${ADMIN_HOST}
 SINGLE_SHOP=holzsauna
 PUBLIC_SCHEME=https
 COOKIE_SECURE=true
@@ -136,7 +132,7 @@ cat > "$SITE" <<NGINX
 server {
     listen 80;
     listen [::]:80;
-    server_name ${SHOP_HOST} ${ADMIN_HOST};
+    server_name ${SHOP_HOST};
 
     client_max_body_size 55m;
 
@@ -162,13 +158,13 @@ echo "nginx site added and reloaded"
 # ---- HTTPS (needs both DNS records pointing at this server) -------------------------------
 if command -v certbot >/dev/null; then
   if [ -n "${CERTBOT_EMAIL:-}" ]; then
-    certbot --nginx -d "$SHOP_HOST" -d "$ADMIN_HOST" --non-interactive --agree-tos \
+    certbot --nginx -d "$SHOP_HOST" --non-interactive --agree-tos \
       -m "$CERTBOT_EMAIL" --redirect || echo "certbot failed: check that both DNS A records point here, then re-run"
   else
-    echo "certbot found; set CERTBOT_EMAIL and re-run, or run: certbot --nginx -d $SHOP_HOST -d $ADMIN_HOST"
+    echo "certbot found; set CERTBOT_EMAIL and re-run, or run: certbot --nginx -d $SHOP_HOST"
   fi
 else
-  echo "certbot is not installed: apt install certbot python3-certbot-nginx, then run: certbot --nginx -d $SHOP_HOST -d $ADMIN_HOST"
+  echo "certbot is not installed: apt install certbot python3-certbot-nginx, then run: certbot --nginx -d $SHOP_HOST"
 fi
 
 echo

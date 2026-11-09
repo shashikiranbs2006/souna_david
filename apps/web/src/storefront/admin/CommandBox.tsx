@@ -13,14 +13,15 @@ export type Command =
 export function parseCommand(raw: string): Command {
   const s = raw.trim().replace(/\s+/g, ' ');
   const lower = s.toLowerCase();
-  if (/^(new|add|create) quote$/.test(lower)) return { kind: 'go', to: '/admin/contacts' };
-  const find = /^(?:find|search)\s+(.+)$/i.exec(s);
+  // English first; the German, French and Italian phrasings are the same commands.
+  if (/^((new|add|create) quote|neue offerte|nouvelle offre|nuova offerta)$/.test(lower)) return { kind: 'go', to: '/admin/contacts' };
+  const find = /^(?:find|search|suche|suchen|chercher|cherche|cerca)\s+(.+)$/i.exec(s);
   if (find) return { kind: 'go', to: `/admin/contacts?q=${encodeURIComponent(find[1]!)}` };
-  const open = /^open\s+(?:q-?)?(\d{1,9})$/i.exec(s);
+  const open = /^(?:open|öffne|öffnen|ouvrir|apri)\s+(?:q-?)?(\d{1,9})$/i.exec(s);
   if (open) return { kind: 'open', number: Number(open[1]) };
-  if (/^(list|show) open quotes$/.test(lower)) return { kind: 'go', to: '/admin/quotes?open=1' };
-  if (/^(list|show) (expiring|expiring links)$/.test(lower) || lower === 'list expiring links') return { kind: 'go', to: '/admin/reports?show=expiring' };
-  if (/^(report|reports)$/.test(lower)) return { kind: 'go', to: '/admin/reports' };
+  if (/^((list|show) open quotes|offene offerten|offres ouvertes|offerte aperte)$/.test(lower)) return { kind: 'go', to: '/admin/quotes?open=1' };
+  if (/^((list|show) (expiring|expiring links)|ablaufende links|liens expirants|link in scadenza)$/.test(lower)) return { kind: 'go', to: '/admin/reports?show=expiring' };
+  if (/^(report|reports|berichte|rapports|rapporti)$/.test(lower)) return { kind: 'go', to: '/admin/reports' };
   return { kind: 'unknown' };
 }
 

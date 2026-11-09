@@ -14,7 +14,9 @@ BRANCH=${BRANCH:-main}
 [ -f "$BASE/.env" ] && [ -f "$BASE/.env.deploy" ] || { echo "run setup-root.sh as root first" >&2; exit 1; }
 
 # ---- code ---------------------------------------------------------------------------------
-if [ ! -d "$APP/.git" ]; then
+if [ "${SKIP_GIT:-}" = 1 ]; then
+  : # SKIP_GIT=1: the code is already in $APP (copied over by hand), git is not touched
+elif [ ! -d "$APP/.git" ]; then
   git clone --branch "$BRANCH" "$REPO_URL" "$APP"
 else
   git -C "$APP" fetch origin "$BRANCH"
@@ -37,7 +39,7 @@ node --version
 
 # ---- build --------------------------------------------------------------------------------
 npm ci
-VITE_SINGLE_SHOP=holzsauna VITE_LOCALES=de,en npm run build
+VITE_SINGLE_SHOP=holzsauna VITE_LOCALES=de,en,fr,it npm run build
 
 # ---- database -----------------------------------------------------------------------------
 set -a
@@ -50,7 +52,9 @@ node deploy/holz_sauna/db-tasks.mjs ensure-api-password
 if node deploy/holz_sauna/db-tasks.mjs needs-seed; then
   echo "empty database: seeding the shop"
   npm run db:seed
-  node deploy/holz_sauna/db-tasks.mjs lock-demo-users owner@holzsauna.test admin@nordlicht.test
+  # Only David's shop stays: the other demo shops, the manufacturer admin and their logins go.
+  node deploy/holz_sauna/db-tasks.mjs keep-only-shop holzsauna info@holzsauna.ch
+  node deploy/holz_sauna/db-tasks.mjs lock-demo-users info@holzsauna.ch
 else
   npm run db:media
 fi

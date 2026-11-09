@@ -22,6 +22,34 @@ interface Props {
   triggerClassName?: string;
 }
 
+const EDGE = 8;
+
+/**
+ * The list is placed under its button, aligned to one side. Where that would leave the screen
+ * (a button near the bottom of a sidebar, or near a screen edge) it opens upward and/or is
+ * shifted sideways so every item stays visible.
+ */
+function keepInViewport(list: HTMLElement, trigger: HTMLElement | null) {
+  list.style.translate = '';
+  list.style.top = '';
+  list.style.bottom = '';
+  const r = list.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
+  if (trigger && r.bottom > vh - EDGE) {
+    const t = trigger.getBoundingClientRect();
+    if (t.top - r.height - EDGE * 2 >= 0 || t.top > vh - t.bottom) {
+      list.style.top = 'auto';
+      list.style.bottom = 'calc(100% + 0.5rem)';
+    }
+  }
+  const after = list.getBoundingClientRect();
+  let dx = 0;
+  if (after.left < EDGE) dx = EDGE - after.left;
+  else if (after.right > vw - EDGE) dx = vw - EDGE - after.right;
+  if (dx) list.style.translate = dx + 'px 0';
+}
+
 /**
  * Menu button (WAI-ARIA menu pattern): Enter/Space/ArrowDown open, arrows
  * move, Esc or Tab closes and focus returns to the trigger. Items cascade in.
@@ -38,6 +66,7 @@ export function Menu({ trigger, label, items, header, align = 'end', triggerClas
   useEffect(() => {
     if (!open) return;
     const el = list.current;
+    if (el) keepInViewport(el, btn.current);
     if (el && !prefersReducedMotion()) {
       gsap.fromTo(el, { autoAlpha: 0, y: -6 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'sk.out' });
       gsap.fromTo(el.querySelectorAll('[role^="menuitem"]'), { autoAlpha: 0, y: -8 }, { autoAlpha: 1, y: 0, duration: 0.4, stagger: 0.035, ease: 'sk.out' });
