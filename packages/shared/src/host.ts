@@ -7,17 +7,14 @@ export const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 
 export type HostKind =
   | { kind: 'storefront'; slug: string }
-  | { kind: 'manufacturer' }
   | { kind: 'platform' }
   | { kind: 'unknown' };
 
 export interface HostConfig {
   /** e.g. `saunas.example.com`, or `localhost` in development. */
   platformDomain: string;
-  /** Host of the manufacturer admin, e.g. `admin.example-admin.com` or `admin.localhost`. */
-  adminHost: string;
   /**
-   * Single-shop edition: every host except the admin host serves this one storefront, so the
+   * Single-shop edition: every host serves this one storefront, so the
    * shop can live on its own domain (no `{slug}.<platform-domain>` subdomain, no platform page).
    */
   singleShop?: string;
@@ -34,10 +31,7 @@ export function normaliseHost(raw: string | null | undefined): string | null {
 export function parseHost(raw: string | null | undefined, cfg: HostConfig): HostKind {
   const host = normaliseHost(raw);
   if (!host) return { kind: 'unknown' };
-  const admin = normaliseHost(cfg.adminHost);
   const domain = normaliseHost(cfg.platformDomain);
-  // The single-shop edition has no manufacturer admin: that host is not served at all.
-  if (host === admin) return cfg.singleShop ? { kind: 'unknown' } : { kind: 'manufacturer' };
   if (cfg.singleShop) return SLUG_PATTERN.test(cfg.singleShop) ? { kind: 'storefront', slug: cfg.singleShop } : { kind: 'unknown' };
   if (!domain) return { kind: 'unknown' };
   if (host === domain || host === `www.${domain}`) return { kind: 'platform' };

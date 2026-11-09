@@ -14,9 +14,8 @@ const schema = z.object({
   API_DATABASE_URL: z.string().default('postgres://sauna_api:sauna_api@127.0.0.1:5432/sauna'),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   PLATFORM_DOMAIN: z.string().default('localhost'),
-  ADMIN_HOST: z.string().default('admin.localhost'),
   /**
-   * Single-shop edition: the slug of the one reseller. Every host except ADMIN_HOST serves that
+   * Single-shop edition: the slug of the one reseller. Every host serves that
    * storefront, and customer accounts are switched off. Empty = multi-reseller platform.
    */
   SINGLE_SHOP: z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/).optional().or(z.literal('').transform(() => undefined)),
@@ -57,10 +56,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     if (!cfg.COOKIE_SECURE) throw new Error('COOKIE_SECURE cannot be disabled in production');
     if (cfg.APP_SECRET.length < 32) throw new Error('APP_SECRET must be at least 32 characters in production');
     if (cfg.PUBLIC_SCHEME !== 'https') throw new Error('PUBLIC_SCHEME must be https in production');
-    // The single-shop edition has no manufacturer admin host, so ADMIN_HOST is not needed there.
-    if (cfg.PLATFORM_DOMAIN === 'localhost' || (!cfg.SINGLE_SHOP && cfg.ADMIN_HOST === 'admin.localhost')) {
-      throw new Error(cfg.SINGLE_SHOP ? 'PLATFORM_DOMAIN must be set in production' : 'PLATFORM_DOMAIN and ADMIN_HOST must be set in production');
-    }
+    if (cfg.PLATFORM_DOMAIN === 'localhost') throw new Error('PLATFORM_DOMAIN must be set in production');
     if (cfg.ADAPTERS === 'local' && !env.API_DATABASE_URL) throw new Error('API_DATABASE_URL must be set in production');
   }
   return cfg;

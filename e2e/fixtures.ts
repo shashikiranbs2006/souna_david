@@ -12,7 +12,6 @@ export { expect, en, de, fr, SEED, SEED_PASSWORD, SEED_SHARE_TOKEN };
 
 export const PORT = Number(process.env.E2E_PORT ?? 8799);
 export const ALPHA = `http://alpha.localhost:${PORT}`;
-export const ADMIN = `http://admin.localhost:${PORT}`;
 export const hostUrl = (slug: string, path = '/') => `http://${slug}.localhost:${PORT}${path}`;
 
 /** Fills "{name}"-style placeholders the way the SPA's t() does. */

@@ -26,11 +26,6 @@ export const tenantSchema = z.object({
     vatDisplay: z.enum(['INCLUDED', 'EXCLUDED', 'NONE']),
     storefrontLayout,
   }),
-  /** The reseller's manufacturer, for "Authorised reseller of …". */
-  manufacturer: z.object({
-    name: z.string(),
-    website: z.string().nullable(),
-  }),
 });
 export type Tenant = z.infer<typeof tenantSchema>;
 

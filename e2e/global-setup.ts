@@ -103,7 +103,6 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       LOCAL_OBJECTS_DIR: objectsDir,
       S3_ASSETS_BUCKET: 'assets',
       PLATFORM_DOMAIN: 'localhost',
-      ADMIN_HOST: 'admin.localhost',
       STAFF_MFA: 'OPTIONAL',
       RATE_LIMIT: '0',
       LOG_LEVEL: 'warn',

@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { buildPath, CUSTOMER_TRANSITIONS, ERROR_CODES, ERROR_STATUS, isCustomerAccountRoute, parseHost, routes, storefrontHost, signupRequest, STAFF_TRANSITIONS } from '../src/index.ts';
 
-const cfg = { platformDomain: 'saunas.example.com', adminHost: 'admin.example-admin.com' };
+const cfg = { platformDomain: 'saunas.example.com' };
 
 describe('parseHost', () => {
-  it('resolves storefront, manufacturer and platform hosts', () => {
+  it('resolves storefront and platform hosts', () => {
     expect(parseHost('alpha-spa.saunas.example.com', cfg)).toEqual({ kind: 'storefront', slug: 'alpha-spa' });
     expect(parseHost('ALPHA.saunas.example.com:443', cfg)).toEqual({ kind: 'storefront', slug: 'alpha' });
-    expect(parseHost('admin.example-admin.com', cfg)).toEqual({ kind: 'manufacturer' });
     expect(parseHost('saunas.example.com', cfg)).toEqual({ kind: 'platform' });
     expect(parseHost('www.saunas.example.com', cfg)).toEqual({ kind: 'platform' });
   });
@@ -17,20 +16,17 @@ describe('parseHost', () => {
     }
   });
   it('works for local development hosts', () => {
-    const local = { platformDomain: 'localhost', adminHost: 'admin.localhost' };
+    const local = { platformDomain: 'localhost' };
     expect(parseHost('alpha.localhost:5173', local)).toEqual({ kind: 'storefront', slug: 'alpha' });
-    expect(parseHost('admin.localhost:5173', local)).toEqual({ kind: 'manufacturer' });
   });
 });
 
 describe('single-shop edition', () => {
-  const single = { platformDomain: 'offers.holzsauna.ch', adminHost: 'admin.example-admin.com', singleShop: 'holzsauna' };
-  it('serves the one shop on every host but the (switched off) admin host', () => {
-    for (const h of ['offers.holzsauna.ch', 'www.holzsauna.ch', 'localhost:5173', 'alpha.saunas.example.com']) {
+  const single = { platformDomain: 'offers.holzsauna.ch', singleShop: 'holzsauna' };
+  it('serves the one shop on every host', () => {
+    for (const h of ['offers.holzsauna.ch', 'www.holzsauna.ch', 'localhost:5173', 'alpha.saunas.example.com', 'admin.example.com']) {
       expect(parseHost(h, single)).toEqual({ kind: 'storefront', slug: 'holzsauna' });
     }
-    expect(parseHost('admin.example-admin.com', single)).toEqual({ kind: 'unknown' });
-    expect(parseHost('admin.example-admin.com', { ...single, singleShop: undefined })).toEqual({ kind: 'manufacturer' });
     expect(parseHost('', single).kind).toBe('unknown');
     expect(parseHost('x', { ...single, singleShop: 'Bad Slug' }).kind).toBe('unknown');
   });

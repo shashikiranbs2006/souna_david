@@ -58,12 +58,7 @@ export async function loadPrincipal(c: Ctx, pool: Pool, sub: string): Promise<Pr
   if (host.kind === 'storefront') {
     const row = await tenantTx(c, async db => (await db.query<{ staff_user_id: string; email: string; display_name: string; role: 'OWNER' | 'ADMIN' }>(
       `select staff_user_id, email, display_name, role from staff_principal_for_reseller($1, $2)`, [sub, c.get('tenant')!.id])).rows[0]);
-    return row ? { kind: 'staff', staffId: row.staff_user_id, email: row.email, displayName: row.display_name, scope: 'RESELLER', role: row.role, manufacturerId: null } : null;
-  }
-  if (host.kind === 'manufacturer') {
-    const row = await platformTx(c, async db => (await db.query<{ staff_user_id: string; email: string; display_name: string; manufacturer_id: string }>(
-      `select staff_user_id, email, display_name, manufacturer_id from staff_principal_for_manufacturer($1) where status = 'ACTIVE'`, [sub])).rows[0]);
-    return row ? { kind: 'staff', staffId: row.staff_user_id, email: row.email, displayName: row.display_name, scope: 'MANUFACTURER', role: 'MANUFACTURER_ADMIN', manufacturerId: row.manufacturer_id } : null;
+    return row ? { kind: 'staff', staffId: row.staff_user_id, email: row.email, displayName: row.display_name, role: row.role } : null;
   }
   return null;
 }

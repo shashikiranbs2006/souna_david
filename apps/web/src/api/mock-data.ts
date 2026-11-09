@@ -119,7 +119,6 @@ export function tenantDto(t: MockTenant, catalogVersion: number): Tenant {
       vatDisplay: t.vatDisplay,
       storefrontLayout: t.layout,
     },
-    manufacturer: { name: MANUFACTURER_NAME, website: 'https://saunaklar.example' },
   };
 }
 

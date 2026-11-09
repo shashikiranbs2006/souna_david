@@ -56,13 +56,12 @@ export function registerCatalog(app: Hono<AppEnv>): void {
         name: string; default_share_expiry_days: number; display_name: string | null; tagline: string | null; primary_color: string | null;
         logo: string | null; favicon: string | null; support_email: string | null; support_phone: string | null;
         legal_name: string | null; legal_address: string | null; vat_display: 'INCLUDED' | 'EXCLUDED' | 'NONE' | null;
-        storefront_layout: StorefrontLayout | null; manufacturer_name: string;
+        storefront_layout: StorefrontLayout | null;
       }>(
         `select r.name, r.default_share_expiry_days, b.display_name, b.tagline, b.primary_color,
                 l.storage_key as logo, f.storage_key as favicon, b.support_email, b.support_phone,
-                b.legal_name, b.legal_address, b.vat_display, b.storefront_layout, m.name as manufacturer_name
+                b.legal_name, b.legal_address, b.vat_display, b.storefront_layout
            from resellers r
-           join manufacturers m on m.id = r.manufacturer_id
            left join reseller_branding b on b.reseller_id = r.id
            left join assets l on l.id = b.logo_asset_id
            left join assets f on f.id = b.favicon_asset_id
@@ -89,9 +88,6 @@ export function registerCatalog(app: Hono<AppEnv>): void {
           vatDisplay: r.vat_display ?? 'INCLUDED',
           storefrontLayout: r.storefront_layout ?? 'atelier',
         },
-        // manufacturers is reference data readable by app_tenant (no PII). It has no website
-        // column yet, so website is null until one is added.
-        manufacturer: { name: r.manufacturer_name, website: null },
       };
       return out;
     });

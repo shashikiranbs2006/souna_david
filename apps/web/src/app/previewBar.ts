@@ -1,13 +1,12 @@
 /**
  * Preview build only: a small switcher in the corner, since the static copy
- * has no subdomains to tell the storefronts and the admin apps apart.
+ * has no subdomains to tell the shop and the admin apart.
  */
 const LINKS: [string, string][] = [
   ['Shop: Nordic Heat', '?shop=nordic#/'],
   ['Shop: Fjord', '?shop=fjord#/'],
   ['Shop: Kelo', '?shop=kelo#/'],
   ['Reseller admin', '?shop=nordic#/admin'],
-  ['Manufacturer admin', '?app=admin#/'],
   ['Platform page', '?app=platform#/'],
 ];
 

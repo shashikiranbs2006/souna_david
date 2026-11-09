@@ -4,7 +4,6 @@
  * shared parser from `@saunaklar/shared`:
  *
  *   {slug}.<platform-domain>  → reseller storefront
- *   <admin-host>              → manufacturer admin
  *   <platform-domain>, www.   → platform landing page
  *
  * Anything else (an IP, a nested subdomain, an invalid or reserved slug) is
@@ -16,7 +15,6 @@ export type { HostConfig };
 
 export type HostKind =
   | { kind: 'storefront'; slug: string }
-  | { kind: 'manufacturer' }
   | { kind: 'platform'; reason: 'root' | 'unknown-host' | 'reserved-slug'; attempted?: string };
 
 /**
@@ -31,8 +29,6 @@ export const RESERVED_SLUGS: ReadonlySet<string> = new Set([
 export function parseHost(host: string, config: HostConfig): HostKind {
   const parsed = parseSharedHost(host, config);
   switch (parsed.kind) {
-    case 'manufacturer':
-      return parsed;
     case 'platform':
       return { kind: 'platform', reason: 'root' };
     case 'storefront':
@@ -54,7 +50,7 @@ export function parseHost(host: string, config: HostConfig): HostKind {
 declare global {
   interface Window {
     __SK_CONFIG__?: {
-      platformDomain?: string; adminHost?: string; exampleShops?: string[];
+      platformDomain?: string;
       /** Single-shop edition: the one shop's slug (see `singleShop` in @saunaklar/shared). */
       singleShop?: string;
       /** Languages offered, first = default when the browser asks for none of them. */
@@ -65,13 +61,12 @@ declare global {
 
 /** Precedence: runtime config, then build-time VITE_* (local builds), then localhost defaults. */
 export function resolveHostConfig(
-  runtime: { platformDomain?: string; adminHost?: string; singleShop?: string } | undefined,
-  buildEnv: { VITE_PLATFORM_DOMAIN?: string; VITE_ADMIN_HOST?: string; VITE_SINGLE_SHOP?: string },
+  runtime: { platformDomain?: string; singleShop?: string } | undefined,
+  buildEnv: { VITE_PLATFORM_DOMAIN?: string; VITE_SINGLE_SHOP?: string },
 ): HostConfig {
   const singleShop = runtime?.singleShop || buildEnv.VITE_SINGLE_SHOP || undefined;
   return {
     platformDomain: runtime?.platformDomain || buildEnv.VITE_PLATFORM_DOMAIN || 'localhost',
-    adminHost: runtime?.adminHost || buildEnv.VITE_ADMIN_HOST || 'admin.localhost',
     ...(singleShop ? { singleShop } : {}),
   };
 }
@@ -79,19 +74,6 @@ export function resolveHostConfig(
 /** True in the single-shop edition: no platform page, no customer accounts. */
 export function isSingleShop(): boolean {
   return Boolean(hostConfig().singleShop);
-}
-
-/**
- * Shop slugs the platform page links to as examples. Runtime config first (`exampleShops` in
- * /config.js), then the build-time VITE_EXAMPLE_SHOPS (comma separated), then, in local dev only,
- * the shops the seed creates. In production nothing is listed unless it is configured, so the
- * page never links to shops that do not exist.
- */
-export function exampleShops(): string[] {
-  const runtime = typeof window === 'undefined' ? undefined : window.__SK_CONFIG__?.exampleShops;
-  const build = (import.meta.env.VITE_EXAMPLE_SHOPS as string | undefined)?.split(',');
-  const list = runtime?.length ? runtime : build ?? (import.meta.env.DEV ? ['alpha', 'beta', 'gamma'] : []);
-  return list.map(x => x.trim().toLowerCase()).filter(Boolean);
 }
 
 export function hostConfig(): HostConfig {
@@ -122,13 +104,11 @@ function readHost(): HostKind {
 }
 
 /**
- * The static preview build has no subdomains: `?app=admin` opens the
- * manufacturer admin, `?app=platform` the platform page, and `?shop=<slug>`
- * a storefront (the first example shop by default).
+ * The static preview build has no subdomains: `?app=platform` opens the
+ * "no shop here" page and `?shop=<slug>` a storefront.
  */
 function previewHost(search = window.location.search): HostKind {
   const q = new URLSearchParams(search);
-  if (q.get('app') === 'admin') return { kind: 'manufacturer' };
   if (q.get('app') === 'platform') return { kind: 'platform', reason: 'root' };
   return { kind: 'storefront', slug: q.get('shop') || 'nordic' };
 }

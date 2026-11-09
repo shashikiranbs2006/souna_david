@@ -2,7 +2,7 @@
  * Wiring checks that need no SPA page: the server runs against the seeded database, the tenant
  * comes from the Host header, and the catalogue is localised. They run through Chromium.
  */
-import { ADMIN, ALPHA, SEED_SHARE_TOKEN, expect, getJson, hostUrl, test } from './fixtures.ts';
+import { ALPHA, SEED_SHARE_TOKEN, expect, getJson, hostUrl, test } from './fixtures.ts';
 
 interface Tenant { slug: string; currency: string; branding: { displayName: string; primaryColor: string } }
 interface Catalog { currency: string; items: { slug: string; name: string; assets: { thumbnailUrl: string | null; gallery: string[]; lowGlbUrl: string | null } }[] }
@@ -63,10 +63,5 @@ test.describe('local server smoke', () => {
   test('rejects unknown and suspended tenants', async ({ page }) => {
     expect((await getJson(page, hostUrl('nobody', '/api/tenant'))).status).toBe(404);
     expect((await getJson(page, hostUrl('gamma', '/api/tenant'))).status).toBe(404); // gamma is SUSPENDED
-  });
-
-  test('answers on the manufacturer admin host', async ({ page }) => {
-    const res = await page.goto(`${ADMIN}/api/health`);
-    expect(res?.status()).toBe(200);
   });
 });

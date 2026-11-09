@@ -24,8 +24,6 @@ export const resetPasswordRequest = z.object({ email, code: z.string().trim().re
 /** Generic answer for sign-up, resend and forgot-password: never reveals whether an account exists. */
 export const acceptedResponse = z.object({ accepted: z.literal(true) });
 
-export const staffScope = z.enum(['RESELLER', 'MANUFACTURER']);
-
 export const sessionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('anonymous'), csrfToken: z.string() }),
   z.object({
@@ -40,8 +38,7 @@ export const sessionSchema = z.discriminatedUnion('kind', [
       id: uuid,
       email: z.string(),
       displayName: z.string(),
-      scope: staffScope,
-      role: z.enum(['OWNER', 'ADMIN', 'MANUFACTURER_ADMIN']),
+      role: z.enum(['OWNER', 'ADMIN']),
     }),
   }),
 ]);

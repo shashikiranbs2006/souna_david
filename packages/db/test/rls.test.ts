@@ -138,19 +138,6 @@ describe('platform, worker and catalog roles', () => {
     }
   });
 
-  it('app_platform gets aggregate counts through reseller_stats()', async () => {
-    const all = await platform(env, c => c.query('SELECT * FROM reseller_stats(NULL)'));
-    expect(all.rows).toHaveLength(4);
-    const alpha = await platform(env, c => one(c, 'SELECT * FROM reseller_stats($1)', [ALPHA]));
-    expect(alpha).toMatchObject({ reseller_id: ALPHA, customers: 2, configurations: 5, locked_configurations: 4, share_links: 1,
-      share_link_views: 2, requests: 3, requests_open: 3, requests_accepted: 0 });
-    const recent = await platform(env, c => one(c, `SELECT * FROM reseller_stats($1, now() - interval '36 hours')`, [ALPHA]));
-    expect(recent).toMatchObject({ customers: 0, configurations: 0, share_links: 1, share_link_views: 1, requests: 3 });
-    const statuses = await platform(env, c => c.query('SELECT status_code, requests FROM reseller_request_status_counts($1)', [BETA]));
-    expect(statuses.rows).toEqual([{ status_code: 'ACCEPTED', requests: 1 }]);
-    await expectCode(tenant(env, ALPHA, c => c.query('SELECT * FROM reseller_stats($1)', [BETA])), 'INSUFFICIENT_PRIVILEGE');
-  });
-
   it('app_platform manages resellers, assignments and prices', async () => {
     await platform(env, async c => {
       await c.query(`UPDATE sauna_model_prices SET list_price_minor = 700000 WHERE sauna_model_id = $1 AND currency_code = 'EUR'`, [M('espoo-compact')]);
@@ -256,12 +243,7 @@ describe('SECURITY DEFINER API functions', () => {
     await expectCode(platform(env, c => c.query('SELECT * FROM staff_principal_for_reseller($1, $2)', [sub, ALPHA])), 'INSUFFICIENT_PRIVILEGE');
   });
 
-  it('staff_principal_for_manufacturer, staff_by_email and activate_staff_user', async () => {
-    const adminSub = (await one<{ s: string }>(env.owner, 'SELECT idp_subject AS s FROM staff_users WHERE id = $1', [SEED.staff.admin])).s;
-    const m = await platform(env, c => one(c, 'SELECT * FROM staff_principal_for_manufacturer($1)', [adminSub]));
-    expect(m).toMatchObject({ staff_user_id: SEED.staff.admin, manufacturer_id: SEED.manufacturerId, status: 'ACTIVE' });
-    const alphaSubject = await alphaSub();
-    expect((await platform(env, c => c.query('SELECT * FROM staff_principal_for_manufacturer($1)', [alphaSubject]))).rowCount).toBe(0);
+  it('staff_by_email and activate_staff_user', async () => {
     const byEmail = await tenant(env, ALPHA, c => one(c, `SELECT * FROM staff_by_email('OWNER@alpha.test ')`));
     expect(byEmail).toMatchObject({ staff_user_id: SEED.staff.alphaOwner, status: 'ACTIVE' });
 

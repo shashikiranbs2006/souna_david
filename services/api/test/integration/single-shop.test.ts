@@ -20,9 +20,10 @@ describe('single-shop edition', () => {
     expect(c.body.items).toHaveLength(6);
   });
 
-  it('serves the same shop on any other host, and keeps the admin host for the manufacturer', async () => {
+  it('serves the same shop on any other host; there is no manufacturer admin', async () => {
     expect((await h.client('alpha.localhost').get('/api/tenant')).body.slug).toBe('holzsauna');
-    expect((await h.client('admin.localhost').get('/api/catalog')).status).toBe(404);
+    expect((await h.client('admin.localhost').get('/api/tenant')).body.slug).toBe('holzsauna');
+    expect((await h.client('admin.localhost').get('/api/manufacturer/resellers')).status).toBe(404);
   });
 
   it('refuses customer sign-up, sign-in and customer routes', async () => {

@@ -183,7 +183,6 @@ export function Footer({ tenant }: { tenant: Tenant }) {
             {b.logoUrl ? <img src={b.logoUrl} alt="" className="sfoot__logo" /> : <LogoMark size={28} />}
             <span className="sfoot__card-name">{b.displayName}</span>
           </span>
-          <span className="sfoot__badge">{t('footer.authorised', { manufacturer: tenant.manufacturer.name })}</span>
           {b.legalAddress && (
             <span className="sfoot__addr">
               {b.legalAddress.split('\n').map(line => (

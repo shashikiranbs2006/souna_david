@@ -21,19 +21,16 @@ const ACCESS_TEXT: Record<Access, string> = {
   customer: 'Signed-in customer of the tenant resolved from the host (customer session cookie).',
   'reseller-staff': 'Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).',
   'reseller-owner': 'Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).',
-  'manufacturer-staff': 'Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.',
   'any-session': 'Any signed-in session (customer or staff) on this host.',
 };
 
 const HOST_TEXT: Record<RouteDef['host'], string> = {
-  storefront: 'Reseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.',
-  manufacturer: 'Manufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.',
-  any: 'Any host (storefront or ADMIN_HOST); the session is bound to the host it was created on.',
+  storefront: 'The shop host; the shop is resolved from the host.',
+  any: 'Any host; the session is bound to the host it was created on.',
 };
 
 const SERVERS = {
   storefront: { url: 'https://{slug}.{platformDomain}', description: 'Reseller storefront', variables: { slug: { default: 'alpha', description: 'Reseller subdomain' }, platformDomain: { default: 'saunaklar.example', description: 'PLATFORM_DOMAIN' } } },
-  manufacturer: { url: 'https://{adminHost}', description: 'Manufacturer admin (ADMIN_HOST)', variables: { adminHost: { default: 'admin.saunaklar.example', description: 'ADMIN_HOST' } } },
 };
 
 /** Error statuses grouped from ERROR_STATUS, e.g. { 409: ['CONFLICT', 'SLUG_TAKEN', ...] }. */
@@ -130,10 +127,10 @@ export function buildOpenApi(): Json {
       summary: `${route.method} ${route.path}`,
       description: `${ACCESS_TEXT[route.access]}\n\n${HOST_TEXT[route.host]}${isWrite ? '\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).' : ''}`,
       tags: [route.fn],
-      'x-host': route.host === 'manufacturer' ? 'ADMIN_HOST' : route.host === 'storefront' ? '{slug}.{platformDomain}' : 'any',
+      'x-host': route.host === 'storefront' ? '{slug}.{platformDomain}' : 'any',
       'x-access': route.access,
       'x-lambda': route.fn,
-      servers: route.host === 'any' ? [SERVERS.storefront, SERVERS.manufacturer] : [route.host === 'manufacturer' ? SERVERS.manufacturer : SERVERS.storefront],
+      servers: [SERVERS.storefront],
       security,
       ...(parameters.length ? { parameters } : {}),
       ...(route.body ? { requestBody: { required: true, content: { 'application/json': { schema: named(route.body, 'input', `${cap(name)}Body`) } } } } : {}),
@@ -149,10 +146,10 @@ export function buildOpenApi(): Json {
     info: {
       title: 'Saunaklar API',
       version: '0.1.0',
-      description: 'Multi-tenant sauna configurator API. Generated from packages/shared/src/routes.ts by `npm run openapi`; do not edit by hand. See docs/api.md for sessions, CSRF, hosts, errors, pagination and catalog versioning.',
+      description: 'Sauna configurator API. Generated from packages/shared/src/routes.ts by `npm run openapi`; do not edit by hand. See docs/api.md for sessions, CSRF, hosts, errors, pagination and catalog versioning.',
     },
-    servers: [SERVERS.storefront, SERVERS.manufacturer],
-    tags: ['public-catalog', 'customer', 'reseller-admin', 'manufacturer-admin', 'asset-signer'].map((t) => ({ name: t, description: `Served by the ${t} function.` })),
+    servers: [SERVERS.storefront],
+    tags: ['public-catalog', 'customer', 'reseller-admin', 'asset-signer'].map((t) => ({ name: t, description: `Served by the ${t} function.` })),
     paths,
     components: {
       schemas: Object.fromEntries(Object.entries(schemas).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))),

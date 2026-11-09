@@ -566,7 +566,6 @@ async function seedCatalog(db: Db): Promise<void> {
 async function seedTenants(db: Db): Promise<void> {
   await q(db, `INSERT INTO staff_users (id, email, display_name, idp_subject, status) VALUES ($1, 'admin@nordlicht.test', 'Nora Lindqvist', $2, 'ACTIVE')`,
     [SEED.staff.admin, seedId('idp:admin@nordlicht.test')]);
-  await q(db, `INSERT INTO manufacturer_admins (staff_user_id, manufacturer_id) VALUES ($1, $2)`, [SEED.staff.admin, SEED.manufacturerId]);
 
   for (const r of RESELLERS) {
     const rid = SEED.resellers[r.key];
@@ -774,7 +773,6 @@ async function seedIdpUsers(db: Db): Promise<number> {
   const users: { sub: string; pool: 'CUSTOMER' | 'STAFF'; username: string; email: string; attributes: Record<string, unknown> }[] = [
     ...CUSTOMERS.map(c => ({ sub: c.id, pool: 'CUSTOMER' as const, username: c.id, email: c.email,
       attributes: { resellerId: SEED.resellers[c.reseller], given_name: c.first, family_name: c.last, locale: c.locale } })),
-    { sub: seedId('idp:admin@nordlicht.test'), pool: 'STAFF', username: 'admin@nordlicht.test', email: 'admin@nordlicht.test', attributes: { name: 'Nora Lindqvist' } },
     ...RESELLERS.map(r => ({ sub: seedId(`idp:${r.owner.email}`), pool: 'STAFF' as const, username: r.owner.email.toLowerCase(), email: r.owner.email,
       attributes: { name: r.owner.name } })),
     { sub: seedId('idp:admin@alpha.test'), pool: 'STAFF', username: 'admin@alpha.test', email: 'admin@alpha.test', attributes: { name: 'Alma Arnold' } },

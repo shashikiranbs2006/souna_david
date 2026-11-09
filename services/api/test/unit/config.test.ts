@@ -3,7 +3,7 @@ import { loadConfig } from '../../src/config.ts';
 
 const prod = {
   NODE_ENV: 'production', APP_SECRET: 'x'.repeat(40), ORIGIN_SECRET: 'o'.repeat(20), PUBLIC_SCHEME: 'https',
-  PLATFORM_DOMAIN: 'saunas.example.com', ADMIN_HOST: 'admin.saunas.example.com', ADAPTERS: 'aws',
+  PLATFORM_DOMAIN: 'saunas.example.com', ADAPTERS: 'aws',
 };
 
 describe('loadConfig in production', () => {

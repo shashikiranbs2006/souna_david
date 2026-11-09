@@ -29,9 +29,7 @@ export type Principal =
       staffId: string;
       email: string;
       displayName: string;
-      scope: 'RESELLER' | 'MANUFACTURER';
-      role: 'OWNER' | 'ADMIN' | 'MANUFACTURER_ADMIN';
-      manufacturerId: string | null;
+      role: 'OWNER' | 'ADMIN';
     };
 
 export interface AppEnv {

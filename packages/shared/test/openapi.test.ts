@@ -21,7 +21,7 @@ describe('OpenAPI document', () => {
       expect(!!op!.requestBody, name).toBe('body' in r);
       const csrf = op!.parameters?.some((x) => x.$ref === '#/components/parameters/CsrfToken') ?? false;
       expect(csrf, name).toBe(r.method !== 'GET');
-      expect(op!['x-host'], name).toBe(r.host === 'manufacturer' ? 'ADMIN_HOST' : r.host === 'storefront' ? '{slug}.{platformDomain}' : 'any');
+      expect(op!['x-host'], name).toBe(r.host === 'storefront' ? '{slug}.{platformDomain}' : 'any');
     }
   });
 

@@ -23,7 +23,7 @@ export function sessionBody(c: Ctx, principal: Principal = c.get('principal')): 
     return { kind: 'customer', csrfToken, customer: { id: principal.customerId, email: principal.email, firstName: principal.firstName, lastName: principal.lastName, locale: principal.locale } };
   }
   if (principal.kind === 'staff') {
-    return { kind: 'staff', csrfToken, staff: { id: principal.staffId, email: principal.email, displayName: principal.displayName, scope: principal.scope, role: principal.role } };
+    return { kind: 'staff', csrfToken, staff: { id: principal.staffId, email: principal.email, displayName: principal.displayName, role: principal.role } };
   }
   return { kind: 'anonymous', csrfToken };
 }

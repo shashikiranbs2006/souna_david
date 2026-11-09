@@ -352,7 +352,7 @@ describe('reseller admin: OWNER vs ADMIN', () => {
   it('the session exposes the ADMIN role', async () => {
     const c = await alphaAdmin();
     const s = await c.session();
-    expect(s.body.staff).toEqual(expect.objectContaining({ email: 'admin@alpha.test', scope: 'RESELLER', role: 'ADMIN' }));
+    expect(s.body.staff).toEqual(expect.objectContaining({ email: 'admin@alpha.test', role: 'ADMIN' }));
   });
 
   it('an ADMIN gets 403 on every owner-only write and nothing changes', async () => {

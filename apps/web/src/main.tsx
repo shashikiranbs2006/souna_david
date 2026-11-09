@@ -14,14 +14,10 @@ async function boot() {
   await initI18n();
 
   const host = currentHost();
-  // Each host kind loads only its own shell: a storefront never downloads the
-  // manufacturer admin, and vice versa.
   const router =
     host.kind === 'storefront'
       ? (await import('./storefront/routes.tsx')).createStorefrontRouter()
-      : host.kind === 'manufacturer'
-        ? (await import('./manufacturer/routes.tsx')).createManufacturerRouter()
-        : (await import('./platform/routes.tsx')).createPlatformRouter(host);
+      : (await import('./platform/routes.tsx')).createPlatformRouter(host);
 
   createRoot(document.getElementById('root')!).render(<App router={router} />);
   if (import.meta.env.VITE_PREVIEW === '1') (await import('./app/previewBar.ts')).mountPreviewBar();

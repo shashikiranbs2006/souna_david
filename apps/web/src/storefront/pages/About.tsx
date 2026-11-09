@@ -10,7 +10,7 @@ export default function About() {
   const { t, m, f } = useT();
   const tenant = useTenantData();
   const name = tenant.branding.displayName;
-  const vars = { name, manufacturer: tenant.manufacturer.name };
+  const vars = { name };
   useDocumentTitle(t('about.eyebrow'));
   return (
     <div className="page container">

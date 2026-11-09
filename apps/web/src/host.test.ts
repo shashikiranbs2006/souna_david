@@ -3,16 +3,15 @@ import { parseHost, resolveHostConfig } from './host.ts';
 
 describe('resolveHostConfig', () => {
   it('prefers runtime config over build env, then falls back to localhost', () => {
-    expect(resolveHostConfig({ platformDomain: 'a.com', adminHost: 'm.a.com' }, { VITE_PLATFORM_DOMAIN: 'b.com' }))
-      .toEqual({ platformDomain: 'a.com', adminHost: 'm.a.com' });
-    expect(resolveHostConfig({}, { VITE_PLATFORM_DOMAIN: 'b.com', VITE_ADMIN_HOST: 'x.b.com' }))
-      .toEqual({ platformDomain: 'b.com', adminHost: 'x.b.com' });
-    expect(resolveHostConfig(undefined, {})).toEqual({ platformDomain: 'localhost', adminHost: 'admin.localhost' });
+    expect(resolveHostConfig({ platformDomain: 'a.com' }, { VITE_PLATFORM_DOMAIN: 'b.com' })).toEqual({ platformDomain: 'a.com' });
+    expect(resolveHostConfig({}, { VITE_PLATFORM_DOMAIN: 'b.com' })).toEqual({ platformDomain: 'b.com' });
+    expect(resolveHostConfig(undefined, {})).toEqual({ platformDomain: 'localhost' });
+    expect(resolveHostConfig(undefined, { VITE_SINGLE_SHOP: 'holzsauna' })).toEqual({ platformDomain: 'localhost', singleShop: 'holzsauna' });
   });
 });
 
-const local = { platformDomain: 'localhost', adminHost: 'admin.localhost' };
-const prod = { platformDomain: 'saunaklar.com', adminHost: 'manufacturer.example.org' };
+const local = { platformDomain: 'localhost' };
+const prod = { platformDomain: 'saunaklar.com' };
 
 describe('parseHost (local)', () => {
   it('resolves a storefront from a single subdomain label, ignoring port and case', () => {
@@ -20,10 +19,6 @@ describe('parseHost (local)', () => {
     expect(parseHost('Alpha-Spa.LOCALHOST', local)).toEqual({ kind: 'storefront', slug: 'alpha-spa' });
     expect(parseHost('a.localhost', local)).toEqual({ kind: 'storefront', slug: 'a' });
     expect(parseHost(`${'a'.repeat(32)}.localhost`, local)).toEqual({ kind: 'storefront', slug: 'a'.repeat(32) });
-  });
-
-  it('resolves the manufacturer admin host before the storefront rule', () => {
-    expect(parseHost('admin.localhost:5173', local)).toEqual({ kind: 'manufacturer' });
   });
 
   it('serves the platform page on the bare domain and www', () => {
@@ -45,28 +40,15 @@ describe('parseHost (local)', () => {
 });
 
 describe('parseHost (production)', () => {
-  it('uses the configured platform domain and admin host', () => {
+  it('uses the configured platform domain', () => {
     expect(parseHost('alpha-spa.saunaklar.com', prod)).toEqual({ kind: 'storefront', slug: 'alpha-spa' });
-    expect(parseHost('manufacturer.example.org', prod)).toEqual({ kind: 'manufacturer' });
     expect(parseHost('saunaklar.com', prod)).toEqual({ kind: 'platform', reason: 'root' });
-    expect(parseHost('admin.localhost', prod)).toMatchObject({ kind: 'platform', reason: 'unknown-host' });
+    expect(parseHost('other.example.org', prod)).toMatchObject({ kind: 'platform', reason: 'unknown-host' });
     expect(parseHost('alpha-spa.saunaklar.com.evil.io', prod)).toMatchObject({ kind: 'platform', reason: 'unknown-host' });
   });
 
-  it('treats `admin` as reserved when the admin panel lives on another domain', () => {
+  it('treats `admin` as a reserved shop name', () => {
     expect(parseHost('admin.saunaklar.com', prod)).toMatchObject({ kind: 'platform', reason: 'reserved-slug' });
   });
 });
 
-describe('exampleShops', () => {
-  it('lists the seeded shops in dev, honours runtime config, and lists nothing without config in production', async () => {
-    const { exampleShops } = await import('./host.ts');
-    expect(exampleShops()).toEqual(['alpha', 'beta', 'gamma']); // vitest runs with DEV=true
-    (globalThis as { window?: unknown }).window = { __SK_CONFIG__: { exampleShops: [' Shop-One ', '', 'shop-two'] } };
-    try {
-      expect(exampleShops()).toEqual(['shop-one', 'shop-two']);
-    } finally {
-      delete (globalThis as { window?: unknown }).window;
-    }
-  });
-});

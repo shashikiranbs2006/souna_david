@@ -2,13 +2,13 @@ import type { Hono } from 'hono';
 import { routes, type StaffChallengeResponse } from '@saunaklar/shared';
 import type { AuthResult, ChallengeName, Tokens } from '../adapters/types.ts';
 import type { AppEnv, Ctx } from '../context.ts';
-import { platformTx, tenantTx } from '../lib/db.ts';
+import { tenantTx } from '../lib/db.ts';
 import { ApiError } from '../lib/problem.ts';
 import { mount } from '../lib/route.ts';
 import { loadPrincipal, setSessionCookies } from '../middleware/session.ts';
 
 /**
- * Staff sign-in on a reseller host (`{slug}/admin`) or the manufacturer host.
+ * Staff sign-in on the shop's host (`/admin`).
  * Follows the Cognito challenge flow: password → (new password) → TOTP setup
  * or TOTP code → tokens. The challenge kind travels inside the opaque
  * challenge id so the client only ever echoes it back.
@@ -23,8 +23,7 @@ function parseChallenge(id: string): { kind: ChallengeName; session: string } {
 }
 
 function requireStaffHost(c: Ctx): void {
-  const kind = c.get('host').kind;
-  if (kind !== 'storefront' && kind !== 'manufacturer') throw new ApiError('NOT_FOUND');
+  if (c.get('host').kind !== 'storefront') throw new ApiError('NOT_FOUND');
 }
 
 async function step(c: Ctx, result: AuthResult): Promise<StaffChallengeResponse> {
@@ -40,17 +39,14 @@ async function step(c: Ctx, result: AuthResult): Promise<StaffChallengeResponse>
 
 /**
  * Tokens are only turned into a session when the staff user actually
- * administers THIS host's reseller (or the manufacturer, on the admin host).
+ * administers THIS host's shop.
  * Otherwise the tokens are revoked and the answer is indistinguishable from
  * a wrong password.
  */
 async function finish(c: Ctx, tokens: Tokens): Promise<StaffChallengeResponse> {
   const { identity } = c.get('deps').adapters;
   const { sub } = await identity.verifyAccessToken('STAFF', tokens.accessToken);
-  const host = c.get('host');
-  const activate = (fn: typeof tenantTx) => fn(c, db => db.query('select activate_staff_user($1)', [sub]));
-  if (host.kind === 'storefront') await activate(tenantTx);
-  else await activate(platformTx);
+  await tenantTx(c, db => db.query('select activate_staff_user($1)', [sub]));
   const principal = await loadPrincipal(c, 'STAFF', sub);
   if (!principal) {
     await identity.revoke('STAFF', tokens.refreshToken).catch(() => undefined);

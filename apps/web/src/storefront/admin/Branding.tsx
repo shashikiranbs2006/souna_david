@@ -259,7 +259,7 @@ function AccountPanel() {
         <dd>{session.staff.displayName}</dd>
         <dt>{t('staff.email')}</dt>
         <dd>{session.staff.email}</dd>
-        <dt>{t('manufacturer.role')}</dt>
+        <dt>{t('staff.role')}</dt>
         <dd>{t(`staff.roles.${session.staff.role}` as TKey)}</dd>
       </dl>
     </Panel>

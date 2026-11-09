@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Storefront, customer account, reseller admin and manufacturer admin SPA.",
+  "description": "Shop, 3D configurator and admin SPA for the Holzsauna shop.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p . && vite build",

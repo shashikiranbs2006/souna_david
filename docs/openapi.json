@@ -3,7 +3,7 @@
   "info": {
     "title": "Saunaklar API",
     "version": "0.1.0",
-    "description": "Multi-tenant sauna configurator API. Generated from packages/shared/src/routes.ts by `npm run openapi`; do not edit by hand. See docs/api.md for sessions, CSRF, hosts, errors, pagination and catalog versioning."
+    "description": "Sauna configurator API. Generated from packages/shared/src/routes.ts by `npm run openapi`; do not edit by hand. See docs/api.md for sessions, CSRF, hosts, errors, pagination and catalog versioning."
   },
   "servers": [
     {
@@ -17,16 +17,6 @@
         "platformDomain": {
           "default": "saunaklar.example",
           "description": "PLATFORM_DOMAIN"
-        }
-      }
-    },
-    {
-      "url": "https://{adminHost}",
-      "description": "Manufacturer admin (ADMIN_HOST)",
-      "variables": {
-        "adminHost": {
-          "default": "admin.saunaklar.example",
-          "description": "ADMIN_HOST"
         }
       }
     }
@@ -45,10 +35,6 @@
       "description": "Served by the reseller-admin function."
     },
     {
-      "name": "manufacturer-admin",
-      "description": "Served by the manufacturer-admin function."
-    },
-    {
       "name": "asset-signer",
       "description": "Served by the asset-signer function."
     }
@@ -58,7 +44,7 @@
       "get": {
         "operationId": "tenant",
         "summary": "GET /api/tenant",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "public-catalog"
         ],
@@ -129,7 +115,7 @@
       "get": {
         "operationId": "catalog",
         "summary": "GET /api/catalog",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "public-catalog"
         ],
@@ -212,7 +198,7 @@
       "get": {
         "operationId": "sauna",
         "summary": "GET /api/catalog/saunas/:slug",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "public-catalog"
         ],
@@ -303,7 +289,7 @@
       "get": {
         "operationId": "rooms",
         "summary": "GET /api/rooms",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "public-catalog"
         ],
@@ -386,7 +372,7 @@
       "get": {
         "operationId": "shared",
         "summary": "GET /api/shared/:token",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "public-catalog"
         ],
@@ -467,7 +453,7 @@
       "post": {
         "operationId": "sharedActivity",
         "summary": "POST /api/shared/:token/activity",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "public-catalog"
         ],
@@ -567,7 +553,7 @@
       "post": {
         "operationId": "assetSession",
         "summary": "POST /api/assets/session",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "asset-signer"
         ],
@@ -659,7 +645,7 @@
       "post": {
         "operationId": "assetAr",
         "summary": "POST /api/assets/ar",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "asset-signer"
         ],
@@ -751,7 +737,7 @@
       "get": {
         "operationId": "session",
         "summary": "GET /api/auth/session",
-        "description": "Public. No session needed (a session is used when present).\n\nAny host (storefront or ADMIN_HOST); the session is bound to the host it was created on.",
+        "description": "Public. No session needed (a session is used when present).\n\nAny host; the session is bound to the host it was created on.",
         "tags": [
           "customer"
         ],
@@ -770,16 +756,6 @@
               "platformDomain": {
                 "default": "saunaklar.example",
                 "description": "PLATFORM_DOMAIN"
-              }
-            }
-          },
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
               }
             }
           }
@@ -886,19 +862,11 @@
                             "displayName": {
                               "type": "string"
                             },
-                            "scope": {
-                              "type": "string",
-                              "enum": [
-                                "RESELLER",
-                                "MANUFACTURER"
-                              ]
-                            },
                             "role": {
                               "type": "string",
                               "enum": [
                                 "OWNER",
-                                "ADMIN",
-                                "MANUFACTURER_ADMIN"
+                                "ADMIN"
                               ]
                             }
                           },
@@ -906,7 +874,6 @@
                             "id",
                             "email",
                             "displayName",
-                            "scope",
                             "role"
                           ],
                           "additionalProperties": false
@@ -955,7 +922,7 @@
       "post": {
         "operationId": "logout",
         "summary": "POST /api/auth/logout",
-        "description": "Public. No session needed (a session is used when present).\n\nAny host (storefront or ADMIN_HOST); the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nAny host; the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -974,16 +941,6 @@
               "platformDomain": {
                 "default": "saunaklar.example",
                 "description": "PLATFORM_DOMAIN"
-              }
-            }
-          },
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
               }
             }
           }
@@ -1047,7 +1004,7 @@
       "post": {
         "operationId": "refresh",
         "summary": "POST /api/auth/refresh",
-        "description": "Public. No session needed (a session is used when present).\n\nAny host (storefront or ADMIN_HOST); the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nAny host; the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -1066,16 +1023,6 @@
               "platformDomain": {
                 "default": "saunaklar.example",
                 "description": "PLATFORM_DOMAIN"
-              }
-            }
-          },
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
               }
             }
           }
@@ -1187,19 +1134,11 @@
                             "displayName": {
                               "type": "string"
                             },
-                            "scope": {
-                              "type": "string",
-                              "enum": [
-                                "RESELLER",
-                                "MANUFACTURER"
-                              ]
-                            },
                             "role": {
                               "type": "string",
                               "enum": [
                                 "OWNER",
-                                "ADMIN",
-                                "MANUFACTURER_ADMIN"
+                                "ADMIN"
                               ]
                             }
                           },
@@ -1207,7 +1146,6 @@
                             "id",
                             "email",
                             "displayName",
-                            "scope",
                             "role"
                           ],
                           "additionalProperties": false
@@ -1262,7 +1200,7 @@
       "post": {
         "operationId": "signup",
         "summary": "POST /api/auth/signup",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -1354,7 +1292,7 @@
       "post": {
         "operationId": "confirm",
         "summary": "POST /api/auth/confirm",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -1494,19 +1432,11 @@
                             "displayName": {
                               "type": "string"
                             },
-                            "scope": {
-                              "type": "string",
-                              "enum": [
-                                "RESELLER",
-                                "MANUFACTURER"
-                              ]
-                            },
                             "role": {
                               "type": "string",
                               "enum": [
                                 "OWNER",
-                                "ADMIN",
-                                "MANUFACTURER_ADMIN"
+                                "ADMIN"
                               ]
                             }
                           },
@@ -1514,7 +1444,6 @@
                             "id",
                             "email",
                             "displayName",
-                            "scope",
                             "role"
                           ],
                           "additionalProperties": false
@@ -1569,7 +1498,7 @@
       "post": {
         "operationId": "resendCode",
         "summary": "POST /api/auth/resend-code",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -1661,7 +1590,7 @@
       "post": {
         "operationId": "login",
         "summary": "POST /api/auth/login",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -1801,19 +1730,11 @@
                             "displayName": {
                               "type": "string"
                             },
-                            "scope": {
-                              "type": "string",
-                              "enum": [
-                                "RESELLER",
-                                "MANUFACTURER"
-                              ]
-                            },
                             "role": {
                               "type": "string",
                               "enum": [
                                 "OWNER",
-                                "ADMIN",
-                                "MANUFACTURER_ADMIN"
+                                "ADMIN"
                               ]
                             }
                           },
@@ -1821,7 +1742,6 @@
                             "id",
                             "email",
                             "displayName",
-                            "scope",
                             "role"
                           ],
                           "additionalProperties": false
@@ -1876,7 +1796,7 @@
       "post": {
         "operationId": "forgotPassword",
         "summary": "POST /api/auth/forgot-password",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -1968,7 +1888,7 @@
       "post": {
         "operationId": "resetPassword",
         "summary": "POST /api/auth/reset-password",
-        "description": "Public. No session needed (a session is used when present).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -2060,7 +1980,7 @@
       "post": {
         "operationId": "staffLogin",
         "summary": "POST /api/auth/staff/login",
-        "description": "Public. No session needed (a session is used when present).\n\nAny host (storefront or ADMIN_HOST); the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nAny host; the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -2079,16 +1999,6 @@
               "platformDomain": {
                 "default": "saunaklar.example",
                 "description": "PLATFORM_DOMAIN"
-              }
-            }
-          },
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
               }
             }
           }
@@ -2235,7 +2145,7 @@
       "post": {
         "operationId": "staffMfa",
         "summary": "POST /api/auth/staff/mfa",
-        "description": "Public. No session needed (a session is used when present).\n\nAny host (storefront or ADMIN_HOST); the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nAny host; the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -2254,16 +2164,6 @@
               "platformDomain": {
                 "default": "saunaklar.example",
                 "description": "PLATFORM_DOMAIN"
-              }
-            }
-          },
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
               }
             }
           }
@@ -2410,7 +2310,7 @@
       "post": {
         "operationId": "staffNewPassword",
         "summary": "POST /api/auth/staff/new-password",
-        "description": "Public. No session needed (a session is used when present).\n\nAny host (storefront or ADMIN_HOST); the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Public. No session needed (a session is used when present).\n\nAny host; the session is bound to the host it was created on.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -2429,16 +2329,6 @@
               "platformDomain": {
                 "default": "saunaklar.example",
                 "description": "PLATFORM_DOMAIN"
-              }
-            }
-          },
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
               }
             }
           }
@@ -2585,7 +2475,7 @@
       "get": {
         "operationId": "me",
         "summary": "GET /api/me",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -2656,7 +2546,7 @@
       "patch": {
         "operationId": "patchMe",
         "summary": "PATCH /api/me",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -2748,7 +2638,7 @@
       "delete": {
         "operationId": "deleteMe",
         "summary": "DELETE /api/me",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -2842,7 +2732,7 @@
       "get": {
         "operationId": "exportMe",
         "summary": "GET /api/me/export",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -2915,7 +2805,7 @@
       "get": {
         "operationId": "addresses",
         "summary": "GET /api/me/addresses",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -2986,7 +2876,7 @@
       "post": {
         "operationId": "createAddress",
         "summary": "POST /api/me/addresses",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3080,7 +2970,7 @@
       "patch": {
         "operationId": "updateAddress",
         "summary": "PATCH /api/me/addresses/:id",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3181,7 +3071,7 @@
       "delete": {
         "operationId": "deleteAddress",
         "summary": "DELETE /api/me/addresses/:id",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3274,7 +3164,7 @@
       "get": {
         "operationId": "consents",
         "summary": "GET /api/me/consents",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -3345,7 +3235,7 @@
       "put": {
         "operationId": "putConsents",
         "summary": "PUT /api/me/consents",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3439,7 +3329,7 @@
       "get": {
         "operationId": "configurations",
         "summary": "GET /api/configurations",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -3532,7 +3422,7 @@
       "post": {
         "operationId": "createConfiguration",
         "summary": "POST /api/configurations",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3626,7 +3516,7 @@
       "get": {
         "operationId": "configuration",
         "summary": "GET /api/configurations/:id",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -3708,7 +3598,7 @@
       "patch": {
         "operationId": "renameConfiguration",
         "summary": "PATCH /api/configurations/:id",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3809,7 +3699,7 @@
       "delete": {
         "operationId": "deleteConfiguration",
         "summary": "DELETE /api/configurations/:id",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -3902,7 +3792,7 @@
       "put": {
         "operationId": "putSelections",
         "summary": "PUT /api/configurations/:id/selections",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4005,7 +3895,7 @@
       "put": {
         "operationId": "putPlacement",
         "summary": "PUT /api/configurations/:id/room",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4143,7 +4033,7 @@
       "get": {
         "operationId": "price",
         "summary": "GET /api/configurations/:id/price",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -4227,7 +4117,7 @@
       "post": {
         "operationId": "clone",
         "summary": "POST /api/configurations/:id/clone",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4320,7 +4210,7 @@
       "post": {
         "operationId": "submitRequest",
         "summary": "POST /api/configurations/:id/requests",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4423,7 +4313,7 @@
       "post": {
         "operationId": "claimShared",
         "summary": "POST /api/shared/:token/claim",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4515,7 +4405,7 @@
       "get": {
         "operationId": "myRequests",
         "summary": "GET /api/me/requests",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -4610,7 +4500,7 @@
       "get": {
         "operationId": "myRequest",
         "summary": "GET /api/me/requests/:id",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "customer"
         ],
@@ -4694,7 +4584,7 @@
       "post": {
         "operationId": "cancelRequest",
         "summary": "POST /api/me/requests/:id/cancel",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4787,7 +4677,7 @@
       "post": {
         "operationId": "acceptRequest",
         "summary": "POST /api/me/requests/:id/accept",
-        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Signed-in customer of the tenant resolved from the host (customer session cookie).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "customer"
         ],
@@ -4890,7 +4780,7 @@
       "get": {
         "operationId": "adminBranding",
         "summary": "GET /api/admin/branding",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -4961,7 +4851,7 @@
       "patch": {
         "operationId": "adminPatchBranding",
         "summary": "PATCH /api/admin/branding",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5055,7 +4945,7 @@
       "post": {
         "operationId": "adminCreateUpload",
         "summary": "POST /api/admin/branding/uploads",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5149,7 +5039,7 @@
       "post": {
         "operationId": "adminCompleteUpload",
         "summary": "POST /api/admin/branding/uploads/:uploadId/complete",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5242,7 +5132,7 @@
       "get": {
         "operationId": "adminSettings",
         "summary": "GET /api/admin/settings",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -5313,7 +5203,7 @@
       "patch": {
         "operationId": "adminPatchSettings",
         "summary": "PATCH /api/admin/settings",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5407,7 +5297,7 @@
       "get": {
         "operationId": "adminSaunas",
         "summary": "GET /api/admin/saunas",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -5480,7 +5370,7 @@
       "patch": {
         "operationId": "adminPatchSauna",
         "summary": "PATCH /api/admin/saunas/:id",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5583,7 +5473,7 @@
       "put": {
         "operationId": "adminSaunaOrder",
         "summary": "PUT /api/admin/saunas/order",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5677,7 +5567,7 @@
       "put": {
         "operationId": "adminPutSaunaDiscount",
         "summary": "PUT /api/admin/saunas/:id/discount",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5778,7 +5668,7 @@
       "delete": {
         "operationId": "adminDeleteSaunaDiscount",
         "summary": "DELETE /api/admin/saunas/:id/discount",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -5871,7 +5761,7 @@
       "get": {
         "operationId": "adminSaunaOptions",
         "summary": "GET /api/admin/saunas/:id/options",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -5953,7 +5843,7 @@
       "put": {
         "operationId": "adminPutSaunaOptions",
         "summary": "PUT /api/admin/saunas/:id/options",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6056,7 +5946,7 @@
       "put": {
         "operationId": "adminPutDefaultDiscount",
         "summary": "PUT /api/admin/discount",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6148,7 +6038,7 @@
       "delete": {
         "operationId": "adminDeleteDefaultDiscount",
         "summary": "DELETE /api/admin/discount",
-        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6232,7 +6122,7 @@
       "get": {
         "operationId": "adminConfigurations",
         "summary": "GET /api/admin/configurations",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -6325,7 +6215,7 @@
       "post": {
         "operationId": "adminCreateConfiguration",
         "summary": "POST /api/admin/configurations",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6419,7 +6309,7 @@
       "get": {
         "operationId": "adminConfiguration",
         "summary": "GET /api/admin/configurations/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -6503,7 +6393,7 @@
       "put": {
         "operationId": "adminPutSelections",
         "summary": "PUT /api/admin/configurations/:id/selections",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6606,7 +6496,7 @@
       "put": {
         "operationId": "adminPutPlacement",
         "summary": "PUT /api/admin/configurations/:id/room",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6744,7 +6634,7 @@
       "get": {
         "operationId": "adminShareLinks",
         "summary": "GET /api/admin/configurations/:id/share-links",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -6826,7 +6716,7 @@
       "post": {
         "operationId": "adminCreateShareLink",
         "summary": "POST /api/admin/configurations/:id/share-links",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -6929,7 +6819,7 @@
       "delete": {
         "operationId": "adminRevokeShareLink",
         "summary": "DELETE /api/admin/configurations/:id/share-links/:linkId",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -7031,7 +6921,7 @@
       "get": {
         "operationId": "adminRequests",
         "summary": "GET /api/admin/requests",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -7152,7 +7042,7 @@
       "get": {
         "operationId": "adminRequest",
         "summary": "GET /api/admin/requests/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -7236,7 +7126,7 @@
       "post": {
         "operationId": "adminTransition",
         "summary": "POST /api/admin/requests/:id/transition",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -7339,7 +7229,7 @@
       "post": {
         "operationId": "adminNote",
         "summary": "POST /api/admin/requests/:id/notes",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -7442,7 +7332,7 @@
       "put": {
         "operationId": "adminQuote",
         "summary": "PUT /api/admin/requests/:id/quote",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -7545,7 +7435,7 @@
       "get": {
         "operationId": "adminContacts",
         "summary": "GET /api/admin/contacts",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -7627,7 +7517,7 @@
       "post": {
         "operationId": "adminCreateContact",
         "summary": "POST /api/admin/contacts",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -7721,7 +7611,7 @@
       "get": {
         "operationId": "adminContact",
         "summary": "GET /api/admin/contacts/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -7803,7 +7693,7 @@
       "patch": {
         "operationId": "adminUpdateContact",
         "summary": "PATCH /api/admin/contacts/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -7906,7 +7796,7 @@
       "get": {
         "operationId": "adminOffers",
         "summary": "GET /api/admin/offers",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8010,7 +7900,7 @@
       "post": {
         "operationId": "adminCreateOffer",
         "summary": "POST /api/admin/offers",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -8104,7 +7994,7 @@
       "get": {
         "operationId": "adminOffer",
         "summary": "GET /api/admin/offers/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8188,7 +8078,7 @@
       "post": {
         "operationId": "adminOfferVersion",
         "summary": "POST /api/admin/offers/:id/versions",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -8291,7 +8181,7 @@
       "get": {
         "operationId": "adminOfferTracking",
         "summary": "GET /api/admin/offers/:id/tracking",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8375,7 +8265,7 @@
       "get": {
         "operationId": "adminOfferPdf",
         "summary": "GET /api/admin/offers/:id/pdf",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8457,7 +8347,7 @@
       "get": {
         "operationId": "adminInvoices",
         "summary": "GET /api/admin/invoices",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8553,7 +8443,7 @@
       "post": {
         "operationId": "adminCreateInvoice",
         "summary": "POST /api/admin/invoices",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -8647,7 +8537,7 @@
       "get": {
         "operationId": "adminInvoice",
         "summary": "GET /api/admin/invoices/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8731,7 +8621,7 @@
       "post": {
         "operationId": "adminInvoiceStatus",
         "summary": "POST /api/admin/invoices/:id/status",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -8834,7 +8724,7 @@
       "get": {
         "operationId": "adminInvoicePdf",
         "summary": "GET /api/admin/invoices/:id/pdf",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8916,7 +8806,7 @@
       "get": {
         "operationId": "adminReports",
         "summary": "GET /api/admin/reports",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -8989,7 +8879,7 @@
       "post": {
         "operationId": "adminWatermarkImage",
         "summary": "POST /api/admin/watermark-image",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -9083,7 +8973,7 @@
       "post": {
         "operationId": "adminOfferStatus",
         "summary": "POST /api/admin/offers/:id/status",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
           "reseller-admin"
         ],
@@ -9186,7 +9076,7 @@
       "get": {
         "operationId": "adminCustomers",
         "summary": "GET /api/admin/customers",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -9290,7 +9180,7 @@
       "get": {
         "operationId": "adminCustomer",
         "summary": "GET /api/admin/customers/:id",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -9374,7 +9264,7 @@
       "get": {
         "operationId": "adminAnalytics",
         "summary": "GET /api/admin/analytics",
-        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nReseller storefront host `{slug}.{platformDomain}`; the tenant is resolved from the subdomain.",
+        "description": "Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
           "reseller-admin"
         ],
@@ -9456,25 +9346,29 @@
         }
       }
     },
-    "/api/manufacturer/resellers": {
+    "/api/admin/pricing": {
       "get": {
-        "operationId": "mResellers",
-        "summary": "GET /api/manufacturer/resellers",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
+        "operationId": "adminPricing",
+        "summary": "GET /api/admin/pricing",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.",
         "tags": [
-          "manufacturer-admin"
+          "reseller-admin"
         ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-owner",
+        "x-lambda": "reseller-admin",
         "servers": [
           {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
             "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
               }
             }
           }
@@ -9490,451 +9384,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MResellersResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      },
-      "post": {
-        "operationId": "mCreateReseller",
-        "summary": "POST /api/manufacturer/resellers",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MCreateResellerBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MCreateResellerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/resellers/{id}": {
-      "get": {
-        "operationId": "mReseller",
-        "summary": "GET /api/manufacturer/resellers/:id",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MCreateResellerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      },
-      "patch": {
-        "operationId": "mPatchReseller",
-        "summary": "PATCH /api/manufacturer/resellers/:id",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MPatchResellerBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MCreateResellerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/resellers/{id}/admins": {
-      "post": {
-        "operationId": "mInviteAdmin",
-        "summary": "POST /api/manufacturer/resellers/:id/admins",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MInviteAdminBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MCreateResellerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/resellers/{id}/saunas": {
-      "get": {
-        "operationId": "mAssignments",
-        "summary": "GET /api/manufacturer/resellers/:id/saunas",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MAssignmentsResponse"
+                  "$ref": "#/components/schemas/AdminPricingResponse"
                 }
               }
             }
@@ -9969,219 +9419,29 @@
         }
       }
     },
-    "/api/manufacturer/resellers/{id}/saunas/{saunaId}": {
+    "/api/admin/pricing/{id}": {
       "put": {
-        "operationId": "mAssign",
-        "summary": "PUT /api/manufacturer/resellers/:id/saunas/:saunaId",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
+        "operationId": "adminPutPrice",
+        "summary": "PUT /api/admin/pricing/:id",
+        "description": "Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).\n\nThe shop host; the shop is resolved from the host.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
         "tags": [
-          "manufacturer-admin"
+          "reseller-admin"
         ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
+        "x-host": "{slug}.{platformDomain}",
+        "x-access": "reseller-owner",
+        "x-lambda": "reseller-admin",
         "servers": [
           {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
+            "url": "https://{slug}.{platformDomain}",
+            "description": "Reseller storefront",
             "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "saunaId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MAssignmentsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      },
-      "delete": {
-        "operationId": "mUnassign",
-        "summary": "DELETE /api/manufacturer/resellers/:id/saunas/:saunaId",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "saunaId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MAssignmentsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/resellers/{id}/rooms": {
-      "put": {
-        "operationId": "mPutRooms",
-        "summary": "PUT /api/manufacturer/resellers/:id/rooms",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
+              "slug": {
+                "default": "alpha",
+                "description": "Reseller subdomain"
+              },
+              "platformDomain": {
+                "default": "saunaklar.example",
+                "description": "PLATFORM_DOMAIN"
               }
             }
           }
@@ -10210,7 +9470,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MPutRoomsBody"
+                "$ref": "#/components/schemas/AdminPutPriceBody"
               }
             }
           }
@@ -10221,7 +9481,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MCreateResellerResponse"
+                  "$ref": "#/components/schemas/AdminPricingResponse"
                 }
               }
             }
@@ -10249,570 +9509,6 @@
           },
           "415": {
             "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/saunas": {
-      "get": {
-        "operationId": "mSaunas",
-        "summary": "GET /api/manufacturer/saunas",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MSaunasResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/saunas/{id}": {
-      "get": {
-        "operationId": "mSauna",
-        "summary": "GET /api/manufacturer/saunas/:id",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MSaunaResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/saunas/{id}/prices/{currency}": {
-      "put": {
-        "operationId": "mPutPrice",
-        "summary": "PUT /api/manufacturer/saunas/:id/prices/:currency",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "currency",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MPutPriceBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MSaunaResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/saunas/{id}/options/{optionId}/prices/{currency}": {
-      "put": {
-        "operationId": "mPutOptionPrice",
-        "summary": "PUT /api/manufacturer/saunas/:id/options/:optionId/prices/:currency",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.\n\nRequires the `X-CSRF-Token` header (from GET /api/auth/session).",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "optionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "currency",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/CsrfToken"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MPutOptionPriceBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MSaunaResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "413": {
-            "$ref": "#/components/responses/Problem413"
-          },
-          "415": {
-            "$ref": "#/components/responses/Problem415"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/analytics": {
-      "get": {
-        "operationId": "mAnalytics",
-        "summary": "GET /api/manufacturer/analytics",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "days",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "default": 30,
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 365
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MAnalyticsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
-          },
-          "422": {
-            "$ref": "#/components/responses/Problem422"
-          },
-          "429": {
-            "$ref": "#/components/responses/Problem429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Problem500"
-          }
-        }
-      }
-    },
-    "/api/manufacturer/audit": {
-      "get": {
-        "operationId": "mAudit",
-        "summary": "GET /api/manufacturer/audit",
-        "description": "Manufacturer staff on ADMIN_HOST (staff session cookie). Never returns customer personal data.\n\nManufacturer admin host `ADMIN_HOST` only; 404 on storefront hosts.",
-        "tags": [
-          "manufacturer-admin"
-        ],
-        "x-host": "ADMIN_HOST",
-        "x-access": "manufacturer-staff",
-        "x-lambda": "manufacturer-admin",
-        "servers": [
-          {
-            "url": "https://{adminHost}",
-            "description": "Manufacturer admin (ADMIN_HOST)",
-            "variables": {
-              "adminHost": {
-                "default": "admin.saunaklar.example",
-                "description": "ADMIN_HOST"
-              }
-            }
-          }
-        ],
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "resellerId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-            }
-          },
-          {
-            "name": "entityType",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "maxLength": 60
-            }
-          },
-          {
-            "name": "cursor",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "maxLength": 200
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "default": 50,
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MAuditResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Problem400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Problem401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Problem403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Problem404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Problem409"
-          },
-          "410": {
-            "$ref": "#/components/responses/Problem410"
           },
           "422": {
             "$ref": "#/components/responses/Problem422"
@@ -13075,6 +11771,97 @@
         },
         "required": [
           "defaultShareExpiryDays"
+        ]
+      },
+      "AdminPricingResponse": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "thumbnailUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "listPriceMinor": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "maxDiscountBps": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "slug",
+                "name",
+                "thumbnailUrl",
+                "listPriceMinor",
+                "maxDiscountBps"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "currency",
+          "items"
+        ],
+        "additionalProperties": false
+      },
+      "AdminPutPriceBody": {
+        "type": "object",
+        "properties": {
+          "listPriceMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "maxDiscountBps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "listPriceMinor",
+          "maxDiscountBps"
         ]
       },
       "AdminPutSaunaDiscountBody": {
@@ -15691,843 +14478,6 @@
           "password"
         ]
       },
-      "MAnalyticsResponse": {
-        "type": "object",
-        "properties": {
-          "days": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "resellers": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "resellerId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "slug": {
-                  "type": "string"
-                },
-                "customers": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "configurations": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "requests": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "acceptedRequests": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "shareLinkViews": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                }
-              },
-              "required": [
-                "resellerId",
-                "name",
-                "slug",
-                "customers",
-                "configurations",
-                "requests",
-                "acceptedRequests",
-                "shareLinkViews"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "days",
-          "resellers"
-        ],
-        "additionalProperties": false
-      },
-      "MAssignmentsResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "saunaModelId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "slug": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "assigned": {
-                  "type": "boolean"
-                },
-                "blockedReason": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "isVisible": {
-                  "type": [
-                    "boolean",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "saunaModelId",
-                "slug",
-                "name",
-                "assigned",
-                "blockedReason",
-                "isVisible"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "items"
-        ],
-        "additionalProperties": false
-      },
-      "MAuditResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "occurredAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                },
-                "action": {
-                  "type": "string"
-                },
-                "entityType": {
-                  "type": "string"
-                },
-                "entityId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "resellerId": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "actorName": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "details": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "propertyNames": {
-                        "type": "string"
-                      },
-                      "additionalProperties": {}
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "id",
-                "occurredAt",
-                "action",
-                "entityType",
-                "entityId",
-                "resellerId",
-                "actorName",
-                "details"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "nextCursor": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor"
-        ],
-        "additionalProperties": false
-      },
-      "MCreateResellerBody": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "currencyCode": {
-            "type": "string",
-            "pattern": "^[A-Z]{3}$"
-          },
-          "owner": {
-            "type": "object",
-            "properties": {
-              "email": {
-                "type": "string",
-                "maxLength": 254,
-                "format": "email",
-                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
-              },
-              "displayName": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 120
-              }
-            },
-            "required": [
-              "email",
-              "displayName"
-            ]
-          }
-        },
-        "required": [
-          "slug",
-          "name",
-          "currencyCode",
-          "owner"
-        ]
-      },
-      "MCreateResellerResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-          },
-          "slug": {
-            "type": "string",
-            "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
-          },
-          "name": {
-            "type": "string"
-          },
-          "currency": {
-            "type": "string",
-            "pattern": "^[A-Z]{3}$"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED"
-            ]
-          },
-          "storefrontUrl": {
-            "type": "string"
-          },
-          "saunasAssigned": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "saunasVisible": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "customers": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "openRequests": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-          },
-          "defaultShareExpiryDays": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "catalogVersion": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "admins": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "email": {
-                  "type": "string"
-                },
-                "displayName": {
-                  "type": "string"
-                },
-                "role": {
-                  "type": "string",
-                  "enum": [
-                    "OWNER",
-                    "ADMIN"
-                  ]
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "INVITED",
-                    "ACTIVE",
-                    "DISABLED"
-                  ]
-                }
-              },
-              "required": [
-                "id",
-                "email",
-                "displayName",
-                "role",
-                "status"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "rooms": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "code": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "assigned": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "id",
-                "code",
-                "name",
-                "assigned"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "id",
-          "slug",
-          "name",
-          "currency",
-          "status",
-          "storefrontUrl",
-          "saunasAssigned",
-          "saunasVisible",
-          "customers",
-          "openRequests",
-          "createdAt",
-          "defaultShareExpiryDays",
-          "catalogVersion",
-          "admins",
-          "rooms"
-        ],
-        "additionalProperties": false
-      },
-      "MInviteAdminBody": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "maxLength": 254,
-            "format": "email",
-            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
-          },
-          "displayName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "role": {
-            "default": "ADMIN",
-            "type": "string",
-            "enum": [
-              "OWNER",
-              "ADMIN"
-            ]
-          }
-        },
-        "required": [
-          "email",
-          "displayName"
-        ]
-      },
-      "MPatchResellerBody": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED"
-            ]
-          }
-        }
-      },
-      "MPutOptionPriceBody": {
-        "type": "object",
-        "properties": {
-          "priceDeltaMinor": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          }
-        },
-        "required": [
-          "priceDeltaMinor"
-        ]
-      },
-      "MPutPriceBody": {
-        "type": "object",
-        "properties": {
-          "listPriceMinor": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "maxDiscountBps": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 10000
-          }
-        },
-        "required": [
-          "listPriceMinor",
-          "maxDiscountBps"
-        ]
-      },
-      "MPutRoomsBody": {
-        "type": "object",
-        "properties": {
-          "roomSceneIds": {
-            "maxItems": 200,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-            }
-          }
-        },
-        "required": [
-          "roomSceneIds"
-        ]
-      },
-      "MResellersResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "slug": {
-                  "type": "string",
-                  "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "currency": {
-                  "type": "string",
-                  "pattern": "^[A-Z]{3}$"
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "ACTIVE",
-                    "SUSPENDED"
-                  ]
-                },
-                "storefrontUrl": {
-                  "type": "string"
-                },
-                "saunasAssigned": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "saunasVisible": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "customers": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "openRequests": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                },
-                "createdAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-                }
-              },
-              "required": [
-                "id",
-                "slug",
-                "name",
-                "currency",
-                "status",
-                "storefrontUrl",
-                "saunasAssigned",
-                "saunasVisible",
-                "customers",
-                "openRequests",
-                "createdAt"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "items"
-        ],
-        "additionalProperties": false
-      },
-      "MSaunaResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "DRAFT",
-              "ACTIVE",
-              "RETIRED"
-            ]
-          },
-          "thumbnailUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "prices": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "currency": {
-                  "type": "string",
-                  "pattern": "^[A-Z]{3}$"
-                },
-                "listPriceMinor": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "maxDiscountBps": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 10000
-                }
-              },
-              "required": [
-                "currency",
-                "listPriceMinor",
-                "maxDiscountBps"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "resellersAssigned": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "code": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "selectionType": {
-                  "type": "string",
-                  "enum": [
-                    "SINGLE",
-                    "MULTI"
-                  ]
-                },
-                "required": {
-                  "type": "boolean"
-                },
-                "options": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                      },
-                      "code": {
-                        "type": "string"
-                      },
-                      "name": {
-                        "type": "string"
-                      },
-                      "prices": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "currency": {
-                              "type": "string",
-                              "pattern": "^[A-Z]{3}$"
-                            },
-                            "priceDeltaMinor": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "currency",
-                            "priceDeltaMinor"
-                          ],
-                          "additionalProperties": false
-                        }
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "code",
-                      "name",
-                      "prices"
-                    ],
-                    "additionalProperties": false
-                  }
-                }
-              },
-              "required": [
-                "id",
-                "code",
-                "name",
-                "selectionType",
-                "required",
-                "options"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "id",
-          "sku",
-          "slug",
-          "name",
-          "status",
-          "thumbnailUrl",
-          "prices",
-          "resellersAssigned",
-          "groups"
-        ],
-        "additionalProperties": false
-      },
-      "MSaunasResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-                },
-                "sku": {
-                  "type": "string"
-                },
-                "slug": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "DRAFT",
-                    "ACTIVE",
-                    "RETIRED"
-                  ]
-                },
-                "thumbnailUrl": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "prices": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "currency": {
-                        "type": "string",
-                        "pattern": "^[A-Z]{3}$"
-                      },
-                      "listPriceMinor": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
-                      "maxDiscountBps": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 10000
-                      }
-                    },
-                    "required": [
-                      "currency",
-                      "listPriceMinor",
-                      "maxDiscountBps"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "resellersAssigned": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
-                }
-              },
-              "required": [
-                "id",
-                "sku",
-                "slug",
-                "name",
-                "status",
-                "thumbnailUrl",
-                "prices",
-                "resellersAssigned"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "items"
-        ],
-        "additionalProperties": false
-      },
       "MeResponse": {
         "type": "object",
         "properties": {
@@ -18634,25 +16584,6 @@
               "storefrontLayout"
             ],
             "additionalProperties": false
-          },
-          "manufacturer": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "website": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "name",
-              "website"
-            ],
-            "additionalProperties": false
           }
         },
         "required": [
@@ -18662,8 +16593,7 @@
           "currency",
           "catalogVersion",
           "defaultShareExpiryDays",
-          "branding",
-          "manufacturer"
+          "branding"
         ],
         "additionalProperties": false
       },

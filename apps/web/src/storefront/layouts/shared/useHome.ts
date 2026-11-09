@@ -8,7 +8,7 @@ export function useHome() {
   const tenant = useTenantData();
   const catalog = useCatalog();
   const name = tenant.branding.displayName;
-  const vars = { name, manufacturer: tenant.manufacturer.name };
+  const vars = { name };
   const items = catalog.data?.items ?? [];
   const currency = catalog.data?.currency ?? tenant.currency;
   const maxSeats = items.reduce((mx, i) => Math.max(mx, specsOf(i).persons), 0) || 8;

@@ -91,7 +91,6 @@ export async function createHarness(overrides: Record<string, string> = {}): Pro
     NODE_ENV: 'test',
     API_DATABASE_URL: db.apiUrl,
     PLATFORM_DOMAIN: 'localhost',
-    ADMIN_HOST: 'admin.localhost',
     COOKIE_SECURE: '0',
     RATE_LIMIT: '0',
     STAFF_MFA: 'OPTIONAL',

@@ -71,7 +71,7 @@ describe('dev seed', () => {
     const staff = await count(env.owner,
       `SELECT 1 FROM staff_users s JOIN idp.users u ON u.sub::text = s.idp_subject AND u.username = lower(s.email) AND u.pool = 'STAFF'
        WHERE NOT u.mfa_enabled`);
-    expect(staff).toBe(6);
+    expect(staff).toBe(5);
   });
 
   it('keeps the same e-mail as two customer accounts at alpha and beta', async () => {

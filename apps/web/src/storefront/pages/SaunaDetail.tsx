@@ -438,7 +438,7 @@ function Product({ s }: { s: Sauna }) {
               {single ? <p className="pricecard__hint">{t('detail.askOfferHint', { name: tenant.branding.displayName })}</p> : !signedIn && <p className="pricecard__hint">{t('detail.loginHint')}</p>}
               {!single && s.assets.hasAr && <ArButton saunaModelId={s.id} name={s.name} enabled={signedIn} />}
               <p className="pricecard__hint">
-                <Icon icon={ArrowRight} size="xs" /> {t('detail.delivery', { name: tenant.branding.displayName, manufacturer: tenant.manufacturer.name })}
+                <Icon icon={ArrowRight} size="xs" /> {t('detail.delivery', { name: tenant.branding.displayName })}
               </p>
             </div>
           </div>

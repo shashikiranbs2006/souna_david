@@ -13,10 +13,10 @@ import { registerAssets } from './routes/assets.ts';
 import { registerAuth } from './routes/auth.ts';
 import { registerCatalog } from './routes/catalog.ts';
 import { registerConfigurations } from './routes/configurations.ts';
-import { registerManufacturer } from './routes/manufacturer.ts';
+import { registerPricing } from './routes/pricing.ts';
 import { registerStaffAuth } from './routes/staffAuth.ts';
 
-export const ALL_FUNCTIONS: readonly LambdaFunction[] = ['public-catalog', 'customer', 'reseller-admin', 'manufacturer-admin', 'asset-signer'];
+export const ALL_FUNCTIONS: readonly LambdaFunction[] = ['public-catalog', 'customer', 'reseller-admin', 'asset-signer'];
 
 /**
  * Builds the API. In AWS each Lambda function mounts only its own routes
@@ -46,10 +46,7 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
     registerAdmin(app);
     registerQuotes(app);
     registerInvoices(app);
-  }
-  if (has('manufacturer-admin')) {
-    if (!has('reseller-admin')) registerStaffAuth(app);
-    registerManufacturer(app);
+    registerPricing(app);
   }
   if (has('asset-signer')) registerAssets(app);
 

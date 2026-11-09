@@ -5,7 +5,7 @@ import * as auth from './auth.ts';
 import * as catalog from './catalog.ts';
 import { ok, page, pageQuery } from './common.ts';
 import * as cfg from './configurations.ts';
-import * as mfr from './manufacturer.ts';
+import * as pricing from './pricing.ts';
 import * as quo from './quotes.ts';
 import * as req from './requests.ts';
 import * as share from './sharing.ts';
@@ -15,9 +15,9 @@ import * as share from './sharing.ts';
  * web client derives its typed calls from it, so the two cannot drift.
  * `fn` is the Lambda function that serves the route (design 4.2).
  */
-export type LambdaFunction = 'public-catalog' | 'customer' | 'reseller-admin' | 'manufacturer-admin' | 'asset-signer';
+export type LambdaFunction = 'public-catalog' | 'customer' | 'reseller-admin' | 'asset-signer';
 /** `reseller-owner`: reseller staff with role OWNER only (shop settings, discounts, option prices). */
-export type Access = 'public' | 'customer' | 'reseller-staff' | 'reseller-owner' | 'manufacturer-staff' | 'any-session';
+export type Access = 'public' | 'customer' | 'reseller-staff' | 'reseller-owner' | 'any-session';
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export interface RouteDef {
@@ -25,7 +25,7 @@ export interface RouteDef {
   path: string;
   fn: LambdaFunction;
   access: Access;
-  host: 'storefront' | 'manufacturer' | 'any';
+  host: 'storefront' | 'any';
   query?: z.ZodType;
   body?: z.ZodType;
   response: z.ZodType;
@@ -59,7 +59,7 @@ export const routes = {
   forgotPassword: r({ method: 'POST', path: '/api/auth/forgot-password', fn: 'customer', access: 'public', host: 'storefront', body: auth.emailOnlyRequest, response: auth.acceptedResponse, status: 202 }),
   resetPassword: r({ method: 'POST', path: '/api/auth/reset-password', fn: 'customer', access: 'public', host: 'storefront', body: auth.resetPasswordRequest, response: ok }),
 
-  // ---- staff auth (reseller host and manufacturer host) ------------------
+  // ---- staff auth ---------------------------------------------------------
   staffLogin: r({ method: 'POST', path: '/api/auth/staff/login', fn: 'reseller-admin', access: 'public', host: 'any', body: auth.staffLoginRequest, response: auth.staffChallengeResponse }),
   staffMfa: r({ method: 'POST', path: '/api/auth/staff/mfa', fn: 'reseller-admin', access: 'public', host: 'any', body: auth.staffMfaRequest, response: auth.staffChallengeResponse }),
   staffNewPassword: r({ method: 'POST', path: '/api/auth/staff/new-password', fn: 'reseller-admin', access: 'public', host: 'any', body: auth.staffNewPasswordRequest, response: auth.staffChallengeResponse }),
@@ -144,22 +144,9 @@ export const routes = {
   adminCustomer: r({ method: 'GET', path: '/api/admin/customers/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: admin.adminCustomerSummarySchema.extend({ phone: z.string().nullable(), addresses: z.array(account.addressSchema), recentConfigurations: z.array(cfg.configurationSummarySchema), recentRequests: z.array(req.requestSummarySchema) }) }),
   adminAnalytics: r({ method: 'GET', path: '/api/admin/analytics', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: admin.analyticsQuery, response: admin.analyticsSchema }),
 
-  // ---- manufacturer admin ---------------------------------------------------
-  mResellers: r({ method: 'GET', path: '/api/manufacturer/resellers', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: z.object({ items: z.array(mfr.resellerSummarySchema) }) }),
-  mCreateReseller: r({ method: 'POST', path: '/api/manufacturer/resellers', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', body: mfr.createResellerRequest, response: mfr.resellerDetailSchema, status: 201 }),
-  mReseller: r({ method: 'GET', path: '/api/manufacturer/resellers/:id', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: mfr.resellerDetailSchema }),
-  mPatchReseller: r({ method: 'PATCH', path: '/api/manufacturer/resellers/:id', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', body: mfr.resellerPatch, response: mfr.resellerDetailSchema }),
-  mInviteAdmin: r({ method: 'POST', path: '/api/manufacturer/resellers/:id/admins', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', body: mfr.inviteAdminRequest, response: mfr.resellerDetailSchema, status: 201 }),
-  mAssignments: r({ method: 'GET', path: '/api/manufacturer/resellers/:id/saunas', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: mfr.assignmentsSchema }),
-  mAssign: r({ method: 'PUT', path: '/api/manufacturer/resellers/:id/saunas/:saunaId', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: mfr.assignmentsSchema }),
-  mUnassign: r({ method: 'DELETE', path: '/api/manufacturer/resellers/:id/saunas/:saunaId', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: mfr.assignmentsSchema }),
-  mPutRooms: r({ method: 'PUT', path: '/api/manufacturer/resellers/:id/rooms', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', body: mfr.putRoomsRequest, response: mfr.resellerDetailSchema }),
-  mSaunas: r({ method: 'GET', path: '/api/manufacturer/saunas', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: z.object({ items: z.array(mfr.manufacturerSaunaSchema) }) }),
-  mSauna: r({ method: 'GET', path: '/api/manufacturer/saunas/:id', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', response: mfr.manufacturerSaunaDetailSchema }),
-  mPutPrice: r({ method: 'PUT', path: '/api/manufacturer/saunas/:id/prices/:currency', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', body: mfr.putPriceRequest, response: mfr.manufacturerSaunaDetailSchema }),
-  mPutOptionPrice: r({ method: 'PUT', path: '/api/manufacturer/saunas/:id/options/:optionId/prices/:currency', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', body: mfr.putOptionPriceRequest, response: mfr.manufacturerSaunaDetailSchema }),
-  mAnalytics: r({ method: 'GET', path: '/api/manufacturer/analytics', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', query: z.object({ days: z.coerce.number().int().min(1).max(365).default(30) }), response: mfr.manufacturerAnalyticsSchema }),
-  mAudit: r({ method: 'GET', path: '/api/manufacturer/audit', fn: 'manufacturer-admin', access: 'manufacturer-staff', host: 'manufacturer', query: mfr.auditQuery, response: page(mfr.auditEventSchema) }),
+  // ---- prices (the shop owner edits base price and largest discount of each sauna) ----------
+  adminPricing: r({ method: 'GET', path: '/api/admin/pricing', fn: 'reseller-admin', access: 'reseller-owner', host: 'storefront', response: pricing.pricingSchema }),
+  adminPutPrice: r({ method: 'PUT', path: '/api/admin/pricing/:id', fn: 'reseller-admin', access: 'reseller-owner', host: 'storefront', body: pricing.putPriceRequest, response: pricing.pricingSchema }),
 } as const satisfies Record<string, RouteDef>;
 
 export type Routes = typeof routes;

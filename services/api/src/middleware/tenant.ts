@@ -14,7 +14,7 @@ export function hostAndTenant(cache = new TenantCache()): MiddlewareHandler<AppE
     const deps = c.get('deps');
     const { config } = deps;
     const raw = (config.TRUST_X_TENANT_HOST ? c.req.header('x-tenant-host') : undefined) ?? c.req.header('host') ?? '';
-    const host = parseHost(raw, { platformDomain: config.PLATFORM_DOMAIN, adminHost: config.ADMIN_HOST, singleShop: config.SINGLE_SHOP });
+    const host = parseHost(raw, { platformDomain: config.PLATFORM_DOMAIN, singleShop: config.SINGLE_SHOP });
     const name = raw.toLowerCase().replace(/:\d+$/, '');
     c.set('host', { ...host, name });
     c.set('tenant', null);

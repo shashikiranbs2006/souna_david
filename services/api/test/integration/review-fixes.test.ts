@@ -7,42 +7,6 @@ let h: Harness;
 beforeAll(async () => { h = await createHarness(); }, 120_000);
 afterAll(async () => { await h?.close(); });
 
-describe('manufacturer staff', () => {
-  it('a disabled manufacturer admin loses access even with a live access token', async () => {
-    const admin = h.client('admin.localhost');
-    await admin.staffLogin('admin@nordlicht.test', SEED_PASSWORD);
-    expect((await admin.get('/api/manufacturer/resellers')).status).toBe(200);
-
-    await h.owner.query(`update staff_users set status = 'DISABLED' where id = $1`, [SEED.staff.admin]);
-    try {
-      const r = await admin.get('/api/manufacturer/resellers');
-      expect(r.status).toBe(401);
-      expect((await admin.session()).body.kind).toBe('anonymous');
-    } finally {
-      await h.owner.query(`update staff_users set status = 'ACTIVE' where id = $1`, [SEED.staff.admin]);
-    }
-  });
-
-  it("does not show another manufacturer's catalog price changes in the audit trail", async () => {
-    const { rows: [m] } = await h.owner.query<{ id: string }>(`insert into manufacturers (name) values ('Other Maker') returning id`);
-    const { rows: [model] } = await h.owner.query<{ id: string }>(
-      `insert into sauna_models (manufacturer_id, sku, slug, status, name) values ($1, 'OTHER-1', 'other-one', 'ACTIVE', 'Other One') returning id`, [m!.id]);
-    await h.owner.query(`insert into sauna_model_prices (sauna_model_id, currency_code, list_price_minor, max_discount_bps) values ($1, 'EUR', 100000, 1000)`, [model!.id]);
-
-    const admin = h.client('admin.localhost');
-    await admin.staffLogin('admin@nordlicht.test', SEED_PASSWORD);
-    // Own price change: visible.
-    const own = SEED.models('espoo-compact');
-    expect((await admin.put(`/api/manufacturer/saunas/${own}/prices/EUR`, { listPriceMinor: 1_234_500, maxDiscountBps: 1500 })).status).toBe(200);
-
-    const r = await admin.get('/api/manufacturer/audit?entityType=sauna_model_prices&limit=100');
-    expect(r.status).toBe(200);
-    const ids = (r.body.items as { entityId: string }[]).map(i => i.entityId);
-    expect(ids.some(id => id.includes(own))).toBe(true);
-    expect(ids.some(id => id.includes(model!.id))).toBe(false);
-  });
-});
-
 describe('requests', () => {
   it('a double-submitted request yields one request, not a conflict', async () => {
     const anna = h.client('alpha.localhost');

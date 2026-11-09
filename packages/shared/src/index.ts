@@ -8,6 +8,6 @@ export * from './configurations.ts';
 export * from './requests.ts';
 export * from './sharing.ts';
 export * from './admin.ts';
-export * from './manufacturer.ts';
+export * from './pricing.ts';
 export * from './routes.ts';
 export * from './quotes.ts';

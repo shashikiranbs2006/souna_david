@@ -3,7 +3,7 @@ import { useSession } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { Icon } from '../../design/components/Icon.tsx';
 
-export type StaffRole = 'OWNER' | 'ADMIN' | 'MANUFACTURER_ADMIN';
+export type StaffRole = 'OWNER' | 'ADMIN';
 
 /**
  * Shop settings, branding, layout, discounts, sauna visibility/order and per-option prices are

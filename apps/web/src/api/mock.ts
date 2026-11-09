@@ -248,7 +248,7 @@ function page<T>(items: T[], q: URLSearchParams) {
 }
 
 function session(): Session {
-  if (state.staff) return { kind: 'staff', csrfToken: state.csrf, staff: { ...state.staff, scope: 'RESELLER', role: 'OWNER' } };
+  if (state.staff) return { kind: 'staff', csrfToken: state.csrf, staff: { ...state.staff, role: 'OWNER' } };
   return state.customer
     ? { kind: 'customer', csrfToken: state.csrf, customer: { id: state.customer.id, email: state.customer.email, firstName: state.customer.firstName, lastName: state.customer.lastName, locale: state.customer.locale } }
     : { kind: 'anonymous', csrfToken: state.csrf };
