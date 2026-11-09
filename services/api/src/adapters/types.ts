@@ -126,6 +126,8 @@ export interface MailMessage {
   replyTo?: string;
   /** Display name in From, typically the reseller's brand name. */
   fromName?: string;
+  /** Files sent with the mail (the quote PDF). The dev mailbox only lists their names. */
+  attachments?: { filename: string; contentBase64: string }[];
 }
 
 export interface Mailer {

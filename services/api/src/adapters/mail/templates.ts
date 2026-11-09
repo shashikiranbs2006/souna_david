@@ -48,6 +48,66 @@ const optionalQuote = (text?: string | null): Block[] => (text ? [{ kind: 'quote
  * en/de/fr/it (region suffixes accepted); anything else falls back to English.
  */
 export const templates = {
+  /** The offer a customer receives from the shop's admin: summary, the PDF attached, a view-only 3D link. */
+  offerSent(
+    brand: MailBrand,
+    data: { firstName?: string | null; label: string; saunaName: string; total: Money; validUntil?: Date | string | null; comment?: string | null; viewUrl: string },
+    locale?: string | null,
+  ): RenderedMail {
+    return build(brand, locale, ({ t, locale: l }) => {
+      const total = formatMoney(data.total.amountMinor, data.total.currency, l);
+      const until = data.validUntil ? formatDate(data.validUntil, l) : null;
+      return {
+        subject: t.offerSent.subject(brand.brandName, data.label),
+        preheader: t.offerSent.preheader(total),
+        blocks: [
+          { kind: 'heading', text: t.offerSent.heading },
+          greet(t, data.firstName),
+          { kind: 'paragraph', text: t.offerSent.body(brand.brandName, data.saunaName) },
+          {
+            kind: 'facts',
+            rows: [
+              [t.offerSent.offerNumber, data.label],
+              [t.labels.sauna, data.saunaName],
+              [t.labels.quotedPrice, total],
+              ...(until ? ([[t.labels.validUntil, until]] as [string, string][]) : []),
+            ],
+          },
+          ...optionalQuote(data.comment),
+          { kind: 'button', label: t.offerSent.cta, url: data.viewUrl },
+          ...(until ? ([{ kind: 'note', text: t.offerSent.note(until) }] as Block[]) : []),
+        ],
+      };
+    });
+  },
+
+  /** A customer's question from the customer link, sent to the shop. Reply-To is the customer. */
+  enquiry(
+    brand: MailBrand,
+    data: { name: string; email: string; phone?: string | null; message: string; saunaName?: string | null; linkUrl: string },
+    locale?: string | null,
+  ): RenderedMail {
+    return build(brand, locale, ({ t }) => ({
+      subject: t.enquiry.subject(data.name),
+      preheader: t.enquiry.preheader(data.name),
+      blocks: [
+        { kind: 'heading', text: t.enquiry.heading },
+        { kind: 'paragraph', text: t.enquiry.body(data.name) },
+        {
+          kind: 'facts',
+          rows: [
+            [t.enquiry.name, data.name],
+            [t.labels.email, data.email],
+            ...(data.phone ? ([[t.enquiry.phone, data.phone]] as [string, string][]) : []),
+            ...(data.saunaName ? ([[t.labels.sauna, data.saunaName]] as [string, string][]) : []),
+          ],
+        },
+        { kind: 'quote', text: data.message },
+        { kind: 'button', label: t.enquiry.cta, url: data.linkUrl },
+      ],
+    }));
+  },
+
   signupCode(brand: MailBrand, data: { code: string; firstName?: string | null }, locale?: string | null): RenderedMail {
     return build(brand, locale, ({ t }) => ({
       subject: t.signupCode.subject(brand.brandName),

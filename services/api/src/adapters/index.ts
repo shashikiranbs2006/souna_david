@@ -12,6 +12,8 @@
  *   TOTP_ISSUER                   issuer shown in authenticator apps (default Saunaklar)
  *   MAIL_FROM_DOMAIN              platform mail domain; From is always no-reply@<domain> (default mail.localhost)
  *   MAIL_DEFAULT_FROM_NAME        From display name when no brand is given (default Saunaklar)
+ *   RESEND_API_KEY                local adapters: send mail through Resend instead of the dev mailbox
+ *   MAIL_FROM_ADDRESS             sender address on a domain verified at Resend (default onboarding@resend.dev)
  *   S3_ASSETS_BUCKET              asset bucket: staging uploads/, public branding/ (required on aws; local default assets)
  *   local only:
  *   LOCAL_IDP_JWT_SECRET          HS256 key of the local IdP (>= 32 bytes; dev default)
@@ -39,6 +41,7 @@ import { NoopEdgeTenantStore } from './edge/memory.ts';
 import { CognitoIdentityProvider } from './idp/cognito.ts';
 import { LocalIdentityProvider } from './idp/local.ts';
 import { DevMailboxMailer } from './mail/dev-mailbox.ts';
+import { ResendMailer } from './mail/resend.ts';
 import { SesMailer } from './mail/ses.ts';
 import { InProcessQueue, type QueueHandler } from './queue/in-process.ts';
 import { SqsQueue } from './queue/sqs.ts';
@@ -168,7 +171,10 @@ function createLocalAdapters(env: Env, deps: AdapterDeps): Adapters {
     if (!deps.pool) throw new Error('Local adapters need a database pool');
     return roleTx(deps.pool, 'idp_local');
   });
-  const mailer = lazy(() => new DevMailboxMailer(tx(), env.MAIL_FROM_DOMAIN || 'mail.localhost'));
+  // With RESEND_API_KEY mail goes out through Resend; without it every mail lands in the dev mailbox.
+  const mailer = lazy((): Mailer => env.RESEND_API_KEY
+    ? new ResendMailer({ apiKey: env.RESEND_API_KEY, fromAddress: env.MAIL_FROM_ADDRESS || 'onboarding@resend.dev', defaultFromName: env.MAIL_DEFAULT_FROM_NAME || 'Saunaklar' })
+    : new DevMailboxMailer(tx(), env.MAIL_FROM_DOMAIN || 'mail.localhost'));
   const identity = lazy(
     () =>
       new LocalIdentityProvider({

@@ -18,6 +18,8 @@ const samples = {
   shareLinkCreated: { saunaName: 'Nordic 200', shareUrl: 'https://alpha.example.com/s/abc', expiresAt: '2026-11-30T12:00:00Z' },
   accountExists: { firstName: 'Anna', loginUrl: 'https://alpha.example.com/login', resetUrl: 'https://alpha.example.com/forgot' },
   accountDeleted: { firstName: 'Anna' },
+  offerSent: { firstName: 'Anna', label: 'Q-1024', saunaName: 'Espoo Compact', total: { amountMinor: 664000, currency: 'CHF' }, validUntil: '2026-12-31T12:00:00Z', comment: 'Delivery in six weeks.', viewUrl: 'https://alpha.example.com/s/abc' },
+  enquiry: { name: 'Anna Muster', email: 'anna@example.com', phone: '+41 79 000 00 00', message: 'Can you deliver in March?', saunaName: 'Espoo Compact', linkUrl: 'https://alpha.example.com/s/abc' },
 } as const;
 
 type Name = keyof typeof templates;

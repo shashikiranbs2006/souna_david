@@ -17,7 +17,7 @@ export class DevMailboxMailer implements Mailer {
         `INSERT INTO devtools.mailbox (reseller_id, to_address, subject, html, text)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING id`,
-        [resellerId, message.to, singleLine(message.subject), message.html, withEnvelope(message.text, from, message.replyTo)],
+        [resellerId, message.to, singleLine(message.subject), message.html, withEnvelope(message.text, from, message.replyTo, message.attachments)],
       ),
     );
     let rows: { id: string | number }[];
@@ -34,5 +34,5 @@ export class DevMailboxMailer implements Mailer {
 }
 
 /** The mailbox table has no envelope columns; show From/Reply-To on top of the text part. */
-const withEnvelope = (text: string, from: string, replyTo?: string): string =>
-  `From: ${from}\n${replyTo ? `Reply-To: ${replyTo}\n` : ''}\n${text}`;
+const withEnvelope = (text: string, from: string, replyTo?: string, attachments?: { filename: string }[]): string =>
+  `From: ${from}\n${replyTo ? `Reply-To: ${replyTo}\n` : ''}${attachments?.length ? `Attachments: ${attachments.map(a => a.filename).join(', ')}\n` : ''}\n${text}`;
