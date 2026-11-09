@@ -4,6 +4,7 @@ import { UPLOAD_LIMITS, routes, type AdminSauna, type AdminSaunaOptions, type St
 import { processBrandingUpload } from '../adapters/images.ts';
 import { originFor } from '../config.ts';
 import type { AppEnv, Ctx, Db, TenantInfo } from '../context.ts';
+import { shareCacheKeyOfHash } from '../lib/shareLinkCache.ts';
 import { hmac, randomToken, safeEqual } from '../lib/crypto.ts';
 import { decodeCursor, pageOf } from '../lib/cursor.ts';
 import { tenantTx } from '../lib/db.ts';
@@ -14,7 +15,7 @@ import { assetUrl, effectiveOptionPrice } from '../domain/catalog.ts';
 import {
   createConfiguration, getConfigRow, listConfigurationSummaries, lockConfiguration, replacePlacement, replaceSelections, toConfigurationDto,
 } from '../domain/configurations.ts';
-import { hashShareToken, newShareToken, shareState } from '../domain/sharing.ts';
+import { hashShareToken, newShareToken, shareCacheOf, shareState } from '../domain/sharing.ts';
 
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
 const UPLOAD_TTL_SECONDS = 600;
@@ -481,17 +482,29 @@ export function registerAdmin(app: Hono<AppEnv>): void {
   mount(app, routes.adminCreateShareLink, async ({ c, params, body, principal }) => {
     const me = asStaff(principal);
     const { tenant, locale, deps } = ctx(c);
-    const token = newShareToken();
+    let token = '';
     const link = await tenantTx(c, async db => {
       const row = await getConfigRow(db, params.id!);
       await lockConfiguration(db, tenant, locale, row, deps.config.SHARE_PRICE_VALID_DAYS);
       const { rows: s } = await db.query<{ d: number }>('select default_share_expiry_days as d from resellers where id = $1', [tenant.id]);
       const days = body.expiresInDays ?? s[0]!.d;
-      const { rows } = await db.query<{ id: string; expires_at: Date }>(
-        `insert into share_links (reseller_id, configuration_id, token_hash, created_by_staff_id, expires_at)
-         values ($1, $2, $3, $4, now() + make_interval(days => $5)) returning id, expires_at`,
-        [tenant.id, row.id, hashShareToken(token), me.staffId, days]);
-      return rows[0]!;
+      // A short token can collide with an existing one: retry with a new token (a savepoint keeps the transaction usable).
+      for (let attempt = 0; attempt < 5; attempt++) {
+        token = newShareToken();
+        await db.query('savepoint share_insert');
+        try {
+          const { rows } = await db.query<{ id: string; expires_at: Date }>(
+            `insert into share_links (reseller_id, configuration_id, token_hash, created_by_staff_id, expires_at)
+             values ($1, $2, $3, $4, now() + make_interval(days => $5)) returning id, expires_at`,
+            [tenant.id, row.id, hashShareToken(token), me.staffId, days]);
+          await db.query('release savepoint share_insert');
+          return rows[0]!;
+        } catch (err) {
+          if ((err as { code?: string }).code !== '23505') throw err;
+          await db.query('rollback to savepoint share_insert');
+        }
+      }
+      throw new ApiError('INTERNAL', 'Could not create a share link. Try again.');
     });
     c.header('Cache-Control', 'no-store');
     return { id: link.id, url: `${originFor(deps.config, c.get('host').name)}/s/${token}`, expiresAt: link.expires_at.toISOString() };
@@ -503,9 +516,12 @@ export function registerAdmin(app: Hono<AppEnv>): void {
       await db.query('update share_links set revoked_at = now() where id = $1 and configuration_id = $2 and revoked_at is null', [params.linkId, params.id]);
       const { rows } = await db.query<LinkRow>(`${LINK_SQL} where s.id = $1 and s.configuration_id = $2`, [params.linkId, params.id]);
       if (!rows[0]) throw new ApiError('NOT_FOUND', 'Share link not found.');
-      return rows[0];
+      const { rows: h } = await db.query<{ token_hash: Buffer }>('select token_hash from share_links where id = $1', [params.linkId]);
+      return { link: rows[0], tokenHash: h[0]!.token_hash };
     });
-    return linkOf(row, now);
+    // After the commit, so a concurrent reader cannot re-cache the pre-revoke state.
+    await shareCacheOf(c.get('deps')).delete(shareCacheKeyOfHash(row.tokenHash, c.get('tenant')!.id));
+    return linkOf(row.link, now);
   });
 
 }

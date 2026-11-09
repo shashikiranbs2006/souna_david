@@ -9,7 +9,7 @@ import { assetUrl, listCatalog, listRooms, loadModel } from '../domain/catalog.t
 import { getConfigRow, getSelections, getSnapshot } from '../domain/configurations.ts';
 import { loadMailBrand } from '../domain/mailBrand.ts';
 import { templates } from '../adapters/mail/templates.ts';
-import { deviceClass, isAutomatedClient, resolveShareToken, visitorPrefix } from '../domain/sharing.ts';
+import { deviceClass, isAutomatedClient, resolveShareLink, visitorPrefix } from '../domain/sharing.ts';
 import { issueAssetCookies } from './assets.ts';
 
 const IMMUTABLE = 'public, max-age=31536000, immutable';
@@ -123,7 +123,7 @@ export function registerCatalog(app: Hono<AppEnv>): void {
   mount(app, routes.shared, async ({ c, params, tenant, principal }) => {
     const now = c.get('deps').now();
     const body = await tenantTx(c, async db => {
-      const link = await resolveShareToken(db, params.token!, now);
+      const link = await resolveShareLink(c, db, params.token!);
       const row = await getConfigRow(db, link.configuration_id);
       // Links are only ever created for locked configurations; an unlocked one is a data bug, not a viewable state.
       if (!row.locked_at) throw new ApiError('NOT_FOUND', 'This link does not exist.');
@@ -174,7 +174,7 @@ export function registerCatalog(app: Hono<AppEnv>): void {
     if (principal.kind !== 'staff') {
       const now = c.get('deps').now();
       await tenantTx(c, async db => {
-        const link = await resolveShareToken(db, params.token!, now);
+        const link = await resolveShareLink(c, db, params.token!);
         const { rows } = await db.query<{ n: string; has: boolean }>(
           'select count(*) as n, bool_or(visit_id = $2) as has from share_link_activity where share_link_id = $1', [link.id, body.visitId]);
         if (!rows[0]!.has && Number(rows[0]!.n) >= 500) return;
@@ -194,7 +194,7 @@ export function registerCatalog(app: Hono<AppEnv>): void {
   mount(app, routes.sharedEnquiry, async ({ c, params, body }) => {
     const { deps } = { deps: c.get('deps') };
     const found = await tenantTx(c, async db => {
-      const link = await resolveShareToken(db, params.token!, deps.now());
+      const link = await resolveShareLink(c, db, params.token!);
       const { rows } = await db.query<{ sauna: string }>(
         `select coalesce(t.name, m.name) as sauna
            from configurations cf join sauna_models m on m.id = cf.sauna_model_id

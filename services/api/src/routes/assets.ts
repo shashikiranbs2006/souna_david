@@ -6,7 +6,7 @@ import type { AppEnv, Ctx, Db } from '../context.ts';
 import { tenantTx } from '../lib/db.ts';
 import { ApiError } from '../lib/problem.ts';
 import { mount } from '../lib/route.ts';
-import { resolveShareToken } from '../domain/sharing.ts';
+import { resolveShareLink } from '../domain/sharing.ts';
 
 /**
  * Asset access (design 10): 3D files sit behind CloudFront signed cookies.
@@ -27,10 +27,10 @@ export async function issueAssetCookies(c: Ctx, tier: AssetTier): Promise<Date> 
 }
 
 /** The share link's sauna model, or null when the token is not usable. Errors are swallowed: a bad token just means LOW. */
-async function shareModel(db: Db, token: string | undefined, now: Date): Promise<string | null> {
+async function shareModel(c: Ctx, db: Db, token: string | undefined): Promise<string | null> {
   if (!token) return null;
   try {
-    const link = await resolveShareToken(db, token, now);
+    const link = await resolveShareLink(c, db, token);
     const { rows } = await db.query<{ sauna_model_id: string; locked_at: Date | null }>(
       'select sauna_model_id, locked_at from configurations where id = $1', [link.configuration_id]);
     return rows[0]?.locked_at ? rows[0].sauna_model_id : null;
@@ -44,7 +44,7 @@ export function registerAssets(app: Hono<AppEnv>): void {
   mount(app, routes.assetSession, async ({ c, body, principal }) => {
     let tier: AssetTier = principal.kind === 'anonymous' ? 'LOW' : 'FULL';
     if (tier === 'LOW' && body.shareToken) {
-      const model = await tenantTx(c, db => shareModel(db, body.shareToken, c.get('deps').now()));
+      const model = await tenantTx(c, db => shareModel(c, db, body.shareToken));
       if (model) tier = 'FULL';
     }
     const expiresAt = await issueAssetCookies(c, tier);
@@ -55,7 +55,7 @@ export function registerAssets(app: Hono<AppEnv>): void {
   mount(app, routes.assetAr, async ({ c, body, principal }) => {
     const { adapters, config, now } = c.get('deps');
     const keys = await tenantTx(c, async db => {
-      const viaShare = principal.kind === 'anonymous' ? await shareModel(db, body.shareToken, now()) : null;
+      const viaShare = principal.kind === 'anonymous' ? await shareModel(c, db, body.shareToken) : null;
       if (principal.kind === 'anonymous' && viaShare !== body.saunaModelId) {
         throw new ApiError('UNAUTHENTICATED', 'Sign in or open a shared configuration to view this sauna in AR.');
       }

@@ -29,7 +29,7 @@ export function seedId(label: string): string {
 
 export const SEED_PASSWORD = 'Sauna!2026';
 /** Share token of the seeded alpha link: open http://alpha.localhost:5173/s/<token>. */
-export const SEED_SHARE_TOKEN = createHash('sha256').update('saunaklar-seed-share-alpha').digest('base64url');
+export const SEED_SHARE_TOKEN = 'SeedShare7';
 
 export const SEED = {
   manufacturerId: seedId('manufacturer:nordlicht'),

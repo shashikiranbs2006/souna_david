@@ -221,6 +221,9 @@
     border-right: var(--hair) solid var(--line);
     background: var(--paper-2);
     backdrop-filter: none;
+    /* On short screens the sidebar scrolls, so sign-out and the language stay reachable. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .staff-shell__nav {
@@ -268,6 +271,15 @@
 
   .staff-shell__tools {
     justify-content: space-between;
+  }
+
+  /* The language menu sits at the bottom of a full-height sidebar: open it upwards and
+     from its left edge, so it stays inside the sidebar instead of off the screen. */
+  .staff-shell__tools .menu__list {
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
+    right: auto;
   }
 
   .staff-shell__content {

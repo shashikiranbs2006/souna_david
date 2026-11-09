@@ -2,7 +2,8 @@
 
 Target: the Contabo VPS (Ubuntu) that also hosts other projects. Everything here lives next to
 them and does not change them: its own user `holz_sauna`, folder `/opt/holz_sauna`, port 3010,
-a Postgres 16 container `holz-sauna-db` on 127.0.0.1:5433, one systemd service `holz-sauna` and
+a Postgres 16 container `holz-sauna-db` on 127.0.0.1:5433, a Redis 7 container `holz-sauna-redis` on
+127.0.0.1:6380 (share-link cache, password in `.env` as `REDIS_URL`; the app works without it), one systemd service `holz-sauna` and
 one new nginx site `holz_sauna`. Only `nginx -t` and `systemctl reload nginx` touch shared
 services (a reload does not drop connections to the other sites).
 
@@ -36,7 +37,7 @@ bash setup-root.sh
 (Get the file with `curl -O` from this repository, or copy it over.) It generates the secrets in
 `/opt/holz_sauna/.env` and `.env.deploy` (mode 600, owned by `holz_sauna`; never in git),
 starts the database container, installs the service, adds the nginx site and asks Let's Encrypt
-for a certificate. It stops if port 3010 or 5433 is already taken. Re-running it is safe: it keeps
+for a certificate. It stops if port 3010, 5433 or 6380 is already taken. Re-running it is safe: it keeps
 existing secrets and containers.
 
 ## 2. Once, as holz_sauna: get the code
