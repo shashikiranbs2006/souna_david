@@ -932,4 +932,12 @@ export const de: Messages = {
     openDoor: 'Tür öffnen',
     closeDoor: 'Tür schliessen',
   },
+  arRoom: {
+    button: 'In Ihrem Raum ansehen',
+    open: 'In Ihrem Raum öffnen',
+    preparing: 'Ihre Sauna wird für AR vorbereitet…',
+    ready: 'Bereit. Tippen Sie erneut, um die Sauna in Originalgrösse in Ihren Raum zu stellen.',
+    error: 'Die AR-Ansicht konnte nicht vorbereitet werden. Bitte versuchen Sie es erneut.',
+    notSupported: 'AR funktioniert auf Smartphones und Tablets mit ARCore (Android) oder ARKit (iPhone, iPad). Öffnen Sie diesen Link auf Ihrem Smartphone, um die Sauna in Originalgrösse in Ihren Raum zu stellen.',
+  },
 };

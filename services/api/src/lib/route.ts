@@ -52,7 +52,7 @@ export function mount<R extends RouteDef>(app: Hono<AppEnv>, def: R, handler: Ha
     let body: unknown = undefined;
     if (def.body) {
       const len = Number(c.req.header('content-length') ?? 0);
-      if (len > MAX_JSON_BYTES) throw new ApiError('PAYLOAD_TOO_LARGE');
+      if (len > (def.maxBodyBytes ?? MAX_JSON_BYTES)) throw new ApiError('PAYLOAD_TOO_LARGE');
       const type = c.req.header('content-type') ?? '';
       // An optional body (e.g. accept's `{quoteId?}`) may be omitted entirely.
       const omitted = !type && !len && def.body.safeParse(undefined).success;

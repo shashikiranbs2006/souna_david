@@ -16,6 +16,7 @@ import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { ViewerSlot } from '../../three/ViewerSlot.tsx';
 import { ArButton } from '../../three/ArButton.tsx';
+import { ArRoomButton } from '../../three/ar/ArRoomButton.tsx';
 import { specsOf } from '../components/specs.ts';
 import { viewerOptionsOf } from '../components/sauna-helpers.ts';
 import './SaunaDetail.css';
@@ -125,6 +126,7 @@ export default function Shared() {
 
   const d = shared.data;
   const specs = specsOf(d.sauna);
+  const viewerOptions = viewerOptionsOf(d.sauna, d.configuration.selections);
   const chosen = d.sauna.groups.flatMap(g => g.options.filter(o => d.configuration.selections.includes(o.id)).map(o => ({ g: g.name, o })));
   // Customers only look: no account, no changes; they contact the shop.
   const b = tenant.branding;
@@ -133,11 +135,18 @@ export default function Shared() {
       <p className="eyebrow">{t('shared.eyebrow')}</p>
       <div className="detail">
         <div className="detail__stage">
-          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views onViewChange={onViewChange} watermark />
-          {d.sauna.assets.hasAr && (
+          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptions} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views onViewChange={onViewChange} watermark />
+          {specs.source === 'kit' ? (
+            // The exact configured sauna, exported from the same kit scene as the 3D view.
             <div className="detail__ar">
-              <ArButton saunaModelId={d.sauna.id} name={d.sauna.name} enabled shareToken={token} />
+              <ArRoomButton shareToken={token} name={d.configuration.name} specs={specs} options={viewerOptions} thumbnailUrl={d.sauna.assets.thumbnailUrl} />
             </div>
+          ) : (
+            d.sauna.assets.hasAr && (
+              <div className="detail__ar">
+                <ArButton saunaModelId={d.sauna.id} name={d.sauna.name} enabled shareToken={token} />
+              </div>
+            )
           )}
         </div>
         <aside className="detail__aside">

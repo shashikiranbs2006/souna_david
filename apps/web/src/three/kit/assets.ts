@@ -113,6 +113,31 @@ export function useKitAssets(): KitAssets {
   return assets;
 }
 
+/**
+ * The same parts and textures without React (the AR export builds the sauna
+ * outside any canvas). The loaders are imported on demand; free the parts with
+ * disposeParts and the textures with dispose() when done.
+ */
+export async function loadKitAssets(): Promise<KitAssets> {
+  const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
+    import('three/addons/loaders/GLTFLoader.js'),
+    import('three/addons/libs/meshopt_decoder.module.js'),
+  ]);
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+  const textures = new THREE.TextureLoader();
+  const [gltf, knotty, knottyN, clear, clearN, slat] = await Promise.all([loader.loadAsync(partsUrl), ...URLS.map(u => textures.loadAsync(u))]);
+  const B = TEXTURE_SIZE.boards, S = TEXTURE_SIZE.slat;
+  const m = woodMeans as unknown as Record<string, [number, number, number]>;
+  return {
+    parts: partsFrom(gltf.scene),
+    wood: {
+      knotty: { map: prepare(knotty!, B, true), normal: prepare(knottyN!, B, false), mean: m['wall-knotty']! },
+      clear: { map: prepare(clear!, B, true), normal: prepare(clearN!, B, false), mean: m['wall-clear']! },
+      slat: { map: prepare(slat!, S, true), mean: m.slat! },
+    },
+  };
+}
+
 /** Start fetching early, e.g. when the configurator opens. */
 export function preloadKitAssets() {
   useGLTF.preload(partsUrl);

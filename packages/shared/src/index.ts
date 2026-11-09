@@ -5,6 +5,7 @@ export * from './catalog.ts';
 export * from './auth.ts';
 export * from './configurations.ts';
 export * from './sharing.ts';
+export * from './ar.ts';
 export * from './admin.ts';
 export * from './pricing.ts';
 export * from './routes.ts';

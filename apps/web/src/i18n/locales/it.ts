@@ -929,4 +929,12 @@ export const it: Messages = {
     openDoor: 'Apri la porta',
     closeDoor: 'Chiudi la porta',
   },
+  arRoom: {
+    button: 'Guardi nella Sua stanza',
+    open: 'Apra nella Sua stanza',
+    preparing: 'Stiamo preparando la Sua sauna per la RA…',
+    ready: 'Pronto. Tocchi di nuovo per posizionare la sauna a grandezza reale nella Sua stanza.',
+    error: 'Non è stato possibile preparare la vista in RA. Riprovi.',
+    notSupported: 'La RA funziona su smartphone e tablet con ARCore (Android) o ARKit (iPhone, iPad). Apra questo link sul Suo smartphone per posizionare la sauna a grandezza reale nella Sua stanza.',
+  },
 };

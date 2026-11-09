@@ -921,6 +921,14 @@ const messages = {
     openDoor: 'Open door',
     closeDoor: 'Close door',
   },
+  arRoom: {
+    button: 'View in your room',
+    open: 'Open in your room',
+    preparing: 'Preparing your sauna for AR…',
+    ready: 'Ready. Tap again to place the sauna in your room at its real size.',
+    error: 'The AR view could not be prepared. Please try again.',
+    notSupported: 'AR works on phones and tablets with ARCore (Android) or ARKit (iPhone, iPad). Open this link on your phone to place the sauna in your room at its real size.',
+  },
 } as const;
 
 export type Messages = Widen<typeof messages>;
