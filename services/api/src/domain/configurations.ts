@@ -1,6 +1,6 @@
 import { calculatePrice, type PriceBreakdown } from '@saunaklar/pricing';
 import { defaultSelection, validate } from '@saunaklar/rules';
-import type { AppLocale, Configuration, ConfigurationSummary, Placement, PriceBreakdownDto, PriceSnapshotDto, RequestStatus } from '@saunaklar/shared';
+import type { AppLocale, Configuration, ConfigurationSummary, Placement, PriceBreakdownDto, PriceSnapshotDto } from '@saunaklar/shared';
 import type { Db, TenantInfo } from '../context.ts';
 import { ApiError } from '../lib/problem.ts';
 import { assetUrl, loadModel, type LoadedModel } from './catalog.ts';
@@ -15,16 +15,12 @@ export interface ConfigRow {
   id: string;
   reseller_id: string;
   sauna_model_id: string;
-  customer_id: string | null;
   created_by_staff_id: string | null;
   name: string | null;
-  source_configuration_id: string | null;
   locked_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }
-
-export type Owner = { customerId: string } | { staff: true };
 
 const iso = (d: Date) => d.toISOString();
 
@@ -57,11 +53,11 @@ export function livePrice(model: LoadedModel, selections: readonly string[]): Pr
   });
 }
 
-/** Loads a configuration the caller may see: customers only their own, staff any of the tenant. */
-export async function getConfigRow(db: Db, id: string, owner: Owner): Promise<ConfigRow> {
+/** Loads a configuration of this shop (row-level security scopes the query to the shop). */
+export async function getConfigRow(db: Db, id: string): Promise<ConfigRow> {
   const { rows } = await db.query<ConfigRow>('select * from configurations where id = $1', [id]);
   const row = rows[0];
-  if (!row || ('customerId' in owner && row.customer_id !== owner.customerId)) throw new ApiError('NOT_FOUND', 'Configuration not found.');
+  if (!row) throw new ApiError('NOT_FOUND', 'Configuration not found.');
   return row;
 }
 
@@ -105,11 +101,10 @@ export async function getSnapshot(db: Db, configurationId: string): Promise<Pric
 export async function toConfigurationDto(db: Db, tenant: TenantInfo, locale: AppLocale, row: ConfigRow): Promise<Configuration> {
   const model = await loadModel(db, tenant, locale, { id: row.sauna_model_id }, true);
   if (!model) throw new ApiError('SAUNA_NOT_OFFERED', 'This sauna is no longer offered.');
-  const [selections, placement, snapshot, request] = await Promise.all([
+  const [selections, placement, snapshot] = await Promise.all([
     getSelections(db, row.id),
     getPlacement(db, row.id),
     row.locked_at ? getSnapshot(db, row.id) : Promise.resolve(null),
-    db.query<{ id: string; status_code: RequestStatus }>('select id, status_code from configuration_requests where configuration_id = $1', [row.id]),
   ]);
   let breakdown: PriceBreakdownDto;
   if (snapshot) {
@@ -118,7 +113,6 @@ export async function toConfigurationDto(db: Db, tenant: TenantInfo, locale: App
   } else {
     breakdown = toBreakdownDto(livePrice(model, selections), tenant.currency);
   }
-  const req = request.rows[0];
   return {
     id: row.id,
     name: row.name ?? model.detail.name,
@@ -129,10 +123,6 @@ export async function toConfigurationDto(db: Db, tenant: TenantInfo, locale: App
     lockedAt: row.locked_at ? iso(row.locked_at) : null,
     price: breakdown,
     snapshot,
-    owner: row.customer_id ? 'CUSTOMER' : 'STAFF',
-    customerId: row.customer_id,
-    sourceConfigurationId: row.source_configuration_id,
-    request: req ? { id: req.id, status: req.status_code } : null,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
   };
@@ -153,18 +143,16 @@ function checkSelection(model: LoadedModel, selection: readonly string[], comple
 
 export async function createConfiguration(
   db: Db, tenant: TenantInfo, locale: AppLocale,
-  input: { saunaModelId: string; name?: string | undefined; selections?: string[] | undefined; customerId: string | null; staffId: string | null; sourceId?: string | null },
+  input: { saunaModelId: string; name?: string | undefined; selections?: string[] | undefined; staffId: string },
 ): Promise<ConfigRow> {
-  // Customers may only start from visible saunas; staff may prepare hidden ones, and a
-  // clone (own configuration or a claimed share link) keeps the model it was made with.
-  const includeHidden = (input.staffId !== null && input.customerId === null) || Boolean(input.sourceId);
-  const model = await loadModel(db, tenant, locale, { id: input.saunaModelId }, includeHidden);
+  // Staff may prepare hidden saunas too.
+  const model = await loadModel(db, tenant, locale, { id: input.saunaModelId }, true);
   if (!model) throw new ApiError('SAUNA_NOT_OFFERED', 'This sauna is not offered here.');
   const selection = checkSelection(model, input.selections ?? defaultSelection(model.rules), false);
   const { rows } = await db.query<ConfigRow>(
-    `insert into configurations (reseller_id, sauna_model_id, customer_id, created_by_staff_id, name, source_configuration_id)
-     values ($1, $2, $3, $4, $5, $6) returning *`,
-    [tenant.id, model.detail.id, input.customerId, input.staffId, input.name ?? model.detail.name, input.sourceId ?? null]);
+    `insert into configurations (reseller_id, sauna_model_id, created_by_staff_id, name)
+     values ($1, $2, $3, $4) returning *`,
+    [tenant.id, model.detail.id, input.staffId, input.name ?? model.detail.name]);
   const row = rows[0]!;
   await writeSelections(db, row, selection);
   return row;
@@ -182,7 +170,7 @@ async function writeSelections(db: Db, row: ConfigRow, selection: readonly strin
 }
 
 export async function replaceSelections(db: Db, tenant: TenantInfo, locale: AppLocale, row: ConfigRow, selection: readonly string[]): Promise<void> {
-  if (row.locked_at) throw new ApiError('CONFIGURATION_LOCKED', 'This configuration is locked. Clone it to make changes.');
+  if (row.locked_at) throw new ApiError('CONFIGURATION_LOCKED', 'This configuration is locked. Create a new one to make changes.');
   // Serialises concurrent edits of the same configuration.
   await db.query('select 1 from configurations where id = $1 for update', [row.id]);
   const model = await loadModel(db, tenant, locale, { id: row.sauna_model_id }, true);
@@ -191,7 +179,7 @@ export async function replaceSelections(db: Db, tenant: TenantInfo, locale: AppL
 }
 
 export async function replacePlacement(db: Db, tenant: TenantInfo, row: ConfigRow, placement: Placement | null): Promise<void> {
-  if (row.locked_at) throw new ApiError('CONFIGURATION_LOCKED', 'This configuration is locked. Clone it to make changes.');
+  if (row.locked_at) throw new ApiError('CONFIGURATION_LOCKED', 'This configuration is locked. Create a new one to make changes.');
   if (!placement) {
     await db.query('delete from configuration_room_placements where configuration_id = $1', [row.id]);
     return;
@@ -234,51 +222,31 @@ export async function lockConfiguration(db: Db, tenant: TenantInfo, locale: AppL
   return rows[0]!;
 }
 
-/** New draft from any configuration (locked or not) with the same model, selections and placement. */
-export async function cloneConfiguration(db: Db, tenant: TenantInfo, locale: AppLocale, source: ConfigRow, owner: { customerId: string | null; staffId: string | null }): Promise<ConfigRow> {
-  const selections = await getSelections(db, source.id);
-  const row = await createConfiguration(db, tenant, locale, {
-    saunaModelId: source.sauna_model_id,
-    name: source.name ?? undefined,
-    selections,
-    customerId: owner.customerId,
-    staffId: owner.staffId,
-    sourceId: source.id,
-  });
-  const placement = await getPlacement(db, source.id);
-  if (placement) await replacePlacement(db, tenant, row, placement);
-  return row;
-}
-
-export async function listConfigurationSummaries(db: Db, tenant: TenantInfo, locale: AppLocale, filter: { customerId?: string }, cursor: { at: string; id: string } | null, limit: number): Promise<(ConfigurationSummary & { _at: string })[]> {
+export async function listConfigurationSummaries(db: Db, tenant: TenantInfo, locale: AppLocale, cursor: { at: string; id: string } | null, limit: number): Promise<(ConfigurationSummary & { _at: string })[]> {
   const params: unknown[] = [tenant.id, locale, limit + 1];
   let where = 'c.reseller_id = $1';
-  if (filter.customerId) {
-    params.push(filter.customerId);
-    where += ` and c.customer_id = $${params.length}`;
-  }
   if (cursor) {
     params.push(cursor.at, cursor.id);
     where += ` and (c.updated_at, c.id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)`;
   }
   // Page first, then decorate: the keyset walk reads limit+1 rows of
-  // configurations_reseller_updated_idx (or configurations_customer_updated_idx), and the
-  // joins, the thumbnail subquery (assets RLS) and the request/snapshot lookups run only for
+  // configurations_reseller_updated_idx , and the
+  // joins, the thumbnail subquery (assets RLS) and the snapshot lookup run only for
   // the rows on the page. Joining sauna_models inside the page keeps the old semantics: a
   // configuration of a model the reseller no longer offers stays hidden (RLS on sauna_models).
-  const { rows } = await db.query<{ id: string; name: string | null; locked_at: Date | null; customer_id: string | null; created_at: Date; updated_at: Date; cursor_at: string; model_id: string; slug: string; model_name: string; thumb: string | null; final_price_minor: string | null; request_id: string | null; status_code: RequestStatus | null }>(
+  const { rows } = await db.query<{ id: string; name: string | null; locked_at: Date | null; created_at: Date; updated_at: Date; cursor_at: string; model_id: string; slug: string; model_name: string; thumb: string | null; final_price_minor: string | null }>(
     `with page as materialized (
-       select c.id, c.name, c.locked_at, c.customer_id, c.created_at, c.updated_at, c.sauna_model_id
+       select c.id, c.name, c.locked_at, c.created_at, c.updated_at, c.sauna_model_id
          from configurations c
          join sauna_models m on m.id = c.sauna_model_id
         where ${where}
         order by c.updated_at desc, c.id desc
         limit $3)
-     select p.id, p.name, p.locked_at, p.customer_id, p.created_at, p.updated_at,
+     select p.id, p.name, p.locked_at, p.created_at, p.updated_at,
             to_char(p.updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_at,
             m.id as model_id, m.slug, coalesce(t.name, m.name) as model_name,
             th.storage_key as thumb,
-            s.final_price_minor, r.id as request_id, r.status_code
+            s.final_price_minor
        from page p
        join sauna_models m on m.id = p.sauna_model_id
        left join sauna_model_translations t on t.sauna_model_id = m.id and t.locale = $2
@@ -286,7 +254,6 @@ export async function listConfigurationSummaries(db: Db, tenant: TenantInfo, loc
          select a.storage_key from sauna_model_assets x join assets a on a.id = x.asset_id
           where x.sauna_model_id = m.id and x.asset_role = 'MODEL_THUMBNAIL' order by x.position limit 1) th on true
        left join configuration_price_snapshots s on s.configuration_id = p.id
-       left join configuration_requests r on r.configuration_id = p.id
       order by p.updated_at desc, p.id desc`,
     params);
   // Drafts have no snapshot: price them live (one model load per distinct model, one
@@ -317,8 +284,6 @@ export async function listConfigurationSummaries(db: Db, tenant: TenantInfo, loc
       sauna: { id: r.model_id, slug: r.slug, name: r.model_name, thumbnailUrl: assetUrl(r.thumb) },
       locked: r.locked_at !== null,
       lockedAt: r.locked_at ? iso(r.locked_at) : null,
-      owner: r.customer_id ? 'CUSTOMER' : 'STAFF',
-      request: r.request_id ? { id: r.request_id, status: r.status_code! } : null,
       createdAt: iso(r.created_at),
       updatedAt: iso(r.updated_at),
       finalPriceMinor: final,

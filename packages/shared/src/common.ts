@@ -2,9 +2,7 @@ import { z } from 'zod';
 
 export const uuid = z.guid();
 export const isoDateTime = z.iso.datetime({ offset: true });
-export const isoDate = z.iso.date();
 export const currencyCode = z.string().regex(/^[A-Z]{3}$/);
-export const countryCode = z.string().regex(/^[A-Z]{2}$/);
 export const slug = z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/, 'Lower-case letters, digits and hyphens, 1-32 characters.');
 export const hexColor = z.string().regex(/^#[0-9a-f]{6}$/, 'A colour like #1c1c1a.');
 export const locale = z.enum(['en', 'de', 'fr', 'it']);

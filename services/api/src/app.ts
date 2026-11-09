@@ -5,18 +5,16 @@ import { notFoundHandler, onError, originLock, requestContext, securityHeaders }
 import { rateLimit } from './middleware/rateLimit.ts';
 import { csrf, session } from './middleware/session.ts';
 import { hostAndTenant, TenantCache } from './middleware/tenant.ts';
-import { registerAccount } from './routes/account.ts';
 import { registerAdmin } from './routes/admin.ts';
 import { registerQuotes } from './routes/quotes.ts';
 import { registerInvoices } from './routes/invoices.ts';
 import { registerAssets } from './routes/assets.ts';
 import { registerAuth } from './routes/auth.ts';
 import { registerCatalog } from './routes/catalog.ts';
-import { registerConfigurations } from './routes/configurations.ts';
 import { registerPricing } from './routes/pricing.ts';
 import { registerStaffAuth } from './routes/staffAuth.ts';
 
-export const ALL_FUNCTIONS: readonly LambdaFunction[] = ['public-catalog', 'customer', 'reseller-admin', 'asset-signer'];
+export const ALL_FUNCTIONS: readonly LambdaFunction[] = ['public-catalog', 'reseller-admin', 'asset-signer'];
 
 /**
  * Builds the API. In AWS each Lambda function mounts only its own routes
@@ -35,11 +33,9 @@ export function createApp(deps: Deps, functions: readonly LambdaFunction[] = ALL
   app.use('/api/assets/*', rateLimit({ group: 'assets', windowMs: 60_000, max: 120 }));
 
   const has = (f: LambdaFunction) => functions.includes(f);
-  if (has('public-catalog')) registerCatalog(app);
-  if (has('customer')) {
+  if (has('public-catalog')) {
+    registerCatalog(app);
     registerAuth(app);
-    registerAccount(app);
-    registerConfigurations(app);
   }
   if (has('reseller-admin')) {
     registerStaffAuth(app);

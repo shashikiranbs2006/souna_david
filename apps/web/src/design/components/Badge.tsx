@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import type { RequestStatus } from '@saunaklar/shared';
 import { useT, type TKey } from '../../i18n/i18n.ts';
 import './Badge.css';
 
@@ -19,23 +18,16 @@ export function Badge({ tone = 'outline', children, dot }: { tone?: BadgeTone; c
  * (open states outlined, the one needing action solid, terminal ones muted).
  */
 const STATUS_TONE: Record<string, BadgeTone> = {
-  SUBMITTED: 'outline',
-  IN_REVIEW: 'soft',
-  QUOTED: 'solid',
-  ACCEPTED: 'solid',
-  CLOSED: 'muted',
-  REJECTED: 'dashed',
-  CANCELLED: 'muted',
   ACTIVE: 'solid',
   SUSPENDED: 'dashed',
   DRAFT: 'outline',
   LOCKED: 'soft',
 };
 
-export function StatusBadge({ status }: { status: RequestStatus | 'ACTIVE' | 'SUSPENDED' | 'DRAFT' | 'LOCKED' }) {
+export function StatusBadge({ status }: { status: 'ACTIVE' | 'SUSPENDED' | 'DRAFT' | 'LOCKED' }) {
   const { t } = useT();
   return (
-    <Badge tone={STATUS_TONE[status] ?? 'outline'} dot={status !== 'CLOSED' && status !== 'CANCELLED'}>
+    <Badge tone={STATUS_TONE[status] ?? 'outline'} dot>
       {t(`status.${status}` as TKey)}
     </Badge>
   );

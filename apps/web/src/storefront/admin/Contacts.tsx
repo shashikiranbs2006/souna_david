@@ -16,8 +16,7 @@ import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { PageHead, Panel } from '../../staff/PageHead.tsx';
 import { InvoicePanel } from './Invoices.tsx';
-import { useDebounced } from './Requests.tsx';
-import { minorToInput, parseMoney, useAdminMutation } from './helpers.ts';
+import { minorToInput, parseMoney, useAdminMutation, useDebounced } from './helpers.ts';
 
 type Contact = ResponseOf<'adminContacts'>['items'][number];
 type OfferSummary = ResponseOf<'adminOffers'>['items'][number];

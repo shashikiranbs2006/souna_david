@@ -1,18 +1,16 @@
 import { ArrowRight } from 'lucide-react';
 import { useT } from '../../i18n/i18n.ts';
-import { useSession, useTenantData } from '../../api/queries.ts';
+import { useTenantData } from '../../api/queries.ts';
 import { Reveal } from '../../motion/Reveal.tsx';
 import { ExternalLink } from '../../design/components/TextLink.tsx';
 import { ButtonLink } from '../../design/components/Button.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { PageHero } from '../components/PageHero.tsx';
-import { isSingleShop } from '../../host.ts';
 import './Content.css';
 
 export default function Contact() {
   const { t } = useT();
   const tenant = useTenantData();
-  const session = useSession().data;
   const b = tenant.branding;
   useDocumentTitle(t('contact.eyebrow'));
   return (
@@ -61,13 +59,6 @@ export default function Contact() {
             {t('contact.requestCta')}
           </ButtonLink>
         </section>
-        {!isSingleShop() && <section className="contact-block">
-          <h2>{t('contact.statusTitle')}</h2>
-          <p>{t('contact.statusBody')}</p>
-          <ButtonLink to={session?.kind === 'customer' ? '/account/requests' : '/account/login?next=/account/requests'} variant="ghost" iconAfter={ArrowRight}>
-            {t('contact.statusCta')}
-          </ButtonLink>
-        </section>}
       </div>
     </div>
   );

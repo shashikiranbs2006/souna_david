@@ -1,21 +1,17 @@
-import { useParams, useNavigate } from 'react-router';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useParams } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
-import { Clock, Copy, Download, Send } from 'lucide-react';
-import { errorText } from '../../i18n/errorText.ts';
-import { useSubmitRequest } from '../configurator/useSubmitRequest.ts';
+import { Clock } from 'lucide-react';
 import { api, isApiError } from '../../api/client.ts';
 import { useSession, useTenantData } from '../../api/queries.ts';
-import { isSingleShop } from '../../host.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { ScrambleText } from '../../motion/ScrambleText.tsx';
-import { Button, ButtonLink } from '../../design/components/Button.tsx';
+import { ButtonLink } from '../../design/components/Button.tsx';
 import { Price } from '../../design/components/Price.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { EmptyState } from '../../design/components/EmptyState.tsx';
 import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
-import { toast } from '../../design/components/Toast.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { ViewerSlot } from '../../three/ViewerSlot.tsx';
 import { ArButton } from '../../three/ArButton.tsx';
@@ -64,25 +60,9 @@ export default function Shared() {
   const fmt = useFormat();
   const tenant = useTenantData();
   const session = useSession().data;
-  const navigate = useNavigate();
   const shared = useQuery({ queryKey: ['shared', token], queryFn: () => api('shared', { params: { token } }), retry: false });
   useDocumentTitle(shared.data?.configuration.name ?? t('shared.eyebrow'));
-  const onViewChange = useVisitActivity(token, isSingleShop() && !session?.kind?.startsWith('staff'));
-  // A claimed copy is locked at a fresh price: offer the request straight away,
-  // or a clone for customers who want to change options first.
-  const claim = useMutation({
-    mutationFn: () => api('claimShared', { params: { token } }),
-    onSuccess: () => toast(t('shared.claimed')),
-    onError: e => toast.error(t('errors.title'), errorText(t, e)),
-  });
-  const claimedId = claim.data?.configurationId;
-  const submit = useSubmitRequest();
-  const clone = useMutation({
-    mutationFn: (id: string) => api('clone', { params: { id } }),
-    onSuccess: c => navigate(`/saunas/${c.sauna.slug}/configure?id=${c.id}`),
-    onError: e => toast.error(t('errors.title'), errorText(t, e)),
-  });
-
+  const onViewChange = useVisitActivity(token, session?.kind !== 'staff');
   if (shared.isPending)
     return (
       <div className="page container detail" aria-hidden="true">
@@ -109,16 +89,14 @@ export default function Shared() {
   const d = shared.data;
   const specs = specsOf(d.sauna);
   const chosen = d.sauna.groups.flatMap(g => g.options.filter(o => d.configuration.selections.includes(o.id)).map(o => ({ g: g.name, o })));
-  const signedIn = session?.kind === 'customer';
-  // David's edition: customers only look. No claim, clone or login; they contact the shop.
-  const viewOnly = isSingleShop();
+  // Customers only look: no account, no changes; they contact the shop.
   const b = tenant.branding;
   return (
     <div className="page container">
       <p className="eyebrow">{t('shared.eyebrow')}</p>
       <div className="detail">
         <div className="detail__stage">
-          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views={viewOnly} onViewChange={onViewChange} watermark={viewOnly} />
+          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptionsOf(d.sauna, d.configuration.selections)} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views onViewChange={onViewChange} watermark />
           {d.sauna.assets.hasAr && (
             <div className="detail__ar">
               <ArButton saunaModelId={d.sauna.id} name={d.sauna.name} enabled shareToken={token} />
@@ -141,40 +119,11 @@ export default function Shared() {
               <Price minor={d.snapshot.finalPriceMinor} currency={d.snapshot.currency} listMinor={d.snapshot.discountMinor > 0 ? d.snapshot.subtotalMinor : null} size="lg" />
               <p className="pricecard__vat">{t('shared.priceAsOf', { date: fmt.date(d.snapshot.computedAt) })} · {t('shared.validUntil', { date: fmt.date(d.snapshot.priceValidUntil) })}</p>
               <p className="pricecard__vat">{t('shared.expires', { date: fmt.date(d.expiresAt) })}</p>
-              {viewOnly ? (
-                <>
-                  <p className="pricecard__hint">{t('shared.viewOnlyHint', { name: b.displayName })}</p>
-                  <ButtonLink to="/contact" size="lg" block>
-                    {t('shared.contact', { name: b.displayName })}
-                  </ButtonLink>
-                  {b.supportPhone && <a className="btn btn--ghost btn--md btn--block" href={`tel:${b.supportPhone.replace(/[^+\d]/g, '')}`}>{b.supportPhone}</a>}
-                </>
-              ) : claimedId ? (
-                <div className="pricecard__claimed" role="status">
-                  <p className="pricecard__claimed-title">{t('shared.claimedTitle')}</p>
-                  <p className="pricecard__hint">{t('shared.claimedBody')}</p>
-                  <Button icon={Send} size="lg" block onClick={() => submit.mutate({ id: claimedId })} loading={submit.isPending}>
-                    {t('shared.requestQuote')}
-                  </Button>
-                  <Button variant="ghost" icon={Copy} block onClick={() => clone.mutate(claimedId)} loading={clone.isPending}>
-                    {t('configure.clone')}
-                  </Button>
-                  <ButtonLink to={`/account/configurations/${claimedId}`} variant="link" block>
-                    {t('shared.viewSaved')}
-                  </ButtonLink>
-                </div>
-              ) : signedIn ? (
-                <Button icon={Download} size="lg" block onClick={() => claim.mutate()} loading={claim.isPending}>
-                  {t('shared.claim')}
-                </Button>
-              ) : (
-                <>
-                  <ButtonLink to={`/account/login?next=${encodeURIComponent(`/s/${token}`)}`} size="lg" block>
-                    {t('nav.login')}
-                  </ButtonLink>
-                  <p className="pricecard__hint">{t('shared.claimHint')}</p>
-                </>
-              )}
+              <p className="pricecard__hint">{t('shared.viewOnlyHint', { name: b.displayName })}</p>
+              <ButtonLink to="/contact" size="lg" block>
+                {t('shared.contact', { name: b.displayName })}
+              </ButtonLink>
+              {b.supportPhone && <a className="btn btn--ghost btn--md btn--block" href={`tel:${b.supportPhone.replace(/[^+d]/g, '')}`}>{b.supportPhone}</a>}
             </div>
           </div>
         </aside>

@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, Navigate, Route, Routes, useMatch } from 'react-router';
-import { BarChart3, Boxes, Contact, FileText, Inbox, Receipt, SlidersHorizontal, Tag, LayoutDashboard, Store, Users, ExternalLink as ExternalIcon } from 'lucide-react';
+import { Boxes, Contact, FileText, Receipt, SlidersHorizontal, Tag, LayoutDashboard, Store, ExternalLink as ExternalIcon } from 'lucide-react';
 import { useTenantData } from '../../api/queries.ts';
 import { useT } from '../../i18n/i18n.ts';
 import { Icon } from '../../design/components/Icon.tsx';
@@ -10,13 +10,10 @@ import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { Toaster } from '../../design/components/Toast.tsx';
 import { AdminShell } from '../../staff/AdminShell.tsx';
 import { RequireStaff } from '../../staff/RequireStaff.tsx';
-import { Dashboard } from './Dashboard.tsx';
-import { RequestDetail, RequestsList } from './Requests.tsx';
 import { ContactDetail, ContactsList, NewOffer, OfferDetail } from './Contacts.tsx';
 import { CommandBox } from './CommandBox.tsx';
 import { InvoiceDetail, InvoicesList } from './Invoices.tsx';
 import { QuotesList, Reports } from './Reports.tsx';
-import { CustomerDetail, CustomersList } from './Customers.tsx';
 import { ConfigurationDetail, ConfigurationsList, NewConfiguration } from './Configurations.tsx';
 import { SaunasAdmin } from './Saunas.tsx';
 import { SaunaOptionsAdmin } from './SaunaOptions.tsx';
@@ -78,13 +75,10 @@ function AdminBody({ session }: { session: Parameters<typeof AdminShell>[0]['ses
           session={session}
           nav={[
             { to: '/admin', label: t('admin.nav.dashboard'), icon: LayoutDashboard, end: true },
-            { to: '/admin/requests', label: t('admin.nav.requests'), icon: Inbox },
             { to: '/admin/contacts', label: t('admin.nav.contacts'), icon: Contact },
             { to: '/admin/configurations', label: t('admin.nav.configurations'), icon: SlidersHorizontal },
             { to: '/admin/quotes', label: t('admin.nav.quotes'), icon: FileText },
             { to: '/admin/invoices', label: t('admin.nav.invoices'), icon: Receipt },
-            { to: '/admin/reports', label: t('admin.nav.reports'), icon: BarChart3 },
-            { to: '/admin/customers', label: t('admin.nav.customers'), icon: Users },
             { to: '/admin/saunas', label: t('admin.nav.saunas'), icon: Boxes },
             { to: '/admin/prices', label: t('admin.nav.prices'), icon: Tag },
             { to: '/admin/branding', label: t('admin.nav.branding'), icon: Store },
@@ -98,9 +92,7 @@ function AdminBody({ session }: { session: Parameters<typeof AdminShell>[0]['ses
         >
           <CommandBox />
           <Routes>
-            <Route index element={<Dashboard />} />
-            <Route path="requests" element={<RequestsList />} />
-            <Route path="requests/:id" element={<RequestDetail />} />
+            <Route index element={<Reports />} />
             <Route path="contacts" element={<ContactsList />} />
             <Route path="contacts/:id" element={<ContactDetail />} />
             <Route path="contacts/:id/quote" element={<NewOffer />} />
@@ -108,9 +100,7 @@ function AdminBody({ session }: { session: Parameters<typeof AdminShell>[0]['ses
             <Route path="quotes" element={<QuotesList />} />
             <Route path="invoices" element={<InvoicesList />} />
             <Route path="invoices/:id" element={<InvoiceDetail />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="customers" element={<CustomersList />} />
-            <Route path="customers/:id" element={<CustomerDetail />} />
+            <Route path="reports" element={<Navigate to="/admin" replace />} />
             <Route path="configurations" element={<ConfigurationsList />} />
             <Route path="configurations/new" element={<NewConfiguration />} />
             <Route path="configurations/:id" element={<ConfigurationDetail />} />

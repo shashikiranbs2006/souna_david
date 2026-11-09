@@ -1,6 +1,5 @@
 import { createAppRouter } from '../app/router.ts';
 import { Navigate, useParams, type RouteObject } from 'react-router';
-import { isSingleShop } from '../host.ts';
 import { pages } from '../app/pages.ts';
 import { RouteErrorPage } from '../design/components/ErrorBoundary.tsx';
 import { StorefrontRoot, ShellSkeleton } from './StorefrontRoot.tsx';
@@ -11,32 +10,10 @@ const lazy = (load: () => Promise<Mod>, name = 'default') => async () => {
   return { Component: m[name] as React.ComponentType };
 };
 
-const single = isSingleShop();
-
 function ToProduct() {
   const { slug } = useParams();
   return <Navigate to={`/saunas/${slug ?? ''}`} replace />;
 }
-
-const accountRoutes: RouteObject[] = [
-  { path: 'account/login', lazy: lazy(pages.auth, 'Login') },
-  { path: 'account/signup', lazy: lazy(pages.auth, 'Signup') },
-  { path: 'account/verify', lazy: lazy(pages.auth, 'Verify') },
-  { path: 'account/forgot', lazy: lazy(pages.auth, 'Forgot') },
-  { path: 'account/reset', lazy: lazy(pages.auth, 'Reset') },
-  {
-    path: 'account',
-    lazy: lazy(pages.account, 'AccountLayout'),
-    children: [
-      { index: true, lazy: lazy(pages.account, 'Overview') },
-      { path: 'configurations', lazy: lazy(pages.account, 'Configurations') },
-      { path: 'configurations/:id', lazy: lazy(pages.account, 'ConfigurationDetail') },
-      { path: 'requests', lazy: lazy(pages.account, 'Requests') },
-      { path: 'requests/:id', lazy: lazy(pages.account, 'RequestDetail') },
-      { path: 'profile', lazy: lazy(pages.account, 'Profile') },
-    ],
-  },
-];
 
 const routes: RouteObject[] = [
   {
@@ -51,8 +28,8 @@ const routes: RouteObject[] = [
           { index: true, lazy: lazy(pages.home) },
           { path: 'saunas', lazy: lazy(pages.saunas) },
           { path: 'saunas/:slug', lazy: lazy(pages.sauna) },
-          // Single-shop edition: customers have no configurator or account (see accountRoutes).
-          single ? { path: 'saunas/:slug/configure', element: <ToProduct /> } : { path: 'saunas/:slug/configure', lazy: lazy(pages.configure) },
+          // Customers have no configurator: the shop configures with them (old links go to the sauna).
+          { path: 'saunas/:slug/configure', element: <ToProduct /> },
           { path: 's/:token', lazy: lazy(pages.shared) },
           { path: 'showroom', element: <Navigate to="/saunas" replace /> },
           { path: 'guide', lazy: lazy(pages.guide) },
@@ -61,8 +38,7 @@ const routes: RouteObject[] = [
           { path: 'faq', lazy: lazy(pages.faq) },
           { path: 'contact', lazy: lazy(pages.contact) },
           { path: 'legal/:doc', lazy: lazy(pages.legal) },
-          ...(single ? [{ path: 'account', element: <Navigate to="/" replace /> }, { path: 'account/*', element: <Navigate to="/" replace /> }] : accountRoutes),
-          { path: 'admin/*', lazy: lazy(pages.resellerAdmin) },
+          { path: 'admin/*', lazy: lazy(pages.admin) },
           { path: '*', lazy: lazy(pages.notFound) },
         ],
       },

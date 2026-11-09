@@ -26,6 +26,5 @@ export function RequireStaff({ title, brand, children }: { title: string; brand:
     );
   const s = session.data;
   if (s?.kind === 'staff') return <>{children(s)}</>;
-  const notice = s?.kind === 'customer' ? t('staff.wrongAccount') : null;
-  return <StaffLogin title={title} brand={brand} notice={notice} />;
+  return <StaffLogin title={title} brand={brand} />;
 }

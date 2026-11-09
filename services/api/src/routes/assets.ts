@@ -72,7 +72,7 @@ export function registerAssets(app: Hono<AppEnv>): void {
           where rs.reseller_id = $1 and rs.sauna_model_id = $2`,
         [c.get('tenant')!.id, body.saunaModelId]);
       const row = rows[0];
-      if (!row || (!row.is_visible && principal.kind === 'customer' && !viaShare)) throw new ApiError('NOT_FOUND', 'This sauna is not offered here.');
+      if (!row) throw new ApiError('NOT_FOUND', 'This sauna is not offered here.');
       return row;
     });
     const host = c.get('host').name;

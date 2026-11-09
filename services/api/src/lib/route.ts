@@ -1,6 +1,6 @@
 import type { Hono } from 'hono';
 import type { z } from 'zod';
-import { isCustomerAccountRoute, type RouteDef } from '@saunaklar/shared';
+import type { RouteDef } from '@saunaklar/shared';
 import type { AppEnv, Ctx, Principal, TenantInfo } from '../context.ts';
 import { ApiError } from './problem.ts';
 
@@ -38,7 +38,6 @@ export function mount<R extends RouteDef>(app: Hono<AppEnv>, def: R, handler: Ha
   app.on(def.method, def.path, async c => {
     const host = c.get('host');
     if (def.host !== 'any' && host.kind !== def.host) throw new ApiError('NOT_FOUND', 'No such endpoint on this host.');
-    if (c.get('deps').config.SINGLE_SHOP && isCustomerAccountRoute(def)) throw new ApiError('NOT_FOUND', 'Customer accounts are not available in this shop.');
 
     const principal = c.get('principal');
     authorize(c, def, principal);
@@ -94,9 +93,6 @@ function authorize(c: Ctx, def: RouteDef, principal: Principal): void {
     case 'any-session':
       if (principal.kind === 'anonymous') throw expired();
       return;
-    case 'customer':
-      if (principal.kind !== 'customer') throw principal.kind === 'anonymous' ? expired() : new ApiError('FORBIDDEN');
-      return;
     case 'reseller-staff':
       if (principal.kind !== 'staff') throw principal.kind === 'anonymous' ? expired() : new ApiError('FORBIDDEN');
       return;
@@ -109,10 +105,6 @@ function authorize(c: Ctx, def: RouteDef, principal: Principal): void {
 }
 
 /** Narrowing helpers for handlers whose route already enforced the access level. */
-export function asCustomer(p: Principal) {
-  if (p.kind !== 'customer') throw new ApiError('UNAUTHENTICATED');
-  return p;
-}
 export function asStaff(p: Principal) {
   if (p.kind !== 'staff') throw new ApiError('UNAUTHENTICATED');
   return p;

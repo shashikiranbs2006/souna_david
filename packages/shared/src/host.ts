@@ -48,12 +48,3 @@ export function storefrontHost(slug: string, cfg: HostConfig): string {
   if (cfg.singleShop === slug) return cfg.platformDomain;
   return `${slug}.${cfg.platformDomain}`;
 }
-
-/**
- * Customer-account endpoints: customer sign-up, sign-in and password reset, and everything that
- * needs a customer session. The single-shop edition has no customer accounts (the shop owner
- * configures and shares view-only links), so these are switched off there.
- */
-export function isCustomerAccountRoute(def: { access: string; fn: string; host: string; path: string }): boolean {
-  return def.access === 'customer' || (def.fn === 'customer' && def.host === 'storefront' && def.path.startsWith('/api/auth/'));
-}

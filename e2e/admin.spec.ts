@@ -1,16 +1,14 @@
 import { de, en, expect, loginWithForm, test } from './fixtures.ts';
 
-test('reseller admin logs in at /admin and sees the requests list', async ({ page }) => {
+test('shop admin logs in at /admin and sees the overview and the menu', async ({ page }) => {
   await loginWithForm(page, '/admin', 'owner@alpha.test');
-  await expect(page.getByRole('heading', { name: en.admin.title }).or(page.getByRole('navigation').getByText(en.admin.nav.dashboard))).toBeVisible();
-  // The dashboard also links to the submitted requests once its data loads; use the menu entry.
-  await page.getByRole('navigation').getByRole('link', { name: en.admin.nav.requests }).click();
-  const rows = page.getByRole('row');
-  await expect(rows.filter({ hasText: 'Anna Virtanen' }).filter({ hasText: en.status.IN_REVIEW })).toHaveCount(1);
-  await expect(rows.filter({ hasText: 'Anna Virtanen' }).filter({ hasText: en.status.QUOTED })).toHaveCount(1);
-  await expect(rows.filter({ hasText: 'Ben Koskinen' }).filter({ hasText: en.status.SUBMITTED })).toHaveCount(1);
-  // Tenant isolation in the UI: beta's request never shows up at alpha.
-  await expect(rows.filter({ hasText: en.status.ACCEPTED })).toHaveCount(0);
+  const nav = page.getByRole('navigation').first();
+  for (const label of [en.admin.nav.contacts, en.admin.nav.configurations, en.admin.nav.quotes, en.admin.nav.invoices, en.admin.nav.prices]) {
+    await expect(nav).toContainText(label);
+  }
+  // The removed pages are gone: no requests, no customers.
+  await expect(nav).not.toContainText('Requests');
+  await expect(nav).not.toContainText('Customers');
 });
 
 // The staff session lives in memory, so move inside the app instead of reloading the page.
@@ -82,7 +80,7 @@ test('reseller admin sends a customer link, then makes a quote from the same con
 test('switching the language in the admin translates the whole menu and keeps the picker on screen', async ({ page }) => {
   await loginWithForm(page, '/admin', 'owner@alpha.test');
   const nav = page.getByRole('navigation').first();
-  await expect(nav).toContainText(en.admin.nav.requests);
+  await expect(nav).toContainText(en.admin.nav.contacts);
   await page.getByRole('button', { name: new RegExp(en.nav.language) }).first().click();
   const menu = page.getByRole('menu');
   const box = (await menu.boundingBox())!;
@@ -92,9 +90,9 @@ test('switching the language in the admin translates the whole menu and keeps th
   expect(box.x + box.width).toBeLessThanOrEqual(view.width);
   expect(box.y + box.height).toBeLessThanOrEqual(view.height);
   await menu.getByRole('menuitemradio', { name: /Deutsch/ }).click();
-  await expect(nav).toContainText(de.admin.nav.requests);
+  await expect(nav).toContainText(de.admin.nav.contacts);
   // Neither the visible label nor its screen-reader twin may keep the English text.
-  for (const key of ['dashboard', 'requests', 'contacts', 'quotes', 'invoices'] as const) {
+  for (const key of ['dashboard', 'contacts', 'quotes', 'invoices', 'prices'] as const) {
     if (de.admin.nav[key] !== en.admin.nav[key]) await expect(nav).not.toContainText(en.admin.nav[key]);
   }
 });

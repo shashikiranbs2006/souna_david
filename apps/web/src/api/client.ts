@@ -49,13 +49,10 @@ export class ApiError extends Error {
 export const isApiError = (e: unknown, code?: ApiError['code']): e is ApiError =>
   e instanceof ApiError && (code === undefined || e.code === code);
 
-// ---- transport (swappable for the mock API and tests) -------------------------
+// ---- transport (swappable for tests) -------------------------
 
 type Fetch = (input: Request) => Promise<Response>;
 let transport: Fetch = req => fetch(req);
-export function setTransport(f: Fetch): void {
-  transport = f;
-}
 
 // ---- language -------------------------------------------------------------------
 
@@ -75,15 +72,6 @@ let csrfProvider: CsrfProvider = async () => {
   const s = await api('session');
   return s.csrfToken;
 };
-
-/** Lets the app (or tests) supply the token another way. */
-export function setCsrfProvider(p: CsrfProvider): void {
-  csrfProvider = p;
-  csrfToken = null;
-}
-export function setCsrfToken(token: string | null): void {
-  csrfToken = token;
-}
 
 async function getCsrfToken(): Promise<string> {
   if (csrfToken) return csrfToken;

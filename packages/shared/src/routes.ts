@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import * as account from './account.ts';
 import * as admin from './admin.ts';
 import * as auth from './auth.ts';
 import * as catalog from './catalog.ts';
@@ -7,7 +6,6 @@ import { ok, page, pageQuery } from './common.ts';
 import * as cfg from './configurations.ts';
 import * as pricing from './pricing.ts';
 import * as quo from './quotes.ts';
-import * as req from './requests.ts';
 import * as share from './sharing.ts';
 
 /**
@@ -15,9 +13,9 @@ import * as share from './sharing.ts';
  * web client derives its typed calls from it, so the two cannot drift.
  * `fn` is the Lambda function that serves the route (design 4.2).
  */
-export type LambdaFunction = 'public-catalog' | 'customer' | 'reseller-admin' | 'asset-signer';
+export type LambdaFunction = 'public-catalog' | 'reseller-admin' | 'asset-signer';
 /** `reseller-owner`: reseller staff with role OWNER only (shop settings, discounts, option prices). */
-export type Access = 'public' | 'customer' | 'reseller-staff' | 'reseller-owner' | 'any-session';
+export type Access = 'public' | 'reseller-staff' | 'reseller-owner' | 'any-session';
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export interface RouteDef {
@@ -47,51 +45,14 @@ export const routes = {
   assetAr: r({ method: 'POST', path: '/api/assets/ar', fn: 'asset-signer', access: 'public', host: 'storefront', body: catalog.arRequest, response: catalog.arResponse }),
 
   // ---- session (both hosts) -------------------------------------------
-  session: r({ method: 'GET', path: '/api/auth/session', fn: 'customer', access: 'public', host: 'any', response: auth.sessionSchema }),
-  logout: r({ method: 'POST', path: '/api/auth/logout', fn: 'customer', access: 'public', host: 'any', response: ok }),
-  refresh: r({ method: 'POST', path: '/api/auth/refresh', fn: 'customer', access: 'public', host: 'any', response: auth.sessionSchema }),
-
-  // ---- customer auth ----------------------------------------------------
-  signup: r({ method: 'POST', path: '/api/auth/signup', fn: 'customer', access: 'public', host: 'storefront', body: auth.signupRequest, response: auth.acceptedResponse, status: 202 }),
-  confirm: r({ method: 'POST', path: '/api/auth/confirm', fn: 'customer', access: 'public', host: 'storefront', body: auth.confirmRequest, response: auth.sessionSchema }),
-  resendCode: r({ method: 'POST', path: '/api/auth/resend-code', fn: 'customer', access: 'public', host: 'storefront', body: auth.emailOnlyRequest, response: auth.acceptedResponse, status: 202 }),
-  login: r({ method: 'POST', path: '/api/auth/login', fn: 'customer', access: 'public', host: 'storefront', body: auth.loginRequest, response: auth.sessionSchema }),
-  forgotPassword: r({ method: 'POST', path: '/api/auth/forgot-password', fn: 'customer', access: 'public', host: 'storefront', body: auth.emailOnlyRequest, response: auth.acceptedResponse, status: 202 }),
-  resetPassword: r({ method: 'POST', path: '/api/auth/reset-password', fn: 'customer', access: 'public', host: 'storefront', body: auth.resetPasswordRequest, response: ok }),
+  session: r({ method: 'GET', path: '/api/auth/session', fn: 'public-catalog', access: 'public', host: 'any', response: auth.sessionSchema }),
+  logout: r({ method: 'POST', path: '/api/auth/logout', fn: 'public-catalog', access: 'public', host: 'any', response: ok }),
+  refresh: r({ method: 'POST', path: '/api/auth/refresh', fn: 'public-catalog', access: 'public', host: 'any', response: auth.sessionSchema }),
 
   // ---- staff auth ---------------------------------------------------------
   staffLogin: r({ method: 'POST', path: '/api/auth/staff/login', fn: 'reseller-admin', access: 'public', host: 'any', body: auth.staffLoginRequest, response: auth.staffChallengeResponse }),
   staffMfa: r({ method: 'POST', path: '/api/auth/staff/mfa', fn: 'reseller-admin', access: 'public', host: 'any', body: auth.staffMfaRequest, response: auth.staffChallengeResponse }),
   staffNewPassword: r({ method: 'POST', path: '/api/auth/staff/new-password', fn: 'reseller-admin', access: 'public', host: 'any', body: auth.staffNewPasswordRequest, response: auth.staffChallengeResponse }),
-
-  // ---- customer account --------------------------------------------------
-  me: r({ method: 'GET', path: '/api/me', fn: 'customer', access: 'customer', host: 'storefront', response: account.profileSchema }),
-  patchMe: r({ method: 'PATCH', path: '/api/me', fn: 'customer', access: 'customer', host: 'storefront', body: account.profilePatch, response: account.profileSchema }),
-  deleteMe: r({ method: 'DELETE', path: '/api/me', fn: 'customer', access: 'customer', host: 'storefront', body: account.deleteAccountRequest, response: ok }),
-  exportMe: r({ method: 'GET', path: '/api/me/export', fn: 'customer', access: 'customer', host: 'storefront', response: z.record(z.string(), z.unknown()) }),
-  addresses: r({ method: 'GET', path: '/api/me/addresses', fn: 'customer', access: 'customer', host: 'storefront', response: account.addressesSchema }),
-  createAddress: r({ method: 'POST', path: '/api/me/addresses', fn: 'customer', access: 'customer', host: 'storefront', body: account.addressInput, response: account.addressSchema, status: 201 }),
-  updateAddress: r({ method: 'PATCH', path: '/api/me/addresses/:id', fn: 'customer', access: 'customer', host: 'storefront', body: account.addressInput.partial(), response: account.addressSchema }),
-  deleteAddress: r({ method: 'DELETE', path: '/api/me/addresses/:id', fn: 'customer', access: 'customer', host: 'storefront', response: ok }),
-  consents: r({ method: 'GET', path: '/api/me/consents', fn: 'customer', access: 'customer', host: 'storefront', response: account.consentsSchema }),
-  putConsents: r({ method: 'PUT', path: '/api/me/consents', fn: 'customer', access: 'customer', host: 'storefront', body: account.consentsPut, response: account.consentsSchema }),
-
-  // ---- customer configurations and requests -------------------------------
-  configurations: r({ method: 'GET', path: '/api/configurations', fn: 'customer', access: 'customer', host: 'storefront', query: pageQuery, response: page(cfg.configurationSummarySchema) }),
-  createConfiguration: r({ method: 'POST', path: '/api/configurations', fn: 'customer', access: 'customer', host: 'storefront', body: cfg.createConfigurationRequest, response: cfg.configurationSchema, status: 201 }),
-  configuration: r({ method: 'GET', path: '/api/configurations/:id', fn: 'customer', access: 'customer', host: 'storefront', response: cfg.configurationSchema }),
-  renameConfiguration: r({ method: 'PATCH', path: '/api/configurations/:id', fn: 'customer', access: 'customer', host: 'storefront', body: cfg.renameConfigurationRequest, response: cfg.configurationSchema }),
-  deleteConfiguration: r({ method: 'DELETE', path: '/api/configurations/:id', fn: 'customer', access: 'customer', host: 'storefront', response: ok }),
-  putSelections: r({ method: 'PUT', path: '/api/configurations/:id/selections', fn: 'customer', access: 'customer', host: 'storefront', body: cfg.putSelectionsRequest, response: cfg.configurationSchema }),
-  putPlacement: r({ method: 'PUT', path: '/api/configurations/:id/room', fn: 'customer', access: 'customer', host: 'storefront', body: cfg.putPlacementRequest, response: cfg.configurationSchema }),
-  price: r({ method: 'GET', path: '/api/configurations/:id/price', fn: 'customer', access: 'customer', host: 'storefront', response: cfg.configurationSchema.shape.price }),
-  clone: r({ method: 'POST', path: '/api/configurations/:id/clone', fn: 'customer', access: 'customer', host: 'storefront', response: cfg.configurationSchema, status: 201 }),
-  submitRequest: r({ method: 'POST', path: '/api/configurations/:id/requests', fn: 'customer', access: 'customer', host: 'storefront', body: cfg.submitRequestRequest, response: req.requestSchema, status: 201 }),
-  claimShared: r({ method: 'POST', path: '/api/shared/:token/claim', fn: 'customer', access: 'customer', host: 'storefront', response: share.claimResponse, status: 201 }),
-  myRequests: r({ method: 'GET', path: '/api/me/requests', fn: 'customer', access: 'customer', host: 'storefront', query: pageQuery, response: page(req.requestSummarySchema) }),
-  myRequest: r({ method: 'GET', path: '/api/me/requests/:id', fn: 'customer', access: 'customer', host: 'storefront', response: req.requestSchema }),
-  cancelRequest: r({ method: 'POST', path: '/api/me/requests/:id/cancel', fn: 'customer', access: 'customer', host: 'storefront', response: req.requestSchema }),
-  acceptRequest: r({ method: 'POST', path: '/api/me/requests/:id/accept', fn: 'customer', access: 'customer', host: 'storefront', body: req.acceptRequestBody, response: req.requestSchema }),
 
   // ---- reseller admin -----------------------------------------------------
   adminBranding: r({ method: 'GET', path: '/api/admin/branding', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: admin.brandingSchema }),
@@ -110,18 +71,13 @@ export const routes = {
   adminPutDefaultDiscount: r({ method: 'PUT', path: '/api/admin/discount', fn: 'reseller-admin', access: 'reseller-owner', host: 'storefront', body: admin.adminSaunaSchema.shape.discount.unwrap(), response: admin.adminSaunasSchema }),
   adminDeleteDefaultDiscount: r({ method: 'DELETE', path: '/api/admin/discount', fn: 'reseller-admin', access: 'reseller-owner', host: 'storefront', response: admin.adminSaunasSchema }),
   adminConfigurations: r({ method: 'GET', path: '/api/admin/configurations', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: pageQuery, response: page(cfg.configurationSummarySchema) }),
-  adminCreateConfiguration: r({ method: 'POST', path: '/api/admin/configurations', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: cfg.adminCreateConfigurationRequest, response: cfg.configurationSchema, status: 201 }),
+  adminCreateConfiguration: r({ method: 'POST', path: '/api/admin/configurations', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: cfg.createConfigurationRequest, response: cfg.configurationSchema, status: 201 }),
   adminConfiguration: r({ method: 'GET', path: '/api/admin/configurations/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: cfg.configurationSchema }),
   adminPutSelections: r({ method: 'PUT', path: '/api/admin/configurations/:id/selections', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: cfg.putSelectionsRequest, response: cfg.configurationSchema }),
   adminPutPlacement: r({ method: 'PUT', path: '/api/admin/configurations/:id/room', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: cfg.putPlacementRequest, response: cfg.configurationSchema }),
   adminShareLinks: r({ method: 'GET', path: '/api/admin/configurations/:id/share-links', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: share.shareLinksSchema }),
   adminCreateShareLink: r({ method: 'POST', path: '/api/admin/configurations/:id/share-links', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: share.createShareLinkRequest, response: share.createdShareLinkSchema, status: 201 }),
   adminRevokeShareLink: r({ method: 'DELETE', path: '/api/admin/configurations/:id/share-links/:linkId', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: share.shareLinkSchema }),
-  adminRequests: r({ method: 'GET', path: '/api/admin/requests', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: req.adminRequestListQuery, response: page(req.adminRequestSummarySchema) }),
-  adminRequest: r({ method: 'GET', path: '/api/admin/requests/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: req.adminRequestSchema }),
-  adminTransition: r({ method: 'POST', path: '/api/admin/requests/:id/transition', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: req.transitionRequest, response: req.adminRequestSchema }),
-  adminNote: r({ method: 'POST', path: '/api/admin/requests/:id/notes', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: req.noteRequest, response: req.adminRequestSchema, status: 201 }),
-  adminQuote: r({ method: 'PUT', path: '/api/admin/requests/:id/quote', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: req.quoteRequest, response: req.adminRequestSchema }),
   adminContacts: r({ method: 'GET', path: '/api/admin/contacts', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: quo.contactListQuery, response: z.object({ items: z.array(quo.contactSchema) }) }),
   adminCreateContact: r({ method: 'POST', path: '/api/admin/contacts', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.contactInput, response: quo.contactSchema, status: 201 }),
   adminContact: r({ method: 'GET', path: '/api/admin/contacts/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.contactSchema }),
@@ -140,9 +96,6 @@ export const routes = {
   adminReports: r({ method: 'GET', path: '/api/admin/reports', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: quo.reportsSchema }),
   adminWatermarkImage: r({ method: 'POST', path: '/api/admin/watermark-image', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.watermarkImageRequest, response: quo.watermarkedImageSchema }),
   adminOfferStatus: r({ method: 'POST', path: '/api/admin/offers/:id/status', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', body: quo.offerStatusRequest, response: quo.offerSchema }),
-  adminCustomers: r({ method: 'GET', path: '/api/admin/customers', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: admin.adminCustomerListQuery, response: page(admin.adminCustomerSummarySchema) }),
-  adminCustomer: r({ method: 'GET', path: '/api/admin/customers/:id', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', response: admin.adminCustomerSummarySchema.extend({ phone: z.string().nullable(), addresses: z.array(account.addressSchema), recentConfigurations: z.array(cfg.configurationSummarySchema), recentRequests: z.array(req.requestSummarySchema) }) }),
-  adminAnalytics: r({ method: 'GET', path: '/api/admin/analytics', fn: 'reseller-admin', access: 'reseller-staff', host: 'storefront', query: admin.analyticsQuery, response: admin.analyticsSchema }),
 
   // ---- prices (the shop owner edits base price and largest discount of each sauna) ----------
   adminPricing: r({ method: 'GET', path: '/api/admin/pricing', fn: 'reseller-admin', access: 'reseller-owner', host: 'storefront', response: pricing.pricingSchema }),

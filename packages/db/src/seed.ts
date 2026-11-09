@@ -138,9 +138,6 @@ const REFERENCE_SIZES = {
   depth: [[2400, 0], [2700, 80000], [3013, 170000, 'ref'], [3300, 240000], [3600, 320000]],
   height: [[2100, 0], [2292, 60000, 'ref'], [2400, 95000], [2700, 190000]],
 } as const;
-/** layout.ts REFERENCE_ASPECT_RANGE: width/depth pairs outside it stretch the measured facets. */
-const REFERENCE_ASPECT_RANGE = [0.78, 1.30] as const;
-
 function sizeOptions(): OptionDef[] {
   const words = {
     width: { en: 'width', de: 'Außenbreite', fr: 'Largeur', it: 'Larghezza' },
@@ -163,16 +160,6 @@ function sizeOptions(): OptionDef[] {
         },
       };
     }));
-}
-
-/** Width/depth option pairs the reference sauna cannot be built in (same rule as layout.ts). */
-function referenceSizeExcludes(): [string, string][] {
-  const pairs: [string, string][] = [];
-  for (const [w] of REFERENCE_SIZES.width) for (const [d] of REFERENCE_SIZES.depth) {
-    const aspect = w / d;
-    if (aspect < REFERENCE_ASPECT_RANGE[0] || aspect > REFERENCE_ASPECT_RANGE[1]) pairs.push([`width-${w}`, `depth-${d}`]);
-  }
-  return pairs;
 }
 
 const OPTIONS: OptionDef[] = [

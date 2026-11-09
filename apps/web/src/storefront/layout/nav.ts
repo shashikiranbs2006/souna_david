@@ -7,8 +7,3 @@ export const PRIMARY_NAV: { to: string; key: TKey; end?: boolean }[] = [
   { to: '/guide', key: 'nav.guide' },
   { to: '/about', key: 'nav.about' },
 ];
-
-export const SECONDARY_NAV: { to: string; key: TKey }[] = [
-  { to: '/faq', key: 'nav.faq' },
-  { to: '/contact', key: 'nav.contact' },
-];

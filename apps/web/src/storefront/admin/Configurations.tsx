@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Copy, Link2, Plus, X } from 'lucide-react';
+import { Check, Copy, Link2 } from 'lucide-react';
 import { toggle } from '@saunaklar/rules';
 import type { ResponseOf } from '@saunaklar/shared';
 import { api } from '../../api/client.ts';
@@ -11,7 +11,7 @@ import { useFormat } from '../../i18n/format.ts';
 import { Table, type Column } from '../../design/components/Table.tsx';
 import { Badge, StatusBadge } from '../../design/components/Badge.tsx';
 import { Checkbox, Input, Radio, Select } from '../../design/components/Field.tsx';
-import { Button, ButtonLink, IconButton } from '../../design/components/Button.tsx';
+import { Button, ButtonLink } from '../../design/components/Button.tsx';
 import { Dialog } from '../../design/components/Dialog.tsx';
 import { LoadMore } from '../../design/components/LoadMore.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
@@ -23,8 +23,7 @@ import { PageHead, Panel } from '../../staff/PageHead.tsx';
 import { useCursorList } from '../../staff/useCursorList.ts';
 import { rulesOf } from '../components/sauna-helpers.ts';
 import { SaunaCard, SaunaCardSkeleton, SaunaGrid } from '../components/SaunaCard.tsx';
-import { useDebounced } from './Requests.tsx';
-import { fullName, useAdminMutation } from './helpers.ts';
+import { useAdminMutation } from './helpers.ts';
 
 type Summary = ResponseOf<'adminConfigurations'>['items'][number];
 type Config = ResponseOf<'adminConfiguration'>;
@@ -48,8 +47,7 @@ export function ConfigurationsList() {
       ),
       sortValue: c => c.name,
     },
-    { key: 'owner', header: t('admin.configurations.ownerLabel'), cell: c => <Badge tone={c.owner === 'STAFF' ? 'soft' : 'outline'}>{t(`admin.configurations.owner.${c.owner}` as TKey)}</Badge>, sortValue: c => c.owner, hideOnMobile: true },
-    { key: 'status', header: t('staff.status'), cell: c => (c.request ? <StatusBadge status={c.request.status} /> : <StatusBadge status={c.locked ? 'LOCKED' : 'DRAFT'} />) },
+    { key: 'status', header: t('staff.status'), cell: c => <StatusBadge status={c.locked ? 'LOCKED' : 'DRAFT'} /> },
     { key: 'price', header: t('admin.configurations.price'), align: 'end', cell: c => <span className="mono">{fmt.money(c.finalPriceMinor, c.currency)}</span>, sortValue: c => c.finalPriceMinor },
     { key: 'updated', header: t('staff.updated'), align: 'end', cell: c => <span className="mono staff-muted">{fmt.date(c.updatedAt, 'short')}</span>, sortValue: c => c.updatedAt, hideOnMobile: true },
   ];
@@ -68,60 +66,19 @@ export function ConfigurationsList() {
   );
 }
 
-/** Picks a customer by searching name or e-mail; an empty value means "for a share link". */
-function CustomerPicker({ value, onChange }: { value: { id: string; label: string } | null; onChange: (v: { id: string; label: string } | null) => void }) {
-  const { t } = useT();
-  const [search, setSearch] = useState('');
-  const q = useDebounced(search.trim());
-  const results = useQuery({ queryKey: ['admin', 'customers', { q, limit: 6 }], queryFn: () => api('adminCustomers', { query: { q, limit: 6 } }), enabled: q.length >= 2 });
-  if (value)
-    return (
-      <div className="picker__chosen">
-        <span className="staff-strong">{value.label}</span>
-        <IconButton icon={X} label={t('admin.configurations.noCustomer')} variant="quiet" size="sm" onClick={() => onChange(null)} />
-      </div>
-    );
-  return (
-    <div className="picker">
-      <Input label={t('admin.configurations.customer')} hint={t('admin.configurations.customerHint')} type="search" placeholder={t('admin.customers.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} />
-      {q.length >= 2 && (results.data?.items.length ?? 0) > 0 && (
-        <ul className="picker__list">
-          {results.data!.items
-            .filter(c => c.status !== 'ANONYMISED')
-            .map(c => (
-              <li key={c.id}>
-                <button type="button" onClick={() => onChange({ id: c.id, label: `${fullName(c)} · ${c.email}` })}>
-                  <span className="staff-strong">{fullName(c)}</span>
-                  <span className="staff-sub">{c.email}</span>
-                </button>
-              </li>
-            ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 export function NewConfiguration() {
   const { t } = useT();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
   useDocumentTitle(t('admin.configurations.new'));
   const saunas = useQuery({ queryKey: ['admin', 'saunas'], queryFn: () => api('adminSaunas') });
-  const preset = params.get('customer');
-  const presetCustomer = useQuery({ queryKey: ['admin', 'customer', preset], queryFn: () => api('adminCustomer', { params: { id: preset! } }), enabled: Boolean(preset) });
   const [saunaId, setSaunaId] = useState('');
   const [name, setName] = useState('');
-  const [customer, setCustomer] = useState<{ id: string; label: string } | null>(null);
-  useEffect(() => {
-    if (presetCustomer.data) setCustomer({ id: presetCustomer.data.id, label: `${fullName(presetCustomer.data)} · ${presetCustomer.data.email}` });
-  }, [presetCustomer.data]);
   useEffect(() => {
     if (!saunaId && saunas.data?.items[0]) setSaunaId(saunas.data.items[0].id);
   }, [saunas.data, saunaId]);
 
   const create = useAdminMutation(
-    () => api('adminCreateConfiguration', { body: { saunaModelId: saunaId, ...(name.trim() ? { name: name.trim() } : {}), ...(customer ? { customerId: customer.id } : {}) } }),
+    () => api('adminCreateConfiguration', { body: { saunaModelId: saunaId, ...(name.trim() ? { name: name.trim() } : {}) } }),
     { success: 'admin.configurations.createdToast', invalidate: [['admin', 'configurations']], onSuccess: c => navigate(`/admin/configure/${c.sauna.slug}?id=${c.id}`, { replace: true }) },
   );
   const submit = (e: FormEvent) => {
@@ -131,7 +88,7 @@ export function NewConfiguration() {
   return (
     <>
       <PageHead
-        crumbs={[{ label: t('admin.nav.customers'), to: '/admin/customers' }, ...(presetCustomer.data ? [{ label: fullName(presetCustomer.data), to: `/admin/customers/${presetCustomer.data.id}` }] : []), { label: t('admin.configurations.new') }]}
+        crumbs={[{ label: t('admin.nav.configurations'), to: '/admin/configurations' }, { label: t('admin.configurations.new') }]}
         title={t('admin.configurations.new')}
         lede={t('admin.configurations.newLede')}
       />
@@ -141,12 +98,11 @@ export function NewConfiguration() {
         <form className="staff-form" onSubmit={submit}>
           <Select label={t('admin.configurations.sauna')} value={saunaId} onChange={e => setSaunaId(e.target.value)} options={(saunas.data?.items ?? []).map(s => ({ value: s.id, label: s.isVisible ? s.name : `${s.name} (${t('admin.saunas.hidden')})` }))} required />
           <Input label={t('admin.configurations.new') + ' · ' + t('staff.name')} value={name} onChange={e => setName(e.target.value)} maxLength={120} />
-          <CustomerPicker value={customer} onChange={setCustomer} />
           <div className="staff-form__actions">
             <Button type="submit" loading={create.isPending} disabled={!saunaId}>
               {t('staff.create')}
             </Button>
-            <ButtonLink to={preset ? `/admin/customers/${preset}` : '/admin/customers'} variant="quiet">
+            <ButtonLink to="/admin/configurations" variant="quiet">
               {t('staff.cancel')}
             </ButtonLink>
           </div>
@@ -174,23 +130,13 @@ export function ConfigurationDetail() {
   return (
     <>
       <PageHead
-        crumbs={[
-          ...(c.customerId
-            ? [{ label: t('admin.nav.customers'), to: '/admin/customers' }, { label: t('admin.requests.customer'), to: `/admin/customers/${c.customerId}` }]
-            : c.request
-              ? [{ label: t('admin.nav.requests'), to: `/admin/requests/${c.request.id}` }]
-              : [{ label: t('admin.nav.configurations'), to: '/admin/configurations' }]),
-          { label: c.name },
-        ]}
+        crumbs={[{ label: t('admin.nav.configurations'), to: '/admin/configurations' }, { label: c.name }]}
         title={c.name}
         actions={!c.locked ? <ButtonLink to={`/admin/configure/${c.sauna.slug}?id=${c.id}`} size="sm">{t('detail.open3d')}</ButtonLink> : undefined}
         meta={
           <>
-            {c.request ? <StatusBadge status={c.request.status} /> : <StatusBadge status={c.locked ? 'LOCKED' : 'DRAFT'} />}
+            <StatusBadge status={c.locked ? 'LOCKED' : 'DRAFT'} />
             <span>{c.sauna.name}</span>
-            <Badge tone={c.owner === 'STAFF' ? 'soft' : 'outline'}>{t(`admin.configurations.owner.${c.owner}` as TKey)}</Badge>
-            {c.customerId && <Link to={`/admin/customers/${c.customerId}`}>{t('admin.requests.customer')}</Link>}
-            {c.request && <Link to={`/admin/requests/${c.request.id}`}>{t('admin.nav.requests')}</Link>}
           </>
         }
       />

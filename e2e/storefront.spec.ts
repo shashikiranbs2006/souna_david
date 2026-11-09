@@ -28,10 +28,9 @@ test.describe('storefront', () => {
     await page.getByRole('menuitemradio', { name: /Français/ }).click();
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-    // UI strings come from fr.ts: the anonymous call to action is now French, the English one is gone.
-    expect(fr.detail.loginToConfigure).not.toBe(en.detail.loginToConfigure);
-    await expect(page.getByText(fr.detail.loginToConfigure, { exact: true }).first()).toBeVisible();
-    await expect(page.getByText(en.detail.loginToConfigure, { exact: true })).toHaveCount(0);
+    // UI strings come from fr.ts: the nav is now French, the English label is gone.
+    expect(fr.nav.howItWorks).not.toBe(en.nav.howItWorks);
+    await expect(page.getByRole('link', { name: fr.nav.howItWorks, exact: true }).first()).toBeVisible();
     await expect(page.getByText('Sauna d’intérieur pour deux personnes', { exact: false }).first()).toBeVisible();
     await expect(page.getByText(/^Épicéa nordique/).first()).toBeVisible();
     await expect(page.getByText(/^Nordic spruce/)).toHaveCount(0);

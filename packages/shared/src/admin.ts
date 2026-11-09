@@ -74,7 +74,6 @@ export const adminSaunaOptionSchema = z.object({
   effectivePriceMinor: minorUnits,
   descriptionOverride: z.string().nullable(),
 });
-export type AdminSaunaOption = z.infer<typeof adminSaunaOptionSchema>;
 
 export const adminSaunaOptionGroupSchema = z.object({
   id: uuid,
@@ -108,34 +107,3 @@ export const adminSaunaOptionsPut = z.object({
   })).max(500),
 });
 
-export const adminCustomerSummarySchema = z.object({
-  id: uuid,
-  email: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  status: z.enum(['PENDING', 'ACTIVE', 'ANONYMISED']),
-  createdAt: isoDateTime,
-  configurations: z.number().int(),
-  requests: z.number().int(),
-});
-export const adminCustomerListQuery = z.object({
-  q: z.string().trim().max(200).optional(),
-  cursor: z.string().max(200).optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(25),
-});
-
-export const analyticsQuery = z.object({ days: z.coerce.number().int().min(1).max(365).default(30) });
-export const analyticsSchema = z.object({
-  days: z.number().int(),
-  totals: z.object({
-    customers: z.number().int(),
-    configurations: z.number().int(),
-    requests: z.number().int(),
-    shareLinkViews: z.number().int(),
-    acceptedRequests: z.number().int(),
-  }),
-  requestsByStatus: z.record(z.string(), z.number().int()),
-  daily: z.array(z.object({ date: z.string(), requests: z.number().int(), configurations: z.number().int(), views: z.number().int() })),
-  topSaunas: z.array(z.object({ saunaModelId: uuid, name: z.string(), configurations: z.number().int(), requests: z.number().int() })),
-});
-export type Analytics = z.infer<typeof analyticsSchema>;

@@ -1,9 +1,8 @@
-import { useSubmitRequest } from '../configurator/useSubmitRequest.ts';
 import { errorText } from '../../i18n/errorText.ts';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Armchair, ArrowLeft, Check, FileText, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Send, Shapes, type LucideIcon, Link2 } from 'lucide-react';
+import { Armchair, ArrowLeft, Check, FileText, ImageDown, ChevronDown, ChevronLeft, ChevronRight, Flame, House, Lightbulb, RotateCcw, RotateCw, Ruler, Save, ScanLine, Shapes, type LucideIcon, Link2 } from 'lucide-react';
 import { calculatePrice } from '@saunaklar/pricing';
 import { availability, validate } from '@saunaklar/rules';
 import { api, isApiError } from '../../api/client.ts';
@@ -15,7 +14,7 @@ import { ScrambleText } from '../../motion/ScrambleText.tsx';
 import { Button, ButtonLink, IconButton } from '../../design/components/Button.tsx';
 import { Price } from '../../design/components/Price.tsx';
 import { Dialog } from '../../design/components/Dialog.tsx';
-import { Input, Select, Textarea } from '../../design/components/Field.tsx';
+import { Input, Select } from '../../design/components/Field.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { Segmented } from '../../design/components/Segmented.tsx';
 import { Icon } from '../../design/components/Icon.tsx';
@@ -27,7 +26,6 @@ import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
 import { ViewerSlot } from '../../three/ViewerSlot.tsx';
 import { computeReferenceLayout, measureReferenceLayout } from '../../three/reference/layout.ts';
 import { ArButton } from '../../three/ArButton.tsx';
-import { RequireCustomer } from '../account/RequireCustomer.tsx';
 import { configuredSpecsOf } from '../components/specs.ts';
 import { defaultSelectionOf, initStep, oneAtATime, rulesOf, stepGroupCode, viewerOptionsOf } from '../components/sauna-helpers.ts';
 import { useConfigurator } from '../configurator/store.ts';
@@ -230,11 +228,10 @@ function RoomPanel({ sauna }: { sauna: SaunaDetail }) {
 }
 
 /**
- * `staff`: the same configurator, used by the reseller in the admin (David builds the sauna for a
- * contact). Same models, options, rules and prices; it saves through the admin routes, has no
- * "send request" and no clone.
+ * The 3D configurator, used by the shop owner in the admin: David builds the sauna for a contact,
+ * then makes a quote or a customer link. It saves through the admin routes.
  */
-function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: boolean }) {
+function Configurator({ sauna }: { sauna: SaunaDetail }) {
   const { t } = useT();
   const fmt = useFormat();
   const tenant = useTenantData();
@@ -242,7 +239,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const idParam = params.get('id');
-  const cfgKey = (id: string | null) => (staff ? ['admin', 'configuration', id] : ['configuration', id]);
+  const cfgKey = (id: string | null) => ['admin', 'configuration', id];
   const st = useConfigurator();
   // `?step=<groupCode>` (the detail page's "Customise" links) opens on that group's section,
   // with the other groups of the section folded.
@@ -253,18 +250,16 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     stepCode ? new Set(sauna.groups.filter(g => g.code !== stepCode && sectionOf(g.code) === sectionOf(stepCode)).map(g => g.id)) : new Set(),
   );
   const [details, setDetails] = useState(false);
-  const [sendOpen, setSendOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [contact, setContact] = useState({ id: '', name: '', email: '', mobile: '' });
   const capture = useRef<(() => Promise<Blob | null>) | null>(null);
-  const [message, setMessage] = useState('');
   const currency = tenant.currency;
   const rules = useMemo(() => rulesOf(sauna), [sauna]);
 
   const existing = useQuery({
     queryKey: cfgKey(idParam),
-    queryFn: () => api(staff ? 'adminConfiguration' : 'configuration', { params: { id: idParam! } }),
+    queryFn: () => api('adminConfiguration', { params: { id: idParam! } }),
     enabled: Boolean(idParam),
   });
 
@@ -280,8 +275,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   }, [sauna.slug, idParam, existing.data]);
 
   const locked = Boolean(existing.data?.locked);
-  // Staff keep editing a locked sauna: the changes are saved as a new one (see saveDraft).
-  const lockedView = locked && !staff;
+  // A locked sauna (one that has a customer link) stays editable: changes are saved as a new one (see saveDraft).
   // Effective option prices come from the API (reseller override, else manufacturer price); the
   // server recomputes the same breakdown on save and lock.
   const livePrice = useMemo(() => {
@@ -303,29 +297,29 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     () => oneAtATime(async () => {
       const draft = useConfigurator.getState();
       let id = draft.configurationId;
-      // Staff: nothing changed since the last save, so there is nothing to write. This is also how a
+      // Nothing changed since the last save, so there is nothing to write. This is also how a
       // sauna already sent to the customer (its link locks it) is quoted as it is.
-      if (staff && id && !draft.dirty) return { saved: await api('adminConfiguration', { params: { id } }), draft };
+      if (id && !draft.dirty) return { saved: await api('adminConfiguration', { params: { id } }), draft };
       const create = async () => {
-        const created = (await api(staff ? 'adminCreateConfiguration' : 'createConfiguration', { body: { saunaModelId: sauna.id, selections: draft.selection } })).id;
+        const created = (await api('adminCreateConfiguration', { body: { saunaModelId: sauna.id, selections: draft.selection } })).id;
         useConfigurator.setState({ configurationId: created });
         return created;
       };
       if (!id) id = await create();
       else {
         try {
-          await api(staff ? 'adminPutSelections' : 'putSelections', { params: { id }, body: { optionIds: draft.selection } });
+          await api('adminPutSelections', { params: { id }, body: { optionIds: draft.selection } });
         } catch (e) {
-          // Staff: a customer link locks the sauna at its price, so the link keeps showing what was
+          // A customer link locks the sauna at its price, so the link keeps showing what was
           // sent. A change made after that is saved as a new sauna instead of failing.
-          if (!staff || !isApiError(e, 'CONFIGURATION_LOCKED')) throw e;
+          if (!isApiError(e, 'CONFIGURATION_LOCKED')) throw e;
           id = await create();
         }
       }
-      const saved = await api(staff ? 'adminPutPlacement' : 'putPlacement', { params: { id }, body: draft.roomId ? { roomSceneId: draft.roomId, ...draft.placement } : null });
+      const saved = await api('adminPutPlacement', { params: { id }, body: draft.roomId ? { roomSceneId: draft.roomId, ...draft.placement } : null });
       return { saved, draft };
     }),
-    [sauna.id, staff],
+    [sauna.id],
   );
   const save = useMutation({
     mutationFn: saveDraft,
@@ -336,20 +330,14 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
       else useConfigurator.setState({ configurationId: saved.id });
       qc.setQueryData(cfgKey(saved.id), saved);
       if (params.get('id') !== saved.id) setParams({ id: saved.id }, { replace: true, preventScrollReset: true });
-      void qc.invalidateQueries({ queryKey: staff ? ['admin', 'configurations'] : ['configurations'] });
+      void qc.invalidateQueries({ queryKey: ['admin', 'configurations'] });
     },
   });
   const saveId = () => save.mutateAsync().then(r => r.saved.id);
 
-  const submit = useSubmitRequest({ onSent: () => setSendOpen(false) });
-  const send = {
-    isPending: submit.isPending,
-    mutate: () => submit.mutate({ id: save.isPending || st.dirty || !st.configurationId ? saveId() : Promise.resolve(st.configurationId), message }),
-  };
-
-  // Staff: the customer's details are asked only now, at the end. Saves the configuration, finds or
+  // The customer's details are asked only now, at the end. Saves the configuration, finds or
   // makes the contact and opens the new quote.
-  const contacts = useQuery({ queryKey: ['admin', 'contacts', 'pick'], queryFn: () => api('adminContacts', { query: {} }), enabled: staff && quoteOpen });
+  const contacts = useQuery({ queryKey: ['admin', 'contacts', 'pick'], queryFn: () => api('adminContacts', { query: {} }), enabled: quoteOpen });
   const makeQuote = useMutation({
     mutationFn: async () => {
       const configurationId = await saveId();
@@ -364,12 +352,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
     onError: e => toast.error(t('errors.title'), errorText(t, e)),
   });
 
-  const clone = useMutation({
-    mutationFn: () => api('clone', { params: { id: st.configurationId! } }),
-    onSuccess: c => setParams({ id: c.id }, { replace: true }),
-  });
-
-  // Staff: a picture of the current 3D view, stamped by the server before it is downloaded.
+  // A picture of the current 3D view, stamped by the server before it is downloaded.
   const downloadImage = useMutation({
     mutationFn: async () => {
       const blob = await capture.current?.();
@@ -414,7 +397,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   return (
     <div className="page cfg">
       <div className="cfg__stage">
-        <ButtonLink to={staff ? '/admin/configurations' : `/saunas/${sauna.slug}`} variant="link" icon={ArrowLeft} className="cfg__back">
+        <ButtonLink to="/admin/configurations" variant="link" icon={ArrowLeft} className="cfg__back">
           {sauna.name}
         </ButtonLink>
         <ViewerSlot name={sauna.name} specs={specs} options={options} lowUrl={sauna.assets.lowGlbUrl} highUrl={sauna.assets.highGlbUrl} allowHigh thumbnailUrl={sauna.assets.thumbnailUrl} eager views captureRef={capture} />
@@ -432,12 +415,10 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
               {t('configure.priceDetails')}
               <Icon icon={ChevronDown} size="xs" className={details ? 'is-up' : undefined} />
             </button>
-            {!lockedView && (
-              <button type="button" className="cfg-product__toggle" onClick={() => st.init(sauna.slug, defaultSelectionOf(sauna), st.configurationId, st.roomId ? { id: st.roomId, placement: st.placement } : null)}>
-                <Icon icon={RotateCcw} size="xs" />
-                {t('configure.resetOptions')}
-              </button>
-            )}
+            <button type="button" className="cfg-product__toggle" onClick={() => st.init(sauna.slug, defaultSelectionOf(sauna), st.configurationId, st.roomId ? { id: st.roomId, placement: st.placement } : null)}>
+              <Icon icon={RotateCcw} size="xs" />
+              {t('configure.resetOptions')}
+            </button>
           </div>
           {details && (
             <dl className="cfg__lines mono">
@@ -459,15 +440,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
             </dl>
           )}
         </div>
-        {lockedView ? (
-          <div className="cfg-card cfg__locked">
-            <p>{t('configure.locked')}</p>
-            <Button onClick={() => clone.mutate()} loading={clone.isPending}>
-              {t('configure.clone')}
-            </Button>
-          </div>
-        ) : (
-          <>
+        <>
             <div className="cfg-stepper">
               <button type="button" aria-label={t('configure.prevSection')} onClick={() => step(-1)}>
                 <Icon icon={ChevronLeft} size="sm" />
@@ -531,77 +504,43 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
             </div>
             <div className="cfg-card cfg__actions">
               {!valid && <p className="muted cfg__hint">{t('configure.incomplete')}</p>}
-              {staff && locked && <p className="muted cfg__hint">{t('configure.sharedCopy')}</p>}
-              <Button variant="ghost" icon={Save} onClick={() => save.mutate(undefined, { onSuccess: () => toast(t('configure.draftSaved')), onError: e => toast.error(t('errors.title'), errorText(t, e)) })} loading={save.isPending && !send.isPending} disabled={save.isPending || send.isPending}>
+              {locked && <p className="muted cfg__hint">{t('configure.sharedCopy')}</p>}
+              <Button variant="ghost" icon={Save} onClick={() => save.mutate(undefined, { onSuccess: () => toast(t('configure.draftSaved')), onError: e => toast.error(t('errors.title'), errorText(t, e)) })} loading={save.isPending} disabled={save.isPending}>
                 {st.dirty || !st.configurationId ? t('configure.saveDraft') : t('common.saved')}
               </Button>
-              {staff && (
-                <Button variant="ghost" icon={ImageDown} onClick={() => downloadImage.mutate()} loading={downloadImage.isPending}>
-                  {t('configure.downloadImage')}
-                </Button>
-              )}
-              {staff && (
-                <Button variant="ghost" icon={Link2} onClick={() => setLinkOpen(true)} disabled={!valid}>
-                  {t('admin.customerLink.button')}
-                </Button>
-              )}
-              {staff ? (
-                <Button icon={FileText} onClick={() => setQuoteOpen(true)} disabled={!valid}>
-                  {t('configure.makeQuote')}
-                </Button>
-              ) : (
-                <Button icon={Send} onClick={() => setSendOpen(true)} disabled={!valid}>
-                  {t('configure.sendRequest')}
-                </Button>
-              )}
+              <Button variant="ghost" icon={ImageDown} onClick={() => downloadImage.mutate()} loading={downloadImage.isPending}>
+                {t('configure.downloadImage')}
+              </Button>
+              <Button variant="ghost" icon={Link2} onClick={() => setLinkOpen(true)} disabled={!valid}>
+                {t('admin.customerLink.button')}
+              </Button>
+              <Button icon={FileText} onClick={() => setQuoteOpen(true)} disabled={!valid}>
+                {t('configure.makeQuote')}
+              </Button>
             </div>
-          </>
-        )}
+        </>
       </aside>
 
       <Dialog
-        open={sendOpen}
-        onClose={() => setSendOpen(false)}
-        title={t('configure.requestTitle')}
-        description={t('configure.requestBody', { name: tenant.branding.displayName })}
+        open={linkOpen}
+        onClose={() => setLinkOpen(false)}
+        title={t('admin.customerLink.title')}
+        description={t('admin.customerLink.body')}
         footer={
-          <>
-            <Button variant="quiet" onClick={() => setSendOpen(false)}>
-              {t('common.cancel')}
-            </Button>
-            <Button icon={Send} onClick={() => send.mutate()} loading={send.isPending}>
-              {t('configure.sendRequest')}
-            </Button>
-          </>
+          <Button variant="quiet" onClick={() => setLinkOpen(false)}>
+            {t('common.close')}
+          </Button>
         }
       >
-        <div className="stack">
-          <Price minor={price.finalPriceMinor} currency={currency} size="lg" label={t('configure.total')} />
-          <Textarea label={t('configure.message')} placeholder={t('configure.messagePlaceholder')} value={message} onChange={e => setMessage(e.target.value)} maxLength={4000} />
-        </div>
+        {linkOpen && (
+          <Suspense fallback={<Skeleton lines={2} />}>
+            <CustomerLinkMaker
+              configurationId={() => (save.isPending || st.dirty || !st.configurationId ? saveId() : Promise.resolve(st.configurationId))}
+              invalidate={[['admin', 'configurations'], ['admin', 'configuration']]}
+            />
+          </Suspense>
+        )}
       </Dialog>
-      {staff && (
-        <Dialog
-          open={linkOpen}
-          onClose={() => setLinkOpen(false)}
-          title={t('admin.customerLink.title')}
-          description={t('admin.customerLink.body')}
-          footer={
-            <Button variant="quiet" onClick={() => setLinkOpen(false)}>
-              {t('common.close')}
-            </Button>
-          }
-        >
-          {linkOpen && (
-            <Suspense fallback={<Skeleton lines={2} />}>
-              <CustomerLinkMaker
-                configurationId={() => (save.isPending || st.dirty || !st.configurationId ? saveId() : Promise.resolve(st.configurationId))}
-                invalidate={[['admin', 'configurations'], ['admin', 'configuration']]}
-              />
-            </Suspense>
-          )}
-        </Dialog>
-      )}
       <Dialog
         open={quoteOpen}
         onClose={() => setQuoteOpen(false)}
@@ -636,23 +575,7 @@ function Configurator({ sauna, staff = false }: { sauna: SaunaDetail; staff?: bo
   );
 }
 
-export default function Configure() {
-  const { slug = '' } = useParams();
-  const { t } = useT();
-  const sauna = useSauna(slug);
-  useDocumentTitle(sauna.data ? t('configure.title', { name: sauna.data.name }) : null);
-  return (
-    <RequireCustomer fallback={<ConfigureSkeleton />}>
-      {() => {
-        if (sauna.isPending) return <ConfigureSkeleton />;
-        if (sauna.error) return <ErrorPage error={sauna.error} onRetry={() => void sauna.refetch()} />;
-        return <Configurator sauna={sauna.data} />;
-      }}
-    </RequireCustomer>
-  );
-}
-
-/** Reseller admin: /admin/configure/:slug?id=<configuration>. Staff are already signed in (RequireStaff). */
+/** Admin: /admin/configure/:slug?id=<configuration>. Staff are already signed in (RequireStaff). */
 export function StaffConfigure() {
   const { slug = '' } = useParams();
   const { t } = useT();
@@ -660,5 +583,5 @@ export function StaffConfigure() {
   useDocumentTitle(sauna.data ? t('configure.title', { name: sauna.data.name }) : null);
   if (sauna.isPending) return <ConfigureSkeleton />;
   if (sauna.error) return <ErrorPage error={sauna.error} onRetry={() => void sauna.refetch()} />;
-  return <Configurator sauna={sauna.data} staff />;
+  return <Configurator sauna={sauna.data} />;
 }

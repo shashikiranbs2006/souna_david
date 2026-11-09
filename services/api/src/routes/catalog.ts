@@ -122,7 +122,7 @@ export function registerCatalog(app: Hono<AppEnv>): void {
     const now = c.get('deps').now();
     const body = await tenantTx(c, async db => {
       const link = await resolveShareToken(db, params.token!, now);
-      const row = await getConfigRow(db, link.configuration_id, { staff: true });
+      const row = await getConfigRow(db, link.configuration_id);
       // Links are only ever created for locked configurations; an unlocked one is a data bug, not a viewable state.
       if (!row.locked_at) throw new ApiError('NOT_FOUND', 'This link does not exist.');
       const [model, selections, snapshot, placement] = await Promise.all([

@@ -14,7 +14,6 @@ export const pricedSaunaSchema = z.object({
   /** Largest discount the shop may give on this sauna, in basis points (100 = 1 %). */
   maxDiscountBps: basisPoints.nullable(),
 });
-export type PricedSauna = z.infer<typeof pricedSaunaSchema>;
 
 export const pricingSchema = z.object({ currency: currencyCode, items: z.array(pricedSaunaSchema) });
 export type Pricing = z.infer<typeof pricingSchema>;

@@ -69,7 +69,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       db.query<{ label: string; amount_minor: string }>('select label, amount_minor from quote_lines where quote_id = $1 order by position', [id]),
       db.query<{ id: string; version: number; status: QuoteRow['status']; created_at: Date }>(
         'select id, version, status, created_at from quotes where number = $1 order by version desc', [q.number]),
-      getConfigRow(db, q.configuration_id, { staff: true }).then(row => toConfigurationDto(db, tenant, locale, row)),
+      getConfigRow(db, q.configuration_id).then(row => toConfigurationDto(db, tenant, locale, row)),
     ]);
     const extra = lines.rows.map(l => ({ label: l.label, amountMinor: Number(l.amount_minor) }));
     const unit = Number(q.unit_price_minor);
@@ -84,7 +84,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
     number: number; version: number; contactId: string; configurationId: string; quantity: number; comment: string | null; lines: { label: string; amountMinor: number }[];
   }): Promise<string> {
     const { tenant, locale } = ctx(c);
-    const cfg = await toConfigurationDto(db, tenant, locale, await getConfigRow(db, q.configurationId, { staff: true }));
+    const cfg = await toConfigurationDto(db, tenant, locale, await getConfigRow(db, q.configurationId));
     const { rows } = await db.query<{ id: string }>(
       `insert into quotes (reseller_id, number, version, contact_id, configuration_id, quantity, unit_price_minor, comment, created_by_staff_id)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`,
@@ -97,7 +97,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
   }
 
   async function assertConfiguration(db: Db, id: string): Promise<void> {
-    await getConfigRow(db, id, { staff: true }); // NOT_FOUND unless it is this reseller's
+    await getConfigRow(db, id); // NOT_FOUND unless it is this reseller's
   }
 
   mount(app, routes.adminContacts, async ({ c, query }) => {
@@ -286,7 +286,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
         db.query<{ person_name: string; organisation: string | null; email: string | null; mobile: string | null }>('select person_name, organisation, email, mobile from contacts where id = $1', [o.contact.id]),
         db.query<{ display_name: string; legal_name: string | null; legal_address: string | null; support_phone: string | null; support_email: string | null; vat_display: 'INCLUDED' | 'EXCLUDED' | 'NONE' }>(
           'select display_name, legal_name, legal_address, support_phone, support_email, vat_display from reseller_branding where reseller_id = $1', [tenant.id]),
-        getConfigRow(db, o.configuration.id, { staff: true }),
+        getConfigRow(db, o.configuration.id),
       ]);
       const cfg = await toConfigurationDto(db, tenant, locale, cfgRow);
       const model = await loadModel(db, tenant, locale, { id: cfgRow.sauna_model_id }, true);

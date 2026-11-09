@@ -10,7 +10,6 @@ import { ApiError } from './problem.ts';
 function actor(c: Ctx) {
   const p = c.get('principal');
   return {
-    ...(p?.kind === 'customer' ? { actorCustomerId: p.customerId } : {}),
     ...(p?.kind === 'staff' ? { actorStaffId: p.staffId } : {}),
   };
 }
@@ -42,8 +41,4 @@ export function tenantTx<T>(c: Ctx, fn: (db: Db) => Promise<T>): Promise<T> {
 
 export function platformTx<T>(c: Ctx, fn: (db: Db) => Promise<T>): Promise<T> {
   return withTx(c.get('deps').pool, { role: 'app_platform', ...actor(c) }, db => fn(serialized(db)));
-}
-
-export function idpTx<T>(c: Ctx, fn: (db: Db) => Promise<T>): Promise<T> {
-  return withTx(c.get('deps').pool, { role: 'idp_local' }, fn);
 }

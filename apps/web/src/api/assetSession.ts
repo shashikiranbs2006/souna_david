@@ -49,7 +49,7 @@ export function invalidateAssetSession(): void {
 export function useAssetSession(enabled: boolean, shareToken?: string): boolean {
   const session = useSession();
   const s = session.data;
-  const key = !s ? '' : s.kind === 'customer' ? `c:${s.customer.id}` : s.kind === 'staff' ? `s:${s.staff.id}` : 'anon';
+  const key = !s ? '' : s.kind === 'staff' ? `s:${s.staff.id}` : 'anon';
   const [readyKey, setReadyKey] = useState<string | null>(null);
   useEffect(() => {
     if (!enabled || !key) return;

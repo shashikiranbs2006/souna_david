@@ -7,8 +7,6 @@ interface ImportMetaEnv {
   readonly VITE_SINGLE_SHOP?: string;
   /** Languages offered, comma separated, first = fallback (runtime `locales` wins). */
   readonly VITE_LOCALES?: string;
-  /** `1` serves fixtures from src/api/mock.ts instead of calling the API. */
-  readonly VITE_MOCK_API?: string;
 }
 
 interface ImportMeta {

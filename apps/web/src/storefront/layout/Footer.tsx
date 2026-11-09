@@ -7,10 +7,9 @@ import { FlipText } from '../../motion/FlipText.tsx';
 import { Credit } from '../../design/components/Credit.tsx';
 import { Icon } from '../../design/components/Icon.tsx';
 import { LogoMark } from '../../design/brand/Logo.tsx';
-import { useCatalog, useSession } from '../../api/queries.ts';
+import { useCatalog } from '../../api/queries.ts';
 import { OFFERED_LOCALES, LOCALE_NAMES, setLocale, useT } from '../../i18n/i18n.ts';
 import type { Tenant } from '../../api/types.ts';
-import { isSingleShop } from '../../host.ts';
 import './Footer.css';
 
 export function backToTop() {
@@ -133,10 +132,8 @@ export function Footer({ tenant }: { tenant: Tenant }) {
   const { t } = useT();
   const b = tenant.branding;
   const catalog = useCatalog().data;
-  const session = useSession().data;
   const top = catalog?.items.slice(0, 4) ?? [];
   const legalName = b.legalName ?? b.displayName;
-  const signedIn = session?.kind === 'customer';
   const vat = t(`vat.${b.vatDisplay}`);
 
   return (
@@ -231,33 +228,6 @@ export function Footer({ tenant }: { tenant: Tenant }) {
             </li>
           </ul>
         </section>
-        {!isSingleShop() && <section>
-          <h2 className="sfoot__cap">{t('footer.account')}</h2>
-          <ul>
-            {signedIn ? (
-              <>
-                <li>
-                  <FLink to="/account">{t('nav.account')}</FLink>
-                </li>
-                <li>
-                  <FLink to="/account/configurations">{t('nav.configurations')}</FLink>
-                </li>
-                <li>
-                  <FLink to="/account/requests">{t('nav.requests')}</FLink>
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <FLink to="/account/login">{t('nav.login')}</FLink>
-                </li>
-                <li>
-                  <FLink to="/account/signup">{t('nav.signup')}</FLink>
-                </li>
-              </>
-            )}
-          </ul>
-        </section>}
         <section>
           <h2 className="sfoot__cap">{t('footer.language')}</h2>
           <Languages />

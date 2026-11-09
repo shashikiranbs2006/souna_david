@@ -6,10 +6,6 @@ import { setLanguageProvider } from './api/client.ts';
 import { App } from './app/App.tsx';
 
 async function boot() {
-  if (import.meta.env.VITE_MOCK_API === '1') {
-    const { installMock } = await import('./api/mock.ts');
-    installMock();
-  }
   setLanguageProvider(getLocale);
   await initI18n();
 
@@ -20,7 +16,6 @@ async function boot() {
       : (await import('./platform/routes.tsx')).createPlatformRouter(host);
 
   createRoot(document.getElementById('root')!).render(<App router={router} />);
-  if (import.meta.env.VITE_PREVIEW === '1') (await import('./app/previewBar.ts')).mountPreviewBar();
 }
 
 // The splash never outlives a failed or very slow boot: error screens render under it.

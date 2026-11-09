@@ -18,7 +18,6 @@ type Json = Record<string, unknown>;
 
 const ACCESS_TEXT: Record<Access, string> = {
   public: 'Public. No session needed (a session is used when present).',
-  customer: 'Signed-in customer of the tenant resolved from the host (customer session cookie).',
   'reseller-staff': 'Staff user who is an active admin of the tenant resolved from the host (staff session cookie, MFA as configured).',
   'reseller-owner': 'Staff user with role OWNER of the tenant resolved from the host. An ADMIN gets 403 FORBIDDEN (shop settings, branding, discounts and option prices are owner-only).',
   'any-session': 'Any signed-in session (customer or staff) on this host.',

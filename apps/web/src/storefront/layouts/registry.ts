@@ -40,9 +40,9 @@ export const LAYOUT_META: Record<LayoutId, LayoutMeta> = {
 
 const KEY = 'sk.layoutPreview';
 
-/** `?layout=` preview override: honoured in development and mock mode, or for a signed-in staff member. */
+/** `?layout=` preview override: honoured in development, or for a signed-in staff member. */
 export function previewLayout(session: Session | undefined): LayoutId | null {
-  const allowed = import.meta.env.DEV || import.meta.env.VITE_MOCK_API === '1' || session?.kind === 'staff';
+  const allowed = import.meta.env.DEV || session?.kind === 'staff';
   if (!allowed) return null;
   const q = new URLSearchParams(window.location.search).get('layout');
   try {

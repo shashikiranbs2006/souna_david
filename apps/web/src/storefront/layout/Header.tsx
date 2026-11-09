@@ -6,7 +6,6 @@ import { useT } from '../../i18n/i18n.ts';
 import type { Tenant } from '../../api/types.ts';
 import { Brand } from './Brand.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
-import { AccountMenu } from './AccountMenu.tsx';
 import { BottomNav } from './BottomNav.tsx';
 import { PRIMARY_NAV } from './nav.ts';
 import './Header.css';
@@ -65,9 +64,6 @@ export function Header({ tenant }: { tenant: Tenant }) {
           <div className="header__tools">
             <div className="header__lang">
               <LanguageSwitcher compact />
-            </div>
-            <div className="header__account">
-              <AccountMenu />
             </div>
           </div>
         </div>

@@ -27,7 +27,7 @@ export async function getJson<T = unknown>(page: Page, url: string): Promise<{ s
   return { status: res.status(), body: (text ? JSON.parse(text) : null) as T };
 }
 
-/** Logs in through the storefront or admin login form (customer: /account/login, staff: /admin or admin host). */
+/** Signs in through the staff login form at /admin. */
 export async function loginWithForm(page: Page, url: string, email: string, password = SEED_PASSWORD): Promise<void> {
   await page.goto(url);
   // Anchored: field labels may carry a "Required" marker, and "Show password" must not match.

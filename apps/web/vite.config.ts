@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
 /**
@@ -36,13 +36,9 @@ const API = 'http://127.0.0.1:8787';
 // proxy must forward `alpha-spa.localhost:5173` untouched.
 const proxied = ['/api', '/assets', '/media', '/branding', '/favicon.ico', '/dev'];
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const mock = env.VITE_MOCK_API === '1';
-  const preview = env.VITE_PREVIEW === '1';
+export default defineConfig(() => {
   return {
-    // The preview build is opened from any path, so its files are linked relatively.
-    base: preview ? './' : '/',
+    base: '/',
     // plugin-react is typed against the hoisted (newer) vite used by vitest.
     plugins: [react() as unknown as Plugin, dracoDecoder()],
     server: {
@@ -50,8 +46,7 @@ export default defineConfig(({ mode }) => {
       host: true,
       strictPort: true,
       allowedHosts: ['.localhost'],
-      // With the mock API the browser never talks to the backend.
-      proxy: mock ? {} : Object.fromEntries(proxied.map(p => [p, { target: API, changeOrigin: false, ws: false }])),
+      proxy: Object.fromEntries(proxied.map(p => [p, { target: API, changeOrigin: false, ws: false }])),
     },
     preview: { port: 4173, host: true, allowedHosts: ['.localhost'] },
     build: {
@@ -59,7 +54,7 @@ export default defineConfig(({ mode }) => {
       // /assets/* is the signed-cookie path for protected 3D files in CloudFront;
       // the app's own bundles must live elsewhere.
       assetsDir: 'static',
-      sourcemap: !preview,
+      sourcemap: true,
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
         output: {

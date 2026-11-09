@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPath, CUSTOMER_TRANSITIONS, ERROR_CODES, ERROR_STATUS, isCustomerAccountRoute, parseHost, routes, storefrontHost, signupRequest, STAFF_TRANSITIONS } from '../src/index.ts';
+import { buildPath, ERROR_CODES, ERROR_STATUS, parseHost, routes, storefrontHost } from '../src/index.ts';
 
 const cfg = { platformDomain: 'saunas.example.com' };
 
@@ -34,11 +34,6 @@ describe('single-shop edition', () => {
     expect(storefrontHost('holzsauna', single)).toBe('offers.holzsauna.ch');
     expect(storefrontHost('alpha', cfg)).toBe('alpha.saunas.example.com');
   });
-  it('marks exactly the customer-account routes', () => {
-    const names = Object.entries(routes).filter(([, d]) => isCustomerAccountRoute(d)).map(([n]) => n);
-    for (const n of ['signup', 'login', 'confirm', 'resendCode', 'forgotPassword', 'resetPassword', 'me', 'configurations', 'claimShared', 'myRequests']) expect(names).toContain(n);
-    for (const n of ['session', 'logout', 'refresh', 'staffLogin', 'staffMfa', 'catalog', 'sauna', 'shared', 'tenant', 'adminConfigurations']) expect(names).not.toContain(n);
-  });
 });
 
 describe('contract tables', () => {
@@ -49,28 +44,8 @@ describe('contract tables', () => {
     const keys = Object.values(routes).map(r => `${r.method} ${r.path}`);
     expect(new Set(keys).size).toBe(keys.length);
   });
-  it('keeps terminal statuses terminal for every actor', () => {
-    for (const s of ['CLOSED', 'REJECTED', 'CANCELLED'] as const) {
-      expect(STAFF_TRANSITIONS[s]).toEqual([]);
-      expect(CUSTOMER_TRANSITIONS[s]).toEqual([]);
-    }
-  });
   it('builds paths and encodes params', () => {
     expect(buildPath(routes.sauna.path, { slug: 'a b' })).toBe('/api/catalog/saunas/a%20b');
     expect(() => buildPath(routes.sauna.path)).toThrow(/slug/);
-  });
-});
-
-describe('signupRequest', () => {
-  const base = { email: 'a@b.test', password: 'Sauna!2026x', firstName: 'A', lastName: 'B', consents: { terms: true, privacy: true } };
-  it('accepts a valid sign-up and defaults', () => {
-    const v = signupRequest.parse(base);
-    expect(v.locale).toBe('en');
-    expect(v.consents.marketing).toBe(false);
-  });
-  it('requires terms and a strong password', () => {
-    expect(signupRequest.safeParse({ ...base, consents: { terms: false, privacy: true } }).success).toBe(false);
-    expect(signupRequest.safeParse({ ...base, password: 'short' }).success).toBe(false);
-    expect(signupRequest.safeParse({ ...base, password: 'alllowercase1234' }).success).toBe(false);
   });
 });

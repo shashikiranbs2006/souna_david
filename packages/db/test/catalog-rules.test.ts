@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type pg from 'pg';
 import type { Queryable } from '../src/index.ts';
 import { ALPHA, BETA, GAMMA, M, O, SEED, as, count, expectCode, one, ownerTx, platform, setupEnv, tenant, type Env } from './helpers.ts';
 

@@ -7,18 +7,14 @@ const table: { pattern: string; page: PageName; data?: (params: Record<string, s
   { pattern: '/', page: 'home', data: () => prefetchCatalog(queryClient) },
   { pattern: '/saunas', page: 'saunas', data: () => prefetchCatalog(queryClient) },
   { pattern: '/saunas/:slug', page: 'sauna', data: p => prefetchSauna(queryClient, p.slug!) },
-  { pattern: '/saunas/:slug/configure', page: 'configure', data: p => prefetchSauna(queryClient, p.slug!) },
   { pattern: '/guide', page: 'guide' },
   { pattern: '/how-it-works', page: 'how' },
   { pattern: '/about', page: 'about' },
   { pattern: '/faq', page: 'faq' },
   { pattern: '/contact', page: 'contact' },
   { pattern: '/legal/:doc', page: 'legal' },
-  { pattern: '/account/*', page: 'account' },
-  { pattern: '/account', page: 'account' },
 ];
 
-const AUTH = /^\/account\/(login|signup|verify|forgot|reset)$/;
 const done = new Set<string>();
 
 /** Warms the route chunk and its data. Cheap to call repeatedly; skipped with data saver. */
@@ -27,10 +23,6 @@ export function prefetchPath(href: string): void {
   const path = href.split(/[?#]/)[0] || '/';
   if (done.has(path)) return;
   done.add(path);
-  if (AUTH.test(path)) {
-    void pages.auth().catch(() => done.delete(path));
-    return;
-  }
   for (const r of table) {
     const m = matchPath(r.pattern, path);
     if (!m) continue;

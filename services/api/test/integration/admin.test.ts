@@ -14,25 +14,6 @@ async function alphaStaff(): Promise<Client> {
   return c;
 }
 
-/** Runs `fn` with the app clock moved by `ms`, then restores it. */
-async function withClockShift<T>(ms: number, fn: () => Promise<T>): Promise<T> {
-  const real = h.deps.now;
-  h.deps.now = () => new Date(Date.now() + ms);
-  try { return await fn(); } finally { h.deps.now = real; }
-}
-
-/** Ben (alpha) configures a sauna and submits a request; returns the request id. */
-async function benSubmits(slug: string, message: string): Promise<{ ben: Client; requestId: string }> {
-  const ben = h.client('alpha.localhost');
-  await ben.login('ben@example.test', SEED_PASSWORD);
-  const sauna = (await ben.get(`/api/catalog/saunas/${slug}`)).body;
-  const cfg = await ben.post('/api/configurations', { saunaModelId: sauna.id });
-  expect(cfg.status).toBe(201);
-  const sub = await ben.post(`/api/configurations/${cfg.body.id}/requests`, { message });
-  expect(sub.status).toBe(201);
-  return { ben, requestId: sub.body.id };
-}
-
 describe('reseller admin: branding', () => {
   it('patches branding and the storefront tenant reflects it', async () => {
     const c = await alphaStaff();
@@ -65,11 +46,6 @@ describe('reseller admin: branding', () => {
     expect(r.body.code).toBe('VALIDATION_FAILED');
   });
 
-  it('is not reachable for a customer session', async () => {
-    const ben = h.client('alpha.localhost');
-    await ben.login('ben@example.test', SEED_PASSWORD);
-    expect([401, 403]).toContain((await ben.patch('/api/admin/branding', { tagline: 'x' })).status);
-  });
 });
 
 describe('reseller admin: saunas and discounts', () => {
@@ -165,168 +141,6 @@ describe('reseller admin: share links', () => {
   });
 });
 
-describe('reseller admin: customers', () => {
-  it('searches customers of this tenant only and pages the matches without gaps', async () => {
-    const c = await alphaStaff();
-    const all = await c.get('/api/admin/customers?limit=100');
-    expect(all.status, JSON.stringify(all.body)).toBe(200);
-    const anna = await c.get('/api/admin/customers?q=VIRTANEN');
-    expect(anna.body.items.map((x: { email: string }) => x.email)).toEqual(['anna@example.test']);
-    expect((await c.get('/api/admin/customers?q=%25')).body.items).toEqual([]);
-
-    // Every seeded alpha customer matches "example"; page through them one by one.
-    const matches = all.body.items.filter((x: { email: string }) => x.email.includes('example')).map((x: { id: string }) => x.id);
-    expect(matches.length).toBeGreaterThan(1);
-    const seen: string[] = [];
-    let cursor: string | null = null;
-    do {
-      const pg: { body: { items: { id: string }[]; nextCursor: string | null } } =
-        await c.get(`/api/admin/customers?q=example&limit=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
-      seen.push(...pg.body.items.map(x => x.id));
-      cursor = pg.body.nextCursor;
-    } while (cursor && seen.length < 200);
-    expect(seen).toEqual(matches);
-
-    const beta = h.client('beta.localhost');
-    await beta.staffLogin('owner@beta.test', SEED_PASSWORD);
-    const betaAnna = await beta.get('/api/admin/customers?q=anna');
-    expect(betaAnna.body.items.map((x: { id: string }) => x.id)).not.toContain(anna.body.items[0].id);
-  });
-});
-
-describe('reseller admin: requests and quotes', () => {
-  it('lists, searches and pages requests newest first', async () => {
-    const { requestId } = await benSubmits('kelo-barrel', 'List and search');
-    const c = await alphaStaff();
-    const all = await c.get('/api/admin/requests?limit=100');
-    expect(all.status, JSON.stringify(all.body)).toBe(200);
-    const first = all.body.items[0];
-    expect(first.id).toBe(requestId);
-    expect(first.customerEmail).toBe('ben@example.test');
-    expect(first.saunaName).toBeTruthy();
-    expect(first.finalPriceMinor).toBeGreaterThan(0);
-    const created = all.body.items.map((r: { createdAt: string }) => r.createdAt);
-    expect([...created].sort().reverse()).toEqual(created);
-
-    // Search matches the customer's e-mail, the customer's name, or nothing.
-    const byEmail = await c.get('/api/admin/requests?q=BEN%40example');
-    expect(byEmail.body.items.some((r: { id: string }) => r.id === requestId)).toBe(true);
-    const byName = await c.get(`/api/admin/requests?q=${encodeURIComponent(first.customerName.split(' ')[0])}`);
-    expect(byName.body.items.some((r: { id: string }) => r.id === requestId)).toBe(true);
-    expect((await c.get('/api/admin/requests?q=zzqx-no-such')).body.items).toEqual([]);
-
-    // Keyset pages of one walk the same list without gaps or repeats.
-    const seen: string[] = [];
-    let cursor: string | null = null;
-    do {
-      const pg: { body: { items: { id: string }[]; nextCursor: string | null } } =
-        await c.get(`/api/admin/requests?limit=1${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`);
-      seen.push(...pg.body.items.map(r => r.id));
-      cursor = pg.body.nextCursor;
-    } while (cursor && seen.length < 200);
-    expect(seen).toEqual(all.body.items.map((r: { id: string }) => r.id));
-  });
-
-  it('analytics counts the new request against its sauna', async () => {
-    const before = (await (await alphaStaff()).get('/api/admin/analytics?days=30')).body;
-    await benSubmits('aurora-hex', 'Analytics');
-    const c = await alphaStaff();
-    const r = await c.get('/api/admin/analytics?days=30');
-    expect(r.status, JSON.stringify(r.body)).toBe(200);
-    expect(r.body.totals.requests).toBe(before.totals.requests + 1);
-    expect(r.body.totals.configurations).toBe(before.totals.configurations + 1);
-    expect(r.body.daily).toHaveLength(30);
-    expect(r.body.daily.at(-1).requests).toBeGreaterThanOrEqual(1);
-    const sum = r.body.daily.reduce((n: number, d: { requests: number }) => n + d.requests, 0);
-    expect(sum).toBe(r.body.totals.requests);
-    const top = r.body.topSaunas as { name: string; configurations: number; requests: number }[];
-    expect(top.length).toBeGreaterThan(0);
-    for (const t of top) expect(t.requests).toBeLessThanOrEqual(t.configurations);
-    const ranks = top.map(t => [t.requests, t.configurations] as const);
-    for (let i = 1; i < ranks.length; i++) {
-      const [a, b] = [ranks[i - 1]!, ranks[i]!];
-      expect(a[0] > b[0] || (a[0] === b[0] && a[1] >= b[1])).toBe(true);
-    }
-    const prevTop = new Map((before.topSaunas as { saunaModelId: string; requests: number }[]).map(t => [t.saunaModelId, t.requests]));
-    const grew = (r.body.topSaunas as { saunaModelId: string; requests: number }[]).filter(t => t.requests > (prevTop.get(t.saunaModelId) ?? 0));
-    expect(grew).toHaveLength(1);
-  });
-
-  it('quotes a request and the customer accepts it', async () => {
-    const { ben, requestId } = await benSubmits('kelo-barrel', 'Please quote with installation');
-    const c = await alphaStaff();
-    const list = await c.get('/api/admin/requests?status=SUBMITTED');
-    expect(list.body.items.some((r: { id: string }) => r.id === requestId)).toBe(true);
-
-    const validUntil = new Date(Date.now() + 14 * DAY).toISOString();
-    const q = await c.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 1_234_500, validUntil, note: 'Incl. installation' });
-    expect(q.status, JSON.stringify(q.body)).toBe(200);
-    expect(q.body.status).toBe('QUOTED');
-    expect(q.body.quotes.filter((x: { supersededAt: string | null }) => !x.supersededAt)).toHaveLength(1);
-
-    const acc = await ben.post(`/api/me/requests/${requestId}/accept`);
-    expect(acc.status, JSON.stringify(acc.body)).toBe(200);
-    expect(acc.body.status).toBe('ACCEPTED');
-    const staffView = await c.get(`/api/admin/requests/${requestId}`);
-    expect(staffView.body.status).toBe('ACCEPTED');
-    expect(staffView.body.allowedTransitions).toEqual(expect.arrayContaining(['CLOSED']));
-  });
-
-  it('a revised quote supersedes the previous one', async () => {
-    const { requestId } = await benSubmits('espoo-compact', 'Revise please');
-    const c = await alphaStaff();
-    const validUntil = new Date(Date.now() + 7 * DAY).toISOString();
-    expect((await c.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 900_000, validUntil })).status).toBe(200);
-    const r = await c.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 850_000, validUntil, note: 'Better price' });
-    expect(r.status, JSON.stringify(r.body)).toBe(200);
-    expect(r.body.status).toBe('QUOTED');
-    expect(r.body.quotes).toHaveLength(2);
-    const active = r.body.quotes.filter((q: { supersededAt: string | null }) => !q.supersededAt);
-    expect(active).toEqual([expect.objectContaining({ amountMinor: 850_000 })]);
-  });
-
-  it('an expired quote cannot be accepted', async () => {
-    const { ben, requestId } = await benSubmits('espoo-compact', 'Quick one');
-    const c = await alphaStaff();
-    const validUntil = new Date(Date.now() + DAY).toISOString();
-    expect((await c.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 700_000, validUntil })).status).toBe(200);
-    const late = await withClockShift(2 * DAY, () => ben.post(`/api/me/requests/${requestId}/accept`));
-    expect(late.body.code).toBe('QUOTE_EXPIRED');
-    expect((await ben.get(`/api/me/requests/${requestId}`)).body.status).toBe('QUOTED');
-  });
-
-  it('a quote must be valid in the future', async () => {
-    const { requestId } = await benSubmits('aurora-hex', 'Past quote');
-    const c = await alphaStaff();
-    const r = await c.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 1, validUntil: new Date(Date.now() - DAY).toISOString() });
-    expect(r.body.code).toBe('VALIDATION_FAILED');
-  });
-
-  it('staff of beta cannot see or act on alpha requests', async () => {
-    const { requestId } = await benSubmits('fjord-panorama', 'Isolation check');
-    const beta = h.client('beta.localhost');
-    await beta.staffLogin('owner@beta.test', SEED_PASSWORD);
-    const list = await beta.get('/api/admin/requests?limit=100');
-    expect(list.status).toBe(200);
-    expect(list.body.items.some((r: { id: string }) => r.id === requestId)).toBe(false);
-    expect(JSON.stringify(list.body)).not.toContain('ben@example.test');
-    expect((await beta.get(`/api/admin/requests/${requestId}`)).status).toBe(404);
-    const q = await beta.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 1, validUntil: new Date(Date.now() + DAY).toISOString() });
-    expect(q.status).toBe(404);
-  });
-
-  it('a beta staff session does not authenticate on the alpha host', async () => {
-    const beta = h.client('beta.localhost');
-    await beta.staffLogin('owner@beta.test', SEED_PASSWORD);
-    const cookies = ['sk_at', 'sk_st', 'sk_staff'].map(n => beta.cookie(n)).filter(Boolean);
-    const alpha = h.client('alpha.localhost');
-    const header = ['sk_at', 'sk_st', 'sk_staff'].flatMap(n => (beta.cookie(n) ? [`${n}=${beta.cookie(n)}`] : [])).join('; ');
-    expect(cookies.length).toBeGreaterThan(0);
-    const r = await alpha.req('GET', '/api/admin/requests', undefined, { cookie: header });
-    expect([401, 403]).toContain(r.status);
-  });
-});
-
 describe('reseller admin: OWNER vs ADMIN', () => {
   async function alphaAdmin(): Promise<Client> {
     const c = h.client('alpha.localhost');
@@ -368,23 +182,6 @@ describe('reseller admin: OWNER vs ADMIN', () => {
     expect((await c.get('/api/admin/saunas')).body).toEqual(before.saunas);
   });
 
-  it('an ADMIN can read the shop and work requests, customers and configurations', async () => {
-    const c = await alphaAdmin();
-    for (const path of ['/api/admin/branding', '/api/admin/settings', '/api/admin/saunas', `/api/admin/saunas/${espoo()}/options`, '/api/admin/customers', '/api/admin/requests', '/api/admin/analytics?days=30']) {
-      expect((await c.get(path)).status, path).toBe(200);
-    }
-    const { requestId } = await benSubmits('espoo-compact', 'Admin works this one');
-    expect((await c.post(`/api/admin/requests/${requestId}/transition`, { toStatus: 'IN_REVIEW' })).status).toBe(200);
-    expect((await c.post(`/api/admin/requests/${requestId}/notes`, { body: 'Called the customer' })).status).toBe(201);
-    const q = await c.put(`/api/admin/requests/${requestId}/quote`, { amountMinor: 500_000, validUntil: new Date(Date.now() + 7 * DAY).toISOString() });
-    expect(q.status, JSON.stringify(q.body)).toBe(200);
-    // The list carries the active quote's validity, for the "expiring soon" inbox.
-    const quoted = (await c.get('/api/admin/requests?status=QUOTED&limit=100')).body.items.find((r: { id: string }) => r.id === requestId);
-    expect(quoted.quoteValidUntil).toBe(q.body.activeQuote.validUntil);
-    const cfg = await c.post('/api/admin/configurations', { saunaModelId: espoo(), name: 'For Ben', customerId: SEED.customers.benAlpha });
-    expect(cfg.status, JSON.stringify(cfg.body)).toBe(201);
-  });
-
   it('the OWNER can change settings, discounts and option prices', async () => {
     const c = await alphaStaff();
     const s = (await c.get('/api/admin/settings')).body.defaultShareExpiryDays;
@@ -399,17 +196,4 @@ describe('reseller admin: OWNER vs ADMIN', () => {
     expect(put.status, JSON.stringify(put.body)).toBe(200);
   });
 
-  it('a customer, an anonymous visitor and another tenant\'s owner are refused', async () => {
-    const ben = h.client('alpha.localhost');
-    await ben.login('ben@example.test', SEED_PASSWORD);
-    const anon = h.client('alpha.localhost');
-    const beta = h.client('beta.localhost');
-    await beta.staffLogin('owner@beta.test', SEED_PASSWORD);
-    const header = ['sk_at', 'sk_st', 'sk_staff'].flatMap(n => (beta.cookie(n) ? [`${n}=${beta.cookie(n)}`] : [])).join('; ');
-    for (const [method, path, body] of ownerOnly().slice(0, 4)) {
-      expect([401, 403], `customer ${method} ${path}`).toContain((await ben.req(method, path, body)).status);
-      expect([401, 403], `anonymous ${method} ${path}`).toContain((await anon.req(method, path, body)).status);
-      expect([401, 403], `beta ${method} ${path}`).toContain((await anon.req(method, path, body, { cookie: header })).status);
-    }
-  });
 });

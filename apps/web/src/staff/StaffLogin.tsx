@@ -52,7 +52,7 @@ type Step =
  * Staff sign-in for both admin areas. Follows the API's challenge model:
  * password → (new password) → TOTP code or TOTP setup → session cookie.
  */
-export function StaffLogin({ title, brand, notice, onSignedIn }: { title: string; brand: ReactNode; notice?: string | null; onSignedIn?: () => void }) {
+export function StaffLogin({ title, brand }: { title: string; brand: ReactNode }) {
   const { t } = useT();
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>({ kind: 'password' });
@@ -76,7 +76,6 @@ export function StaffLogin({ title, brand, notice, onSignedIn }: { title: string
         case 'OK': {
           const s = await api('session');
           qc.setQueryData(sessionQuery.queryKey, s);
-          onSignedIn?.();
           return;
         }
         case 'MFA_REQUIRED':
@@ -140,11 +139,6 @@ export function StaffLogin({ title, brand, notice, onSignedIn }: { title: string
         <div className="staff-login__brand">{brand}</div>
         <ScrambleText key={step.kind} as="h1" className="staff-login__title" text={heading} />
         <p className="staff-login__lede">{lede}</p>
-        {notice && step.kind === 'password' && (
-          <p className="staff-login__notice" role="status">
-            {notice}
-          </p>
-        )}
         <form className="staff-login__form" onSubmit={submit} noValidate>
           {error && (
             <p className="staff-login__error" role="alert">

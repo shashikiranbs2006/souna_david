@@ -5,13 +5,11 @@ test('the seeded share link renders a read-only snapshot', async ({ page }) => {
   await expect(page.getByText(en.shared.eyebrow, { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: 'Showroom offer: Espoo Compact' })).toBeVisible();
   await expect(page.getByText('Bronze glass door')).toBeVisible();
-  // Read-only: no editing or sending. A visitor is offered "Log in" to copy it to an account.
+  // Read-only: no editing, no account. The visitor is pointed to the shop.
   await expect(page.getByRole('radio')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: en.configure.sendRequest })).toHaveCount(0);
   await expect(page.getByRole('button', { name: en.configure.saveDraft, exact: true })).toHaveCount(0);
-  await expect(page.getByText(en.shared.claimHint)).toBeVisible();
-  // The pricecard's "Log in" returns to this link afterwards (the header one does not).
-  await expect(page.getByRole('link', { name: en.nav.login, exact: true }).and(page.locator(`[href*="next="]`))).toHaveCount(1);
+  await expect(page.getByRole('link', { name: /Alpha Spa/ }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: en.nav.login, exact: true })).toHaveCount(0);
 });
 
 test('an unknown share token shows the expired page', async ({ page }) => {

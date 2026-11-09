@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { ArrowLeft, ArrowRight, Box, Check, Info, Lock, Mail, MessageCircle, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useParams } from 'react-router';
+import { ArrowLeft, ArrowRight, Check, Info, Mail, MessageCircle, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { toggle } from '@saunaklar/rules';
-import { useCatalog, useSauna, useSession, useTenantData } from '../../api/queries.ts';
+import { useCatalog, useSauna, useTenantData } from '../../api/queries.ts';
 import { isApiError } from '../../api/client.ts';
 import type { SaunaDetail as Sauna } from '../../api/types.ts';
 import { useT } from '../../i18n/i18n.ts';
-import { isSingleShop } from '../../host.ts';
 import { useFormat } from '../../i18n/format.ts';
 import { ScrambleText } from '../../motion/ScrambleText.tsx';
 import { prefersReducedMotion } from '../../motion/preferences.ts';
@@ -14,7 +13,7 @@ import { Breadcrumbs } from '../../design/components/Breadcrumbs.tsx';
 import { Button, ButtonLink } from '../../design/components/Button.tsx';
 import { Price } from '../../design/components/Price.tsx';
 import { Badge } from '../../design/components/Badge.tsx';
-import { ExternalLink, TextLink } from '../../design/components/TextLink.tsx';
+import { ExternalLink } from '../../design/components/TextLink.tsx';
 import { Skeleton } from '../../design/components/Skeleton.tsx';
 import { EmptyState } from '../../design/components/EmptyState.tsx';
 import { ErrorPage } from '../../design/components/ErrorBoundary.tsx';
@@ -22,7 +21,6 @@ import { Icon } from '../../design/components/Icon.tsx';
 import { SectionHeading } from '../../design/components/SectionHeading.tsx';
 import { ClampText } from '../../design/components/ClampText.tsx';
 import { useDocumentTitle } from '../../app/useDocumentTitle.ts';
-import { ArButton } from '../../three/ArButton.tsx';
 import { preloadViewer, preloadViewerWhenIdle } from '../../three/preload.ts';
 import { configuredSpecsOf, specsOf } from '../components/specs.ts';
 import { defaultSelectionOf, rulesOf } from '../components/sauna-helpers.ts';
@@ -151,8 +149,8 @@ function SizeSelector({ groups, selection, currency, onPick }: { groups: Group[]
 
 /** Option cards per group: pick to preview the price. Only the reseller's options, at its prices. */
 function OptionGroups({
-  sauna, groups, selection, currency, onPick, customiseTo,
-}: { sauna: Sauna; groups: Group[]; selection: string[]; currency: string; onPick: (id: string, on: boolean) => void; customiseTo: ((code: string) => string) | null }) {
+  sauna, groups, selection, currency, onPick,
+}: { sauna: Sauna; groups: Group[]; selection: string[]; currency: string; onPick: (id: string, on: boolean) => void }) {
   const { t } = useT();
   const fmt = useFormat();
   const names = useMemo(() => new Map(sauna.groups.flatMap(g => g.options.map(o => [o.id, o.name] as const))), [sauna]);
@@ -178,12 +176,6 @@ function OptionGroups({
                 {g.required && <Badge tone="outline">{t('detail.required')}</Badge>}
               </p>
               {g.description && <p className="ogroup__desc">{g.description}</p>}
-              {customiseTo && (
-                <TextLink to={customiseTo(g.code)} tone="underline" className="ogroup__go" aria-label={t('detail.customiseGroup', { group: g.name })}>
-                  {t('detail.customise3d')}
-                  <Icon icon={ArrowRight} size="xs" />
-                </TextLink>
-              )}
             </div>
             <ul className="ogroup__options">
               {g.options.map(o => {
@@ -313,16 +305,9 @@ function Product({ s }: { s: Sauna }) {
   const { t } = useT();
   const fmt = useFormat();
   const tenant = useTenantData();
-  const session = useSession().data;
   const catalog = useCatalog().data;
-  // Single-shop edition: no customer accounts; the shop configures with the customer.
-  const single = isSingleShop();
-  const signedIn = !single && session?.kind === 'customer';
   const currency = tenant.currency;
   const specs = specsOf(s);
-  const configureTo = `/saunas/${s.slug}/configure`;
-  const loginTo = `/account/login?next=${encodeURIComponent(configureTo)}`;
-  const threeTo = signedIn ? configureTo : loginTo;
   const rules = useMemo(() => rulesOf(s), [s]);
   const defaults = useMemo(() => defaultSelectionOf(s), [s]);
   const [selection, setSelection] = useState<string[]>(defaults);
@@ -330,11 +315,6 @@ function Product({ s }: { s: Sauna }) {
   const names = useMemo(() => new Map(s.groups.flatMap(g => g.options.map(o => [o.id, o.name] as const))), [s]);
   const price = useMemo(() => previewPrice(s, selection), [s, selection]);
   const features = useFeatures(s);
-
-  // Signed-in customers can open the 3D configurator: warm its chunk once the page is idle.
-  useEffect(() => {
-    if (signedIn) preloadViewerWhenIdle();
-  }, [signedIn]);
 
   const sizeGroups = s.groups.filter(g => isSizeGroup(g.code) && g.selectionType === 'SINGLE' && g.options.length > 1);
   const optionGroups = s.groups.filter(g => g.options.length > 0 && !sizeGroups.includes(g));
@@ -359,16 +339,11 @@ function Product({ s }: { s: Sauna }) {
   const related = (catalog?.items ?? []).filter(i => i.slug !== s.slug).slice(0, 3);
   const selected = s.groups.flatMap(g => g.options.filter(o => selection.includes(o.id)).map(o => ({ group: g.name, option: o })));
   const email = tenant.branding.supportEmail;
-  const label3d = signedIn ? t('detail.open3d') : t('detail.loginToConfigure');
-  const warm = signedIn ? preloadViewer : undefined;
 
-  const open3d = (size: 'md' | 'lg', block = false) => single ? (
+  // The shop configures the sauna with the customer: the customer asks for an offer.
+  const open3d = (size: 'md' | 'lg', block = false) => (
     <ButtonLink to="/contact" size={size} block={block} icon={MessageCircle} iconAfter={ArrowRight}>
       {t('detail.askOffer', { name: tenant.branding.displayName })}
-    </ButtonLink>
-  ) : (
-    <ButtonLink to={threeTo} size={size} block={block} icon={signedIn ? Box : Lock} iconAfter={ArrowRight} onPointerEnter={warm} onFocus={warm}>
-      {label3d}
     </ButtonLink>
   );
 
@@ -382,12 +357,6 @@ function Product({ s }: { s: Sauna }) {
             <PhotoGallery
               name={s.name}
               photos={photos}
-              overlay={single ? undefined : (
-                <Link to={threeTo} className="pdp__3d" onPointerEnter={warm} onFocus={warm} aria-label={label3d}>
-                  <Icon icon={signedIn ? Box : Lock} size="xs" />
-                  {t('detail.badge3d')}
-                </Link>
-              )}
             />
           ) : (
             <div className="pdp__glyph">
@@ -435,8 +404,7 @@ function Product({ s }: { s: Sauna }) {
                   {t('detail.jumpToOptions')}
                 </Button>
               </div>
-              {single ? <p className="pricecard__hint">{t('detail.askOfferHint', { name: tenant.branding.displayName })}</p> : !signedIn && <p className="pricecard__hint">{t('detail.loginHint')}</p>}
-              {!single && s.assets.hasAr && <ArButton saunaModelId={s.id} name={s.name} enabled={signedIn} />}
+              <p className="pricecard__hint">{t('detail.askOfferHint', { name: tenant.branding.displayName })}</p>
               <p className="pricecard__hint">
                 <Icon icon={ArrowRight} size="xs" /> {t('detail.delivery', { name: tenant.branding.displayName })}
               </p>
@@ -452,7 +420,7 @@ function Product({ s }: { s: Sauna }) {
         </p>
         <div className="pconf">
           <div className="pconf__groups">
-            <OptionGroups sauna={s} groups={optionGroups} selection={selection} currency={currency} onPick={pick} customiseTo={signedIn ? code => `${configureTo}?step=${encodeURIComponent(code)}` : null} />
+            <OptionGroups sauna={s} groups={optionGroups} selection={selection} currency={currency} onPick={pick} />
             <p className="dsec__note">{t('detail.rulesNote')}</p>
           </div>
           <aside className="psum" aria-labelledby="d-summary">

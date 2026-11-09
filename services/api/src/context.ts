@@ -23,7 +23,6 @@ export interface TenantInfo {
 
 export type Principal =
   | { kind: 'anonymous' }
-  | { kind: 'customer'; customerId: string; email: string; firstName: string; lastName: string; locale: string }
   | {
       kind: 'staff';
       staffId: string;

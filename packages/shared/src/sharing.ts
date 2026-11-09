@@ -18,7 +18,6 @@ export const shareLinkSchema = z.object({
   lastViewedAt: isoDateTime.nullable(),
   state: z.enum(['ACTIVE', 'EXPIRED', 'REVOKED']),
 });
-export type ShareLink = z.infer<typeof shareLinkSchema>;
 export const shareLinksSchema = z.object({ items: z.array(shareLinkSchema) });
 
 /** GET /api/shared/:token — read-only snapshot, no account needed. */
@@ -30,6 +29,3 @@ export const sharedConfigurationSchema = z.object({
   expiresAt: isoDateTime,
 });
 export type SharedConfiguration = z.infer<typeof sharedConfigurationSchema>;
-
-/** POST /api/shared/:token/claim — copy into the signed-in customer's account (review C5). */
-export const claimResponse = z.object({ configurationId: uuid });

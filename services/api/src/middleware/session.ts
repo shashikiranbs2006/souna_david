@@ -4,7 +4,7 @@ import type { Pool, Tokens } from '../adapters/types.ts';
 import { IdpError } from '../adapters/errors.ts';
 import { clearCookie, readCookie, writeCookie } from '../lib/cookies.ts';
 import { hmac, randomToken, safeEqual } from '../lib/crypto.ts';
-import { platformTx, tenantTx } from '../lib/db.ts';
+import { tenantTx } from '../lib/db.ts';
 import { ApiError } from '../lib/problem.ts';
 
 const BROWSER_ID_MAX_AGE = 400 * 24 * 3600;
@@ -48,13 +48,6 @@ export const session: MiddlewareHandler<AppEnv> = async (c, next) => {
 /** Maps an identity-provider subject to a principal valid on the current host, or null. */
 export async function loadPrincipal(c: Ctx, pool: Pool, sub: string): Promise<Principal | null> {
   const host = c.get('host');
-  if (pool === 'CUSTOMER') {
-    if (host.kind !== 'storefront') return null;
-    // RLS scopes this to the host's tenant: a customer of another reseller is simply not found.
-    const row = await tenantTx(c, async db => (await db.query<{ id: string; email: string; first_name: string; last_name: string; locale: string }>(
-      `select id, email, first_name, last_name, locale from customers where id = $1 and status = 'ACTIVE'`, [sub])).rows[0]);
-    return row ? { kind: 'customer', customerId: row.id, email: row.email, firstName: row.first_name, lastName: row.last_name, locale: row.locale } : null;
-  }
   if (host.kind === 'storefront') {
     const row = await tenantTx(c, async db => (await db.query<{ staff_user_id: string; email: string; display_name: string; role: 'OWNER' | 'ADMIN' }>(
       `select staff_user_id, email, display_name, role from staff_principal_for_reseller($1, $2)`, [sub, c.get('tenant')!.id])).rows[0]);
