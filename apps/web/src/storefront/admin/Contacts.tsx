@@ -320,7 +320,7 @@ export function OfferDetail() {
         </dl>
         <p className="staff-muted">{t('admin.contacts.markAs')}</p>
         <div className="staff-form__actions">
-          {STATUSES.filter(s => s !== o.status).map(s => (
+          {(o.versions[0]?.id === o.id ? STATUSES.filter(s => s !== o.status && (o.status === 'DRAFT' || o.status === 'SENT')) : []).map(s => (
             <Button key={s} size="sm" variant="ghost" loading={status.isPending && status.variables === s} onClick={() => status.mutate(s)}>
               {t(`admin.contacts.status.${s}` as TKey)}
             </Button>

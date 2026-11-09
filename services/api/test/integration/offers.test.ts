@@ -90,6 +90,40 @@ describe('contacts and quotes', () => {
     expect(t.body.score).toMatchObject({ points: 50, level: 'MEDIUM' });
   });
 
+  it('counts a reload and a link-preview bot as nothing, a second visitor as a second open', async () => {
+    const c = await staff('alpha.localhost', 'owner@alpha.test');
+    const contact = await c.post('/api/admin/contacts', { personName: 'Count Me' });
+    const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'Counted' });
+    const offer = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id });
+    const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 14 });
+    const token = /\/s\/([A-Za-z0-9_-]{20,})$/.exec(link.body.url)![1]!;
+    const opens = async () => (await c.get(`/api/admin/offers/${offer.body.id}/tracking`)).body;
+
+    const bot = { 'user-agent': 'WhatsApp/2.23.20.0 A', 'x-forwarded-for': '198.51.100.9' };
+    await h.client('alpha.localhost').get(`/api/shared/${token}`, bot);
+    expect((await opens()).opens).toBe(0);
+
+    const one = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120', 'x-forwarded-for': '203.0.113.5' };
+    const v = h.client('alpha.localhost');
+    await v.get(`/api/shared/${token}`, one);
+    await v.get(`/api/shared/${token}`, one); // reload
+    expect((await opens()).opens).toBe(1);
+
+    await h.client('alpha.localhost').get(`/api/shared/${token}`, { ...one, 'x-forwarded-for': '203.0.114.5' });
+    expect(await opens()).toMatchObject({ opens: 2, visitors: 2 });
+  });
+
+  it('only lets an open quote change status, and only on its newest version', async () => {
+    const c = await staff('alpha.localhost', 'owner@alpha.test');
+    const contact = await c.post('/api/admin/contacts', { personName: 'Status Rules' });
+    const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'Rules' });
+    const v1 = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id });
+    const v2 = await c.post(`/api/admin/offers/${v1.body.id}/versions`, { quantity: 2 });
+    expect((await c.post(`/api/admin/offers/${v1.body.id}/status`, { status: 'SENT' })).status).toBe(409); // old version
+    expect((await c.post(`/api/admin/offers/${v2.body.id}/status`, { status: 'ACCEPTED' })).status).toBe(200);
+    expect((await c.post(`/api/admin/offers/${v2.body.id}/status`, { status: 'DRAFT' })).status).toBe(409); // final
+  });
+
   it('serves a watermarked PDF and image, and only for the shop\'s own quotes', async () => {
     const c = await staff('alpha.localhost', 'owner@alpha.test');
     const contact = await c.post('/api/admin/contacts', { personName: 'Pdf Person' });

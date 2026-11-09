@@ -7,7 +7,7 @@ import { ApiError } from '../lib/problem.ts';
 import { mount } from '../lib/route.ts';
 import { assetUrl, listCatalog, listRooms, loadModel } from '../domain/catalog.ts';
 import { getConfigRow, getSelections, getSnapshot } from '../domain/configurations.ts';
-import { deviceClass, resolveShareToken, visitorPrefix } from '../domain/sharing.ts';
+import { deviceClass, isAutomatedClient, resolveShareToken, visitorPrefix } from '../domain/sharing.ts';
 import { issueAssetCookies } from './assets.ts';
 
 const IMMUTABLE = 'public, max-age=31536000, immutable';
@@ -45,6 +45,8 @@ async function checkVersion(c: Ctx, v: number | undefined): Promise<void> {
   }
   c.header('Cache-Control', c.req.query('lang') ? IMMUTABLE : IMMUTABLE_PRIVATE);
 }
+
+const VIEW_DEDUPE_MINUTES = 30;
 
 export function registerCatalog(app: Hono<AppEnv>): void {
   mount(app, routes.tenant, async ({ c, tenant }) => {
@@ -136,10 +138,19 @@ export function registerCatalog(app: Hono<AppEnv>): void {
       ]);
       if (!model || !snapshot) throw new ApiError('NOT_FOUND', 'This link does not exist.');
       // The shop's own staff looking at a link do not count as the customer opening it.
-      if (principal.kind !== 'staff') {
-        const ua = c.req.header('user-agent');
-        await db.query('insert into share_link_views (share_link_id, reseller_id, device_class, ip_prefix, user_agent) values ($1, $2, $3, $4, $5)',
-          [link.id, tenant!.id, deviceClass(ua), visitorPrefix({ cloudfront: c.req.header('cloudfront-viewer-address'), forwardedFor: c.req.header('x-forwarded-for') }), ua?.slice(0, 200) ?? null]);
+      // Link-preview bots (chat apps, mail scanners, crawlers) are not the customer, and the same
+      // visitor reloading within VIEW_DEDUPE_MINUTES is one open, not several.
+      const ua = c.req.header('user-agent');
+      if (principal.kind !== 'staff' && !isAutomatedClient(ua)) {
+        const ip = visitorPrefix({ cloudfront: c.req.header('cloudfront-viewer-address'), forwardedFor: c.req.header('x-forwarded-for') });
+        const agent = ua?.slice(0, 200) ?? null;
+        await db.query(
+          `insert into share_link_views (share_link_id, reseller_id, device_class, ip_prefix, user_agent)
+           select $1::uuid, $2::uuid, $3::text, $4::text, $5::text
+            where not exists (select 1 from share_link_views v
+                               where v.share_link_id = $1::uuid and v.ip_prefix is not distinct from $4::text and v.user_agent is not distinct from $5::text
+                                 and v.viewed_at > $6::timestamptz - make_interval(mins => $7::int))`,
+          [link.id, tenant!.id, deviceClass(ua), ip, agent, now, VIEW_DEDUPE_MINUTES]);
       }
       const { maxDiscountBps: _cap, ...sauna } = model.detail;
       const p = placement.rows[0];

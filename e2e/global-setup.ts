@@ -47,6 +47,12 @@ function stop(server: ChildProcess): Promise<void> {
   return new Promise(resolve => {
     if (server.exitCode !== null || server.pid === undefined) return resolve();
     server.once('exit', () => resolve());
+    if (process.platform === 'win32') {
+      // No process groups on Windows: taskkill /T ends npm and everything it started.
+      spawn('taskkill', ['/pid', String(server.pid), '/T', '/F'], { stdio: 'ignore' });
+      setTimeout(resolve, 5000).unref();
+      return;
+    }
     try {
       process.kill(-server.pid, 'SIGTERM'); // the whole group: npm → tsx → node
     } catch {
@@ -82,6 +88,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
 
   const server = spawn('npm', ['run', 'start', '-w', '@saunaklar/api'], {
     cwd: ROOT,
+    shell: process.platform === 'win32', // npm is npm.cmd on Windows
     detached: true,
     stdio: process.env.E2E_SERVER_LOG === '1' ? 'inherit' : 'ignore',
     env: {

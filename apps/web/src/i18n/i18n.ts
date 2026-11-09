@@ -119,8 +119,11 @@ export async function setLocale(locale: Locale): Promise<void> {
   useI18n.setState({ switching: true });
   try {
     const messages = await loadMessages(locale);
-    if (transition) await transition(() => commit(locale, messages));
-    else commit(locale, messages);
+    let done = false;
+    const swap = () => { if (!done) { done = true; commit(locale, messages); } };
+    // If the animation stalls (a hidden tab pauses it), the language still changes.
+    if (transition) await Promise.race([transition(swap), new Promise<void>(r => setTimeout(r, 2500))]);
+    swap();
   } finally {
     useI18n.setState({ switching: false });
   }

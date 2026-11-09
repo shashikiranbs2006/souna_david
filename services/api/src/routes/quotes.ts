@@ -35,6 +35,20 @@ const quoteSummary = (r: QuoteRow) => ({
   quantity: r.quantity, createdAt: r.created_at.toISOString(),
 });
 
+/** Allowed status changes. ACCEPTED and DECLINED are final; a change after that is a new version. */
+const STATUS_NEXT: Record<QuoteRow['status'], QuoteRow['status'][]> = {
+  DRAFT: ['SENT', 'ACCEPTED', 'DECLINED'],
+  SENT: ['DRAFT', 'ACCEPTED', 'DECLINED'],
+  ACCEPTED: [],
+  DECLINED: [],
+};
+
+const validUntilOf = (price: object): Date | null => {
+  const raw = (price as { priceValidUntil?: unknown }).priceValidUntil;
+  const d = raw ? new Date(String(raw)) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+};
+
 const blank = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
 
 export function registerQuotes(app: Hono<AppEnv>): void {
@@ -143,10 +157,11 @@ export function registerQuotes(app: Hono<AppEnv>): void {
              join configurations cf on cf.id = q.configuration_id join sauna_models m on m.id = cf.sauna_model_id
             where ${newest} group by m.name order by n desc, m.name limit 6`),
         db.query<{ shared: string; opened: string; last7: string; inside: string }>(
-          `select (select count(*) from share_links) as shared,
-                  (select count(*) from share_links l where exists (select 1 from share_link_views v where v.share_link_id = l.id)) as opened,
-                  (select count(*) from share_link_views v where v.viewed_at > $1::timestamptz - interval '7 days') as last7,
-                  (select count(*) from share_link_activity a where a.inside_view) as inside`, [now]),
+          `with ql as (select l.id from share_links l where exists (select 1 from quotes q where q.configuration_id = l.configuration_id))
+           select (select count(*) from ql) as shared,
+                  (select count(*) from ql where exists (select 1 from share_link_views v where v.share_link_id = ql.id)) as opened,
+                  (select count(*) from share_link_views v where v.share_link_id in (select id from ql) and v.viewed_at > $1::timestamptz - interval '7 days') as last7,
+                  (select count(*) from share_link_activity a where a.share_link_id in (select id from ql) and a.inside_view) as inside`, [now]),
         db.query<{ id: string; number: number; person_name: string; expires_at: Date; opened: boolean }>(
           `select q.id, q.number, c.person_name, l.expires_at,
                   exists (select 1 from share_link_views v where v.share_link_id = l.id) as opened
@@ -212,8 +227,16 @@ export function registerQuotes(app: Hono<AppEnv>): void {
 
   mount(app, routes.adminOfferStatus, async ({ c, params, body }) =>
     tenantTx(c, async db => {
-      const { rowCount } = await db.query('update quotes set status = $2 where id = $1', [params.id, body.status]);
-      if (!rowCount) throw new ApiError('NOT_FOUND', 'Quote not found.');
+      const { rows } = await db.query<{ status: QuoteRow['status']; version: number; newest: number }>(
+        `select q.status, q.version, (select max(x.version) from quotes x where x.reseller_id = q.reseller_id and x.number = q.number) as newest
+           from quotes q where q.id = $1 for update`, [params.id]);
+      const cur = rows[0];
+      if (!cur) throw new ApiError('NOT_FOUND', 'Quote not found.');
+      if (cur.version !== cur.newest) throw new ApiError('CONFLICT', 'This is an older version of the quote. Change the status on the newest version.');
+      if (cur.status !== body.status && !STATUS_NEXT[cur.status].includes(body.status)) {
+        throw new ApiError('CONFLICT', `A ${cur.status.toLowerCase()} quote cannot become ${body.status.toLowerCase()}. Make a new version instead.`);
+      }
+      await db.query('update quotes set status = $2 where id = $1', [params.id, body.status]);
       return loadQuote(db, c, params.id!);
     }));
 
@@ -229,10 +252,11 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       const link = links[0];
       const empty = { opens: 0, lastOpenedAt: null, visitors: 0, insideViewOpened: false, longestVisitSeconds: 0, recent: [] };
       if (!link) return { link: null, ...empty, score: { points: 0, level: 'NONE' as const, reasons: [] } };
-      const [views, activity] = await Promise.all([
+      const [views, activity, total] = await Promise.all([
         db.query<{ viewed_at: Date; device_class: 'MOBILE' | 'TABLET' | 'DESKTOP' | 'OTHER'; ip_prefix: string | null; user_agent: string | null }>(
           'select viewed_at, device_class, ip_prefix, user_agent from share_link_views where share_link_id = $1 order by viewed_at desc limit 500', [link.id]),
         db.query<{ inside_view: boolean; seconds: number }>('select inside_view, seconds from share_link_activity where share_link_id = $1', [link.id]),
+        db.query<{ n: string }>('select count(*) as n from share_link_views where share_link_id = $1', [link.id]),
       ]);
       const visitorOf = (v: { ip_prefix: string | null; user_agent: string | null }) => (v.ip_prefix || v.user_agent ? `${v.ip_prefix ?? ''}|${v.user_agent ?? ''}` : null);
       const score = scoreShare({
@@ -242,7 +266,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       });
       return {
         link: { id: link.id, createdAt: link.created_at.toISOString(), expiresAt: link.expires_at.toISOString(), revoked: link.revoked_at !== null },
-        opens: views.rows.length,
+        opens: Number(total.rows[0]!.n),
         lastOpenedAt: views.rows[0]?.viewed_at.toISOString() ?? null,
         visitors: new Set(views.rows.map(visitorOf).filter(Boolean)).size,
         insideViewOpened: activity.rows.some(a => a.inside_view),
@@ -277,7 +301,7 @@ export function registerQuotes(app: Hono<AppEnv>): void {
         contact: { personName: row.person_name, organisation: row.organisation, email: row.email, mobile: row.mobile },
         sauna: o.sauna.name, configuration: o.configuration.name, options, currency: o.currency,
         listPriceMinor: price.listPriceMinor, discountMinor: price.discountMinor, unitPriceMinor: o.unitPriceMinor, quantity: o.quantity,
-        lines: o.lines, totalMinor: o.totalMinor, comment: o.comment, validUntil: 'priceValidUntil' in price ? new Date(String(price.priceValidUntil)) : null,
+        lines: o.lines, totalMinor: o.totalMinor, comment: o.comment, validUntil: validUntilOf(price),
       };
     });
     const bytes = await buildOfferPdf(data);

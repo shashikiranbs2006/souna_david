@@ -22,6 +22,14 @@ export const queryClient = new QueryClient({
   },
 });
 
+// The server translates names, options and labels by Accept-Language. Catalogue queries carry the
+// language in their key; everything else (configurations, quotes, shared pages, admin lists) does
+// not, so when the language changes those are refetched instead of showing the old language.
+useI18n.subscribe((state, prev) => {
+  if (state.locale === prev.locale) return;
+  void queryClient.invalidateQueries({ predicate: q => !PERSISTED_ROOTS.has(String(q.queryKey[0])) });
+});
+
 /** Persisted to localStorage by `persist.ts`; only these key roots are stored. */
 export const PERSISTED_ROOTS = new Set(['tenant', 'catalog', 'sauna', 'rooms']);
 

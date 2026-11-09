@@ -76,7 +76,15 @@ export function createLocalEdgeApp(deps: Deps, opts: LocalEdgeOptions): Hono {
     });
     if (!allowed) return text(c, 403, 'Forbidden');
     // Signed responses are per viewer: never shared by caches.
-    return serveObject(c, c.req.path.slice(1), 'private, max-age=600');
+    const res = await serveObject(c, c.req.path.slice(1), 'private, max-age=600');
+    if (res.status === 200) {
+      // 3D files are for the viewer on this page only: the full-quality ones are not kept in the
+      // browser cache or by shared caches, other sites cannot embed them, and search engines skip them.
+      if (!c.req.path.startsWith('/assets/lo/')) res.headers.set('Cache-Control', 'private, no-store');
+      res.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+      res.headers.set('X-Robots-Tag', 'noindex, noimageindex');
+    }
+    return res;
   });
 
   app.on(['GET', 'HEAD'], '/media/*', c => serveObject(c, c.req.path.slice(1), IMMUTABLE));
