@@ -589,10 +589,10 @@ export const de: Messages = {
   platform: {
     unknownEyebrow: "Unbekannte Adresse",
     unknownTitle: "Hier gibt es keinen Saunashop.",
-    unknownBody: "«{host}» ist kein Shop auf dieser Plattform. Prüfen Sie die Adresse, oder fragen Sie Ihren Saunahändler nach seinem Link.",
+    unknownBody: "«{host}» ist kein Shop. Prüfen Sie die Adresse oder den Link, den Sie erhalten haben.",
     reservedBody: "«{host}» ist von der Plattform reserviert und kann kein Shop sein.",
     suspendedTitle: "Dieser Shop ist im Moment geschlossen.",
-    suspendedBody: "Bitte wenden Sie sich direkt an Ihren Saunahändler.",
+    suspendedBody: "Bitte wenden Sie sich direkt an den Shop.",
   },
   staff: {
     role: 'Rolle',

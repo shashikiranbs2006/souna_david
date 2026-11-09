@@ -590,10 +590,10 @@ export const fr: Messages = {
   platform: {
     unknownEyebrow: "Adresse inconnue",
     unknownTitle: "Il n’y a pas de boutique ici.",
-    unknownBody: "« {host} » n’est pas une boutique de cette plateforme. Vérifiez l’adresse ou demandez le lien à votre revendeur de saunas.",
+    unknownBody: "« {host} » n’est pas une boutique. Vérifiez l’adresse ou le lien que vous avez reçu.",
     reservedBody: "« {host} » est réservé par la plateforme et ne peut pas être une boutique.",
     suspendedTitle: "Cette boutique est fermée pour le moment.",
-    suspendedBody: "Veuillez contacter directement votre revendeur de saunas.",
+    suspendedBody: "Veuillez contacter directement la boutique.",
   },
   staff: {
     role: 'Rôle',

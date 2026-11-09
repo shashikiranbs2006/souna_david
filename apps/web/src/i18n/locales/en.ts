@@ -578,10 +578,10 @@ const messages = {
   platform: {
     unknownEyebrow: "Unknown address",
     unknownTitle: "There is no sauna shop here.",
-    unknownBody: "“{host}” is not a shop on this platform. Check the address, or ask your sauna reseller for their link.",
+    unknownBody: "“{host}” is not a shop. Check the address or the link you were sent.",
     reservedBody: "“{host}” is reserved by the platform and cannot be a shop.",
     suspendedTitle: "This shop is closed for the moment.",
-    suspendedBody: "Please contact your sauna reseller directly.",
+    suspendedBody: "Please contact the shop directly.",
   },
   staff: {
     role: 'Role',

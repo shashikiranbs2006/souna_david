@@ -586,10 +586,10 @@ export const it: Messages = {
   platform: {
     unknownEyebrow: "Indirizzo sconosciuto",
     unknownTitle: "Qui non c’è nessun negozio di saune.",
-    unknownBody: "«{host}» non è un negozio di questa piattaforma. Controlli l’indirizzo o chieda il link al Suo rivenditore di saune.",
+    unknownBody: "«{host}» non è un negozio. Controlli l’indirizzo o il link che ha ricevuto.",
     reservedBody: "«{host}» è riservato dalla piattaforma e non può essere un negozio.",
     suspendedTitle: "Questo negozio è chiuso al momento.",
-    suspendedBody: "Contatti direttamente il Suo rivenditore di saune.",
+    suspendedBody: "Contatti direttamente il negozio.",
   },
   staff: {
     role: 'Ruolo',
