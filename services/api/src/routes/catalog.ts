@@ -80,7 +80,7 @@ export function registerCatalog(app: Hono<AppEnv>): void {
         branding: {
           displayName: r.display_name ?? r.name,
           tagline: r.tagline,
-          primaryColor: r.primary_color?.trim() ?? '#5a6b7b',
+          primaryColor: r.primary_color?.trim() ?? '#9a4a24',
           logoUrl: assetUrl(r.logo),
           faviconUrl: assetUrl(r.favicon),
           supportEmail: r.support_email,

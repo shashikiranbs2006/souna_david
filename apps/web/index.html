@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f3f5f7" />
+    <meta name="theme-color" content="#fffdfc" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,7 +20,7 @@
       try { if (sessionStorage.getItem('sk.loader')) document.documentElement.classList.add('sk-seen'); sessionStorage.setItem('sk.loader', '1'); } catch (e) {}
     </script>
     <style>
-      #splash { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #f3f5f7; color: #0a1016; will-change: transform; border-radius: 0 0 28px 28px; }
+      #splash { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: #fffdfc; color: #1c1411; will-change: transform; border-radius: 0 0 28px 28px; }
       #splash .splash__mark { display: grid; gap: 18px; justify-items: center; }
       #splash svg { width: 56px; height: 56px; overflow: visible; }
       #splash path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: splash-draw 0.9s cubic-bezier(0.625, 0.05, 0, 1) forwards; }
@@ -30,12 +30,12 @@
       #splash path:nth-child(5) { animation-delay: 0.66s; }
       #splash .splash__count { font: 400 12px/1 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.3em; font-variant-numeric: tabular-nums; opacity: 0.7; }
       #splash .splash__track { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; overflow: hidden; }
-      #splash .splash__bar { display: block; height: 100%; background: currentColor; transform-origin: 0 50%; transform: scaleX(0); }
+      #splash .splash__bar { display: block; height: 100%; background: #9a4a24; transform-origin: 0 50%; transform: scaleX(0); }
       @keyframes splash-draw { to { stroke-dashoffset: 0; } }
       .sk-seen #splash path { animation: none; stroke-dashoffset: 0; }
       .sk-seen #splash .splash__count, .sk-seen #splash .splash__track { display: none; }
       @media (prefers-color-scheme: dark) {
-        #splash { background: #0b1117; color: #edf1f4; }
+        #splash { background: #170e0a; color: #f8eeea; }
       }
       @media (prefers-reduced-motion: reduce) {
         #splash path { animation: none; stroke-dashoffset: 0; }

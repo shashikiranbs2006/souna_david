@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contrast, oklchToHex, parseHex, rgbToOklch } from './color.ts';
-import { deriveTheme, inkOnPaperContrast } from './theme.ts';
+import { DEFAULT_PRIMARY, deriveTheme, inkOnPaperContrast } from './theme.ts';
 
 describe('colour maths', () => {
   it('round-trips sRGB through OKLCH', () => {
@@ -85,9 +85,11 @@ describe('deriveTheme', () => {
     for (let i = 1; i < ls.length; i++) expect(ls[i]!).toBeGreaterThan(ls[i - 1]!);
   });
 
-  it('tints surfaces with the hue instead of pure grey', () => {
+  it('keeps the page white and tints the quiet surfaces with the hue instead of pure grey', () => {
     const t = deriveTheme('#2d4a38').light;
-    for (const k of ['--paper', '--paper-2', '--line'] as const) expect(rgbToOklch(parseHex(t[k]!)!).c, k).toBeGreaterThan(0.005);
+    expect(rgbToOklch(parseHex(t['--paper']!)!).l).toBeGreaterThan(0.985);
+    expect(t['--card']).toBe('#ffffff');
+    for (const k of ['--paper-2', '--paper-3', '--line'] as const) expect(rgbToOklch(parseHex(t[k]!)!).c, k).toBeGreaterThan(0.003);
   });
 
   it('warm surfaces lean towards wood, dark serves the dark set in both modes', () => {
@@ -100,6 +102,6 @@ describe('deriveTheme', () => {
   });
 
   it('falls back to the default for invalid input', () => {
-    expect(deriveTheme('nope').light['--ink']).toBe(deriveTheme('#5a6b7b').light['--ink']);
+    expect(deriveTheme('nope').light['--ink']).toBe(deriveTheme(DEFAULT_PRIMARY).light['--ink']);
   });
 });

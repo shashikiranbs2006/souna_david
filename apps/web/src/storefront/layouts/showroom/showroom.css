@@ -148,6 +148,8 @@ html[data-layout='showroom'] .sh__title {
 }
 
 .sw-hero__ctas .btn--ghost {
+  background: transparent;
+  box-shadow: none;
   color: var(--on-night);
   border-color: color-mix(in oklab, var(--on-night) 50%, transparent);
 }

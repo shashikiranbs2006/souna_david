@@ -33,22 +33,35 @@ export function shade(hex: string, amount: number): string {
   return `#${mix(1)}${mix(3)}${mix(5)}`;
 }
 
+/** Mixes two colours: `amount` 0 keeps `a`, 1 is `b`. */
+function mix(a: string, b: string, amount: number): string {
+  const ch = (i: number) =>
+    Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - amount) + parseInt(b.slice(i, i + 2), 16) * amount)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${ch(1)}${ch(3)}${ch(5)}`;
+}
+
 /**
- * The palette of a single-colour mail: the brand hue for accents, a dark shade of the same
- * hue as ink (so light brand colours stay readable), and paper/rule tints of it.
+ * The palette of a single-colour mail, matching the web app: white paper on a warm-white
+ * canvas, near-neutral ink and greys that carry only a trace of the brand hue, and the brand
+ * colour itself (darkened where it is too light to read) as the one accent for the button,
+ * links and the thin top rule.
  */
 export function palette(primary: string | undefined) {
-  const accent = normaliseColor(primary);
-  const lum = luminance(accent);
+  const brand = normaliseColor(primary);
+  const lum = luminance(brand);
   // Darken light brand colours until text on paper reaches roughly 4.5:1.
-  const ink = lum > 0.18 ? shade(accent, lum > 0.5 ? 0.75 : 0.55) : accent;
+  const accent = lum > 0.18 ? shade(brand, lum > 0.5 ? 0.75 : 0.55) : brand;
+  // Neutral greys with a trace of the hue (about 8 % of it).
+  const ink = mix('#1a1a1a', shade(accent, 0.6), 0.25);
   return {
-    accent: ink,
-    ink: shade(normaliseColor(primary), 0.82),
+    accent,
+    ink,
     onAccent: '#ffffff',
     paper: '#ffffff',
-    canvas: tint(accent, 0.94),
-    rule: tint(accent, 0.8),
-    muted: tint(ink, 0.35),
+    canvas: mix('#faf9f8', tint(accent, 0.9), 0.25),
+    rule: mix('#e8e6e4', tint(accent, 0.8), 0.15),
+    muted: mix('#6b6866', accent, 0.08),
   };
 }

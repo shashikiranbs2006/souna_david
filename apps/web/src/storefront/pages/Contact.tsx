@@ -55,7 +55,7 @@ export default function Contact() {
         <section className="contact-block contact-block--ink">
           <h2>{t('contact.requestTitle')}</h2>
           <p>{t('contact.requestBody')}</p>
-          <ButtonLink to="/saunas" variant="ghost" iconAfter={ArrowRight} className="on-ink">
+          <ButtonLink to="/saunas" variant="primary" iconAfter={ArrowRight}>
             {t('contact.requestCta')}
           </ButtonLink>
         </section>

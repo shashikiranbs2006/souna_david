@@ -25,8 +25,12 @@ export function ScrambleText<E extends ElementType = 'span'>({ as, text, trigger
   return (
     <Tag {...rest}>
       <span className="sr-only no-copy">{text}</span>
-      <span ref={ref} aria-hidden="true" className="scramble">
-        {text}
+      {/* The box is sized by the final text (CSS draws it invisibly from data-text), and the
+          animated copy is laid over it, so the noisy frames never reflow the line or the page. */}
+      <span className="scramble-box" data-text={text} aria-hidden="true">
+        <span ref={ref} className="scramble">
+          {text}
+        </span>
       </span>
     </Tag>
   );

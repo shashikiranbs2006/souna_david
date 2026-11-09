@@ -17,7 +17,7 @@ const WOOD = ['#dcc39b', '#c48d5e', '#a8774a', '#8d7a66'];
 
 /**
  * Nordic: warm and crafted. Wood-and-paper surfaces (theme flavour "warm"),
- * Fraunces headings, a split hero with the photograph on the left, rounded
+ * Newsreader headings, a split hero with the photograph on the left, rounded
  * cards and a band about the timber.
  */
 export function Home() {
@@ -29,9 +29,10 @@ export function Home() {
     () => {
       if (prefersReducedMotion()) return;
       const d = splashDelay();
-      gsap.from('.nd-hero__photo', { clipPath: 'inset(0 0 100% 0 round 28px)', duration: 1.5, ease: 'expo.inOut', delay: 0.2 + d });
-      gsap.from('.nd-hero__photo .lmedia', { scale: 1.15, duration: 2, ease: 'sk.outSoft', delay: 0.2 + d });
-      gsap.from('.nd-hero__in > *', { y: 26, autoAlpha: 0, duration: 1, stagger: 0.08, ease: 'sk.outSoft', delay: 0.6 + d });
+      // Short, transform/opacity-only intro: the hero is readable within about a second.
+      gsap.from('.nd-hero__photo', { clipPath: 'inset(0 0 100% 0 round 28px)', duration: 1.1, ease: 'expo.inOut', delay: 0.05 + d });
+      gsap.from('.nd-hero__photo .lmedia', { scale: 1.1, duration: 1.6, ease: 'sk.outSoft', delay: 0.05 + d });
+      gsap.from('.nd-hero__in > *', { y: 18, autoAlpha: 0, duration: 0.8, stagger: 0.06, ease: 'sk.outSoft', delay: 0.25 + d });
       gsap.from('.nd-wood__swatch', { scaleY: 0, transformOrigin: '50% 100%', duration: 1, stagger: 0.1, ease: 'sk.snap', scrollTrigger: { trigger: '.nd-wood', start: 'top 75%', once: true } });
     },
     { scope: root },

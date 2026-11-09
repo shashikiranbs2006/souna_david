@@ -218,12 +218,13 @@
   align-content: start;
   padding: clamp(1.5rem, 1rem + 2vw, 3rem);
   background: var(--paper-2);
-  border-radius: var(--radius-lg);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-xl);
 }
 
 .contact-block h2 {
   font-size: var(--step-3);
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
 }
 
 .contact-block p {
@@ -231,25 +232,11 @@
   max-width: 44ch;
 }
 
+/* The lead block: white with a thin accent rule on top; the button carries the colour. */
 .contact-block--ink {
-  background: var(--primary);
-  color: var(--on-primary);
-  --focus: var(--on-primary);
-}
-
-/* Body text on the brand fill keeps the full label colour (4.5:1 by construction). */
-.contact-block--ink p {
-  color: var(--on-primary);
-}
-
-.contact-block--ink .btn--ghost {
-  color: var(--on-primary);
-  border-color: var(--on-primary);
-}
-
-.contact-block--ink .btn--ghost:hover {
-  background: var(--on-primary);
-  color: var(--primary);
+  background: var(--card);
+  border-top: 3px solid var(--accent);
+  box-shadow: var(--shadow-1);
 }
 
 .legal__body {

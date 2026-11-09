@@ -1,49 +1,29 @@
 import { contrast, oklchToHex, parseHex, rgbToOklch, type Oklch } from './color.ts';
 
 /**
- * Unary design tokens, modelled on a cool slate system: low-chroma surfaces,
- * a near-black ink of the hue, and mid tones (umber, taupe, stone, sand) that
- * keep a little more of the hue. There is no second accent colour.
+ * Unary design tokens: a white page, near-neutral ink and greys that carry only
+ * a trace of the brand hue, and the brand hue itself (in tints and shades) as
+ * the single accent for actions, links, selection and small highlights. There
+ * is no second accent colour; changing the one brand colour re-themes everything.
  *
  *   --ink        body text and rules that need weight (near-black); never a fill
- *   --primary    primary actions and selection (brand hue, AA against its label
- *                and the page); --primary-hover, --on-primary its label
+ *   --primary    primary actions, links and selection (brand hue, AA against its
+ *                label and the page); --primary-hover, --on-primary its label
+ *   --accent     the brand hue at mid lightness (dots, stop marks, italics)
+ *   --accent-soft a pale tint of the brand hue for small badges and markers
  *   --highlight  a quiet brand-tinted wash for selected/hovered rows (ink on it)
  *   --surface    alias of --card for raised panels; --frame behind photographs
  *   --ink-2..6   lightness steps from ink towards paper (2 = strongest)
- *   --paper      page background; --paper-2/3 raised and pressed surfaces
- *   --card       the lightest surface (cards, dialogs)
+ *   --paper      page background (white); --paper-2/3 quiet bands and pressed surfaces
+ *   --card       pure white (cards, dialogs, inputs)
  *   --line       hairlines; --line-strong for inputs
  *   --on-ink     text on an ink surface
  *   --focus      focus ring
- *   --accent     the hue at mid lightness (decorative dots, stop marks)
  *   --brand      the reseller's colour exactly as configured
- *   --night*     the footer band: stays dark in both modes
+ *   --night*     the footer band and photo scrims: stays dark in both modes
  */
-/** Platform default: slate. Also the fallback for a reseller without a colour. */
-export const DEFAULT_PRIMARY = '#5a6b7b';
-
-/** The slate palette verbatim, used for the platform default in light mode. */
-const SLATE_LIGHT: ThemeTokens = {
-  '--ink': '#0a1016',
-  '--ink-2': '#1b242c',
-  '--ink-3': '#47525c',
-  '--ink-4': '#74808b',
-  '--ink-5': '#b4bdc6',
-  '--ink-6': '#e3e7eb',
-  '--paper': '#f3f5f7',
-  '--card': '#ffffff',
-  '--paper-3': '#e3e7eb',
-  '--line-strong': '#b4bdc6',
-  '--on-ink': '#f3f5f7',
-  '--focus': '#74808b',
-  '--accent': '#5a6b7b',
-  '--night': '#0a1016',
-  '--night-2': '#1b242c',
-  '--on-night': '#f3f5f7',
-  '--night-muted': '#8d99a4',
-  '--night-line': '#2a333c',
-};
+/** Platform and shop default: a deep ember copper, the colour of oiled wood and stove glow. */
+export const DEFAULT_PRIMARY = '#9a4a24';
 
 export type ThemeTokens = Record<`--${string}`, string>;
 
@@ -75,60 +55,66 @@ export function deriveTheme(primaryHex: string, flavour: ThemeFlavour = 'default
   const hue = neutral ? 250 : base.h;
   const c0 = neutral ? 0.012 : Math.min(base.c, 0.2);
   const c = (l: number, ch: number): string => oklchToHex({ l, c: ch, h: hue });
-  // Warm: surfaces lean two thirds of the way to a wood hue (≈75°) with a little more chroma.
+  // Warm: surfaces take a wood hue (≈75°) with a touch more chroma: a warm white, never a tint
+  // that passes through green on its way from a cool brand hue.
   const warm = flavour === 'warm';
-  const woodHue = (() => {
-    const d = ((75 - hue + 540) % 360) - 180;
-    return (hue + d * (neutral ? 1 : 0.66) + 360) % 360;
-  })();
-  const sc = warm ? 0.02 : 0;
+  const woodHue = 75;
+  const sc = warm ? 0.003 : 0;
   const surf = (l: number, ch: number): string => (warm ? oklchToHex({ l, c: ch + sc, h: woodHue }) : c(l, ch));
 
   // Text steps are pulled towards ink (lightness only) until they clear their
-  // contrast target on the given surface; 5.05 keeps ink-3 at AA on paper-2 too.
-  const fit = (l: number, ch: number, towards: number, surface: string, min: number) => {
+  // contrast target on every given surface (pages, quiet bands, highlight washes).
+  const fit = (l: number, ch: number, towards: number, surfaces: string[], min: number) => {
     let ll = l;
     let hex = c(ll, ch);
-    while (contrast(hex, surface) < min && Math.abs(ll - towards) > 0.005) {
+    while (surfaces.some(sf => contrast(hex, sf) < min) && Math.abs(ll - towards) > 0.005) {
       ll += Math.sign(towards - ll) * 0.005;
       hex = c(ll, ch);
     }
     return hex;
   };
+  // The accent at mid lightness: the brand itself where it sits in a usable band.
+  const accentL = Math.min(0.62, Math.max(0.46, base.l));
 
   // ---- light ----------------------------------------------------------------
-  const lp = surf(0.965, k(c0, 0.15, 0.01));
-  const lp2 = surf(0.94, k(c0, 0.22, 0.014));
+  // A white page; greys keep only a trace of the hue so the accent stays the one colour.
+  const lp = surf(0.995, k(c0, 0.04, 0.003));
+  const lp2 = surf(0.977, k(c0, 0.08, 0.0045));
+  const lp3 = surf(0.956, k(c0, 0.1, 0.007));
+  const lhl = c(0.958, k(c0, 0.2, 0.022));
   const light: ThemeTokens = {
-    '--ink': c(0.16, k(c0, 0.7, 0.035)),
-    '--ink-2': fit(0.25, k(c0, 0.75, 0.04), 0.16, lp, 7),
-    '--ink-3': fit(0.44, k(c0, 0.9, 0.05), 0.16, lp2, 5.05),
-    '--ink-4': c(0.6, k(c0, 0.8, 0.05)),
-    '--ink-5': c(0.79, k(c0, 0.6, 0.035)),
-    '--ink-6': c(0.92, k(c0, 0.3, 0.02)),
+    '--ink': c(0.2, k(c0, 0.16, 0.014)),
+    '--ink-2': fit(0.33, k(c0, 0.18, 0.016), 0.2, [lp, lp2], 8),
+    '--ink-3': fit(0.5, k(c0, 0.2, 0.018), 0.2, [lp2, lp3, lhl], 4.9),
+    '--ink-4': c(0.66, k(c0, 0.2, 0.016)),
+    '--ink-5': c(0.8, k(c0, 0.16, 0.0095)),
+    '--ink-6': c(0.915, k(c0, 0.12, 0.01)),
     '--paper': lp,
     '--paper-2': lp2,
-    '--paper-3': surf(0.915, k(c0, 0.3, 0.02)),
-    '--card': surf(0.99, k(c0, 0.05, 0.004) * (warm ? 0.4 : 1)),
-    '--line': surf(0.895, k(c0, 0.35, 0.022)),
-    '--line-strong': surf(0.79, k(c0, 0.6, 0.035)),
+    '--paper-3': lp3,
+    '--card': '#ffffff',
+    '--line': surf(0.918, k(c0, 0.12, 0.009)),
+    '--line-strong': surf(0.84, k(c0, 0.15, 0.0095)),
     '--on-ink': lp,
     '--focus': c(0.6, k(c0, 0.8, 0.05)),
-    '--accent': c(0.53, k(c0, 1, 0.11)),
-    '--night': c(0.16, k(c0, 0.7, 0.035)),
-    '--night-2': c(0.24, k(c0, 0.75, 0.04)),
-    '--on-night': lp,
-    '--night-muted': c(0.68, k(c0, 0.7, 0.045)),
-    '--night-line': c(0.3, k(c0, 0.7, 0.035)),
+    '--accent': c(accentL, k(c0, 1, 0.14)),
+    '--accent-soft': c(0.94, k(c0, 0.3, 0.035)),
+    '--night': c(0.19, k(c0, 0.18, 0.016)),
+    '--night-2': c(0.245, k(c0, 0.2, 0.018)),
+    '--on-night': c(0.975, k(c0, 0.06, 0.005)),
+    '--night-muted': c(0.74, k(c0, 0.2, 0.016)),
+    '--night-line': c(0.32, k(c0, 0.2, 0.016)),
   };
+  // Light text on the brand fill (the visit card, the footer accent dot) stays legible.
+  light['--accent-on-night'] = c(Math.max(0.68, accentL), k(c0, 0.9, 0.13));
 
   // ---- dark -----------------------------------------------------------------
   const dp = surf(flavour === 'dark' ? 0.15 : 0.175, k(c0, 0.5, 0.018));
   const dp2 = surf(flavour === 'dark' ? 0.19 : 0.21, k(c0, 0.55, 0.02));
   const dark: ThemeTokens = {
     '--ink': c(0.955, k(c0, 0.2, 0.012)),
-    '--ink-2': fit(0.86, k(c0, 0.3, 0.02), 0.955, dp, 7),
-    '--ink-3': fit(0.74, k(c0, 0.5, 0.03), 0.955, dp2, 5.05),
+    '--ink-2': fit(0.86, k(c0, 0.3, 0.02), 0.955, [dp], 7),
+    '--ink-3': fit(0.74, k(c0, 0.5, 0.03), 0.955, [dp2, surf(0.27, k(c0, 0.6, 0.035))], 5.05),
     '--ink-4': c(0.6, k(c0, 0.6, 0.035)),
     '--ink-5': c(0.43, k(c0, 0.6, 0.03)),
     '--ink-6': c(0.3, k(c0, 0.55, 0.025)),
@@ -141,6 +127,8 @@ export function deriveTheme(primaryHex: string, flavour: ThemeFlavour = 'default
     '--on-ink': dp,
     '--focus': c(0.7, k(c0, 0.6, 0.04)),
     '--accent': c(0.68, k(c0, 0.9, 0.1)),
+    '--accent-soft': c(0.3, k(c0, 0.5, 0.05)),
+    '--accent-on-night': c(0.72, k(c0, 0.9, 0.12)),
     '--night': c(0.13, k(c0, 0.5, 0.02)),
     '--night-2': c(0.2, k(c0, 0.55, 0.022)),
     '--on-night': c(0.955, k(c0, 0.2, 0.012)),
@@ -151,8 +139,6 @@ export function deriveTheme(primaryHex: string, flavour: ThemeFlavour = 'default
   const brand = oklchToHex(neutral ? { ...base, h: hue } : base);
   light['--brand'] = brand;
   dark['--brand'] = brand;
-  // The platform default uses the slate palette verbatim.
-  if (flavour === 'default' && (!parseHex(primaryHex) || primaryHex.toLowerCase() === DEFAULT_PRIMARY)) Object.assign(light, SLATE_LIGHT);
 
   // ---- semantic action tokens ----------------------------------------------
   // The primary action is the brand colour itself where it can carry its label;
@@ -177,10 +163,10 @@ export function deriveTheme(primaryHex: string, flavour: ThemeFlavour = 'default
     t['--primary-hover'] = oklchToHex({ l: Math.min(0.97, Math.max(0.03, p.l + dir * 0.06)), c: pc, h: hue });
     t['--on-primary'] = page;
     // Selected/hover wash behind ink text (rows, chips, chosen options).
-    t['--highlight'] = mode === 'light' ? surf(0.925, k(c0, 0.6, 0.04)) : surf(0.27, k(c0, 0.6, 0.035));
+    t['--highlight'] = mode === 'light' ? lhl : surf(0.27, k(c0, 0.6, 0.035));
     t['--surface'] = t['--card']!;
     // Neutral backdrop behind photographs (beige-floor exteriors, bright wood interiors).
-    t['--frame'] = mode === 'light' ? oklchToHex({ l: 0.9, c: 0.008, h: hue }) : oklchToHex({ l: 0.24, c: 0.008, h: hue });
+    t['--frame'] = mode === 'light' ? oklchToHex({ l: 0.94, c: 0.006, h: hue }) : oklchToHex({ l: 0.24, c: 0.008, h: hue });
     t['--focus'] = p.hex;
   };
   semantic(light, 'light');

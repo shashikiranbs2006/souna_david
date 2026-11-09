@@ -9,7 +9,7 @@
   min-height: var(--btn-h);
   padding: 0 var(--btn-px);
   border: var(--hair) solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-btn, 10px);
   font-family: var(--font-body);
   font-size: var(--step--1);
   font-weight: 500;
@@ -63,21 +63,24 @@
 .btn--primary {
   background: var(--primary);
   color: var(--on-primary);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--primary) 30%, transparent), inset 0 1px 0 color-mix(in oklab, var(--on-primary) 14%, transparent);
 }
 
 .btn--primary:hover:not(:disabled) {
   background: var(--primary-hover);
 }
 
+/* Secondary: ink on white with a hairline; the accent appears on hover only. */
 .btn--ghost {
-  background: transparent;
-  color: var(--primary);
-  border-color: var(--primary);
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-0);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--primary);
-  color: var(--on-primary);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .btn--light {
