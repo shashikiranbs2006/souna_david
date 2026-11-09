@@ -75,7 +75,9 @@ try {
         if (r.rowCount) removed[tn] = r.rowCount;
       }
       removed.resellers = (await client.query('DELETE FROM resellers WHERE id <> $1', [id])).rowCount;
-      removed.manufacturer_admins = (await client.query('DELETE FROM manufacturer_admins')).rowCount;
+      if ((await client.query("SELECT to_regclass('public.manufacturer_admins') AS t")).rows[0].t) {
+        removed.manufacturer_admins = (await client.query('DELETE FROM manufacturer_admins')).rowCount;
+      }
       removed.staff_users = (await client.query('DELETE FROM staff_users WHERE lower(email) <> ALL($1::text[])', [keep])).rowCount;
       if ((await client.query("SELECT to_regclass('idp.users') AS t")).rows[0].t) {
         removed.idp_users = (await client.query('DELETE FROM idp.users WHERE lower(email) <> ALL($1::text[])', [keep])).rowCount;
