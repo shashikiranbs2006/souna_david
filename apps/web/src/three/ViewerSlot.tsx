@@ -91,14 +91,14 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
   const onReady = useCallback(() => setReady(true), []);
 
   useEffect(() => {
-    const onFs = () => setFull(document.fullscreenElement === stage.current);
+    const onFs = () => setFull(document.fullscreenElement === ref.current);
     document.addEventListener('fullscreenchange', onFs);
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
 
   const toggleFull = () => {
     if (document.fullscreenElement) void document.exitFullscreen();
-    else void stage.current?.requestFullscreen?.();
+    else void ref.current?.requestFullscreen?.();
   };
 
   const placeholder = thumbnailUrl ? (
@@ -109,6 +109,19 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
 
   return (
     <div ref={ref} className="vslot-wrap">
+      {load && views && !hasGlb && (
+        <div className="vslot__views" role="group" aria-label={t('three.viewLabel')}>
+          {(['exterior', 'interior'] as const).map(v => (
+            <button key={v} type="button" className={view === v ? 'is-active' : undefined} aria-pressed={view === v} onClick={() => goTo(v)}>
+              {t(`three.${v}`)}
+            </button>
+          ))}
+          <button type="button" className="vslot__door" aria-pressed={doorOpen} onClick={() => setDoorOpen(o => !o)}>
+            {doorOpen ? <DoorClosed size={15} aria-hidden="true" /> : <DoorOpen size={15} aria-hidden="true" />}
+            {doorOpen ? t('three.closeDoor') : t('three.openDoor')}
+          </button>
+        </div>
+      )}
       <div ref={stage} className={['vslot', ready && 'is-ready', full && 'is-full'].filter(Boolean).join(' ')}>
         <div className="vslot__placeholder" aria-hidden={load ? true : undefined}>
           {placeholder}
@@ -150,19 +163,6 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
               {t('detail.load3d')}
             </Button>
             {saveData && <p className="vslot__note">{t('detail.saveDataHint')}</p>}
-          </div>
-        )}
-        {load && views && !hasGlb && (
-          <div className="vslot__views" role="group" aria-label={t('three.viewLabel')}>
-            {(['exterior', 'interior'] as const).map(v => (
-              <button key={v} type="button" className={view === v ? 'is-active' : undefined} aria-pressed={view === v} onClick={() => goTo(v)}>
-                {t(`three.${v}`)}
-              </button>
-            ))}
-            <button type="button" className="vslot__door" aria-pressed={doorOpen} onClick={() => setDoorOpen(o => !o)}>
-              {doorOpen ? <DoorClosed size={15} aria-hidden="true" /> : <DoorOpen size={15} aria-hidden="true" />}
-              {doorOpen ? t('three.closeDoor') : t('three.openDoor')}
-            </button>
           </div>
         )}
         {load && (

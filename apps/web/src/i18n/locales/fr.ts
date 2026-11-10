@@ -722,6 +722,8 @@ export const fr: Messages = {
         longestVisit: 'Plus longue visite',
         recent: 'Dernières ouvertures',
         neverOpened: 'Pas encore ouvert',
+        hide: "Masquer", show: "Afficher", colWhen: "Quand", colDevice: "Appareil", colNetwork: "Réseau",
+        staffNote: "Vos propres visites, connecté à l’admin, ne sont pas comptées.",
         likelihood: 'Chance de vente',
         hint: 'Une indication tirée de l’usage du lien, pas une prévision.',
         yes: 'Oui',

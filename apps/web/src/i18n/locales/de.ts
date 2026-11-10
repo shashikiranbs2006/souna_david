@@ -721,6 +721,8 @@ export const de: Messages = {
         longestVisit: 'Längster Besuch',
         recent: 'Letzte Aufrufe',
         neverOpened: 'Noch nicht geöffnet',
+        hide: "Ausblenden", show: "Anzeigen", colWhen: "Wann", colDevice: "Gerät", colNetwork: "Netzwerk",
+        staffNote: "Ihre eigenen Besuche als angemeldete Person im Admin werden nicht mitgezählt.",
         likelihood: 'Kaufwahrscheinlichkeit',
         hint: 'Ein Hinweis aus dem Verhalten mit dem Link, keine Prognose.',
         yes: 'Ja',

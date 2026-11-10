@@ -361,13 +361,13 @@ const RESELLERS: ResellerDef[] = [
     saunas: [{ slug: 'kelo-barrel' }, { slug: 'lappi-corner' }, { slug: 'aurora-hex' }],
     defaultDiscount: { type: 'FIXED', value: 100000 }, rooms: ['basement-spa'],
     owner: { key: 'gammaOwner', email: 'owner@gamma.test', name: 'Gustav Gran' } },
-  // The single-shop edition's shop (SINGLE_SHOP=holzsauna): our six kit models with their
+  // The single-shop edition's shop (SINGLE_SHOP=holzsauna): our seven kit models with their
   // catalogue prices and options unchanged, CHF. Contact details are the shop's real ones (holzsauna.ch).
   { key: 'holzsauna', name: 'Holzbau Boscheri GmbH', currency: 'CHF', status: 'ACTIVE',
     branding: { display: 'Holzsauna', tagline: 'Ihre Sauna, gemeinsam geplant', color: '#9a4a24', email: 'info@holzsauna.ch', phone: '+41 52 552 43 23', legalName: 'Holzbau Boscheri GmbH', legalAddress: 'Hauptstrasse 40, 8507 Hörhausen, Switzerland', layout: 'nordic' },
     saunas: [
       { slug: 'espoo-compact' }, { slug: 'kelo-barrel' }, { slug: 'fjord-panorama' },
-      { slug: 'lappi-corner' }, { slug: 'aurora-hex' }, { slug: 'saimaa-garden-house' },
+      { slug: 'lappi-corner' }, { slug: 'aurora-hex' }, { slug: 'saimaa-garden-house' }, { slug: 'kide-glass-corner' },
     ],
     rooms: ['garden-deck', 'basement-spa', 'lakeside-terrace'],
     owner: { key: 'holzsaunaOwner', email: 'info@holzsauna.ch', name: 'David Boscheri' } },

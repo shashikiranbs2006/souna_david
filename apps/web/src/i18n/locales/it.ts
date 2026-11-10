@@ -718,6 +718,8 @@ export const it: Messages = {
         longestVisit: 'Visita più lunga',
         recent: 'Ultime aperture',
         neverOpened: 'Non ancora aperto',
+        hide: "Nascondi", show: "Mostra", colWhen: "Quando", colDevice: "Dispositivo", colNetwork: "Rete",
+        staffNote: "Le Sue visite con l’accesso all’admin non vengono conteggiate.",
         likelihood: 'Probabilità di vendita',
         hint: 'Un’indicazione basata sull’uso del link, non una previsione.',
         yes: 'Sì',

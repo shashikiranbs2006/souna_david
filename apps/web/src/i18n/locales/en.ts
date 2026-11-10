@@ -710,6 +710,8 @@ const messages = {
         longestVisit: 'Longest visit',
         recent: 'Recent opens',
         neverOpened: 'Not opened yet',
+        hide: "Hide", show: "Show", colWhen: "When", colDevice: "Device", colNetwork: "Network",
+        staffNote: "Your own visits while signed in to admin are not counted.",
         likelihood: 'Chance to sell',
         hint: 'A hint from what the customer did with the link, not a forecast.',
         yes: 'Yes',

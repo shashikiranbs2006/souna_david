@@ -110,18 +110,27 @@
   pointer-events: none;
 }
 
-/* Exterior / Interior / Open door: three separate white cards along the top of the stage. */
+/* Exterior / Interior / Open door: three separate white cards in a bar above the stage, so nothing sits on the sauna. */
+.vslot-wrap {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.vslot-wrap:fullscreen {
+  grid-template-rows: auto 1fr;
+  padding: 0.75rem;
+  background: var(--paper);
+}
+
+.vslot-wrap:fullscreen .vslot {
+  height: 100%;
+}
+
 .vslot__views {
-  position: absolute;
-  top: 0.9rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  max-width: calc(100% - 9rem);
 }
 
 .vslot__views button {
@@ -156,20 +165,15 @@
   }
 }
 
-/* Phones: the cards stay at the top, left-aligned, clear of the reset / fullscreen icons. */
+/* Phones: three equal cards across the full width. */
 @media (max-width: 860px) {
   .vslot__views {
-    left: 0.75rem;
-    right: 5rem;
-    top: 0.75rem;
-    max-width: none;
-    transform: none;
-    justify-content: flex-start;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .vslot__views button {
-    padding: 8px 11px;
+    justify-content: center;
+    padding: 9px 6px;
     font-size: 12.5px;
   }
 }
-

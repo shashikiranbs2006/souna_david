@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Mail, Plus, Trash2 } from 'lucide-react';
 import type { ResponseOf } from '@saunaklar/shared';
 import { api } from '../../api/client.ts';
 import { CustomerLinkMaker } from './CustomerLink.tsx';
@@ -219,6 +219,14 @@ function TrackingPanel({ offerId, configurationId }: { offerId: string; configur
   const q = useQuery({ queryKey: ['admin', 'offer', offerId, 'tracking'], queryFn: () => api('adminOfferTracking', { params: { id: offerId } }), refetchInterval: 60_000 });
   // A link made here stays on screen (it is shown only once) until David leaves the page.
   const [made, setMade] = useState(false);
+  // Minimisable; the choice is remembered in this browser (storage can be unavailable, then it starts open).
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem('admin.tracking.open') !== '0'; } catch { return true; }
+  });
+  const toggle = () => setOpen(o => {
+    try { localStorage.setItem('admin.tracking.open', o ? '0' : '1'); } catch { /* ignore */ }
+    return !o;
+  });
   if (q.isPending) return <Skeleton lines={3} />;
   if (q.error) return <ErrorPage error={q.error} onRetry={() => void q.refetch()} />;
   const d = q.data;
@@ -230,44 +238,57 @@ function TrackingPanel({ offerId, configurationId }: { offerId: string; configur
       </Panel>
     );
   const k = (key: string) => t(`admin.contacts.tracking.${key}` as TKey);
+  const visit = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  const recentColumns: Column<(typeof d.recent)[number]>[] = [
+    { key: 'when', header: k('colWhen'), label: k('colWhen'), sortValue: v => v.viewedAt, cell: v => <span className="mono">{fmt.date(v.viewedAt, 'short')}</span> },
+    { key: 'device', header: k('colDevice'), label: k('colDevice'), cell: v => t(`admin.contacts.tracking.device.${v.device}` as TKey) },
+    { key: 'network', header: k('colNetwork'), label: k('colNetwork'), hideOnMobile: true, cell: v => <span className="mono">{v.network ?? '-'}</span> },
+  ];
   return (
-    <Panel title={t('admin.contacts.tracking.title')} lede={t('admin.contacts.tracking.hint')}>
-      <p>
-        <span className="staff-muted">{k('likelihood')}: </span>
-        <Badge tone={LEVEL_TONE[d.score.level]}>{t(`admin.contacts.tracking.level.${d.score.level}` as TKey)}</Badge> <span className="mono">{d.score.points}/100</span>
-      </p>
-      {d.score.reasons.length > 0 && (
-        <ul>
-          {d.score.reasons.map(r => (
-            <li key={r.code}>
-              <span className="mono">{r.points > 0 ? '+' : ''}{r.points}</span> {t(`admin.contacts.tracking.reason.${r.code}` as TKey)}
-            </li>
-          ))}
-        </ul>
-      )}
-      <dl className="staff-dl">
-        <dt>{k('opens')}</dt>
-        <dd className="mono">{d.opens}</dd>
-        <dt>{k('lastOpened')}</dt>
-        <dd className="mono">{d.lastOpenedAt ? fmt.date(d.lastOpenedAt, 'short') : k('neverOpened')}</dd>
-        <dt>{k('visitors')}</dt>
-        <dd className="mono">{d.visitors}</dd>
-        <dt>{k('insideViewOpened')}</dt>
-        <dd>{d.insideViewOpened ? k('yes') : k('no')}</dd>
-        <dt>{k('longestVisit')}</dt>
-        <dd className="mono">{Math.floor(d.longestVisitSeconds / 60)}:{String(d.longestVisitSeconds % 60).padStart(2, '0')}</dd>
-      </dl>
-      {d.recent.length > 0 && (
-        <>
-          <p className="staff-muted">{k('recent')}</p>
-          <ul>
-            {d.recent.map((v, i) => (
-              <li key={i} className="mono">
-                {fmt.date(v.viewedAt, 'short')} · {t(`admin.contacts.tracking.device.${v.device}` as TKey)}{v.network ? ` · ${v.network}` : ''}
-              </li>
-            ))}
-          </ul>
-        </>
+    <Panel
+      title={t('admin.contacts.tracking.title')}
+      lede={t('admin.contacts.tracking.hint')}
+      action={
+        <Button variant="quiet" size="sm" icon={open ? ChevronUp : ChevronDown} aria-expanded={open} onClick={toggle}>
+          {open ? k('hide') : k('show')}
+        </Button>
+      }
+    >
+      <div className="tracking__stats">
+        <div className="tracking__stat">
+          <span className="tracking__label">{k('likelihood')}</span>
+          <span><Badge tone={LEVEL_TONE[d.score.level]}>{t(`admin.contacts.tracking.level.${d.score.level}` as TKey)}</Badge> <span className="mono">{d.score.points}/100</span></span>
+        </div>
+        <div className="tracking__stat"><span className="tracking__label">{k('opens')}</span><span className="tracking__value mono">{d.opens}</span></div>
+        <div className="tracking__stat"><span className="tracking__label">{k('visitors')}</span><span className="tracking__value mono">{d.visitors}</span></div>
+        <div className="tracking__stat"><span className="tracking__label">{k('lastOpened')}</span><span className="mono">{d.lastOpenedAt ? fmt.date(d.lastOpenedAt, 'short') : k('neverOpened')}</span></div>
+      </div>
+      {open && (
+        <div className="tracking__body">
+          <div className="tracking__stats tracking__stats--sub">
+            <div className="tracking__stat"><span className="tracking__label">{k('insideViewOpened')}</span><span>{d.insideViewOpened ? k('yes') : k('no')}</span></div>
+            <div className="tracking__stat"><span className="tracking__label">{k('longestVisit')}</span><span className="mono">{visit(d.longestVisitSeconds)}</span></div>
+          </div>
+          {d.score.reasons.length > 0 && (
+            <ul className="tracking__reasons">
+              {d.score.reasons.map(r => (
+                <li key={r.code}>
+                  <span className="mono">{r.points > 0 ? '+' : ''}{r.points}</span> {t(`admin.contacts.tracking.reason.${r.code}` as TKey)}
+                </li>
+              ))}
+            </ul>
+          )}
+          <h3 className="tracking__heading">{k('recent')}</h3>
+          <Table
+            columns={recentColumns}
+            rows={d.recent}
+            rowKey={v => `${v.viewedAt}-${v.network ?? ''}`}
+            caption={k('recent')}
+            empty={k('neverOpened')}
+            initialSort={{ key: 'when', dir: 'desc' }}
+          />
+          <p className="staff-muted tracking__note">{k('staffNote')}</p>
+        </div>
       )}
     </Panel>
   );
