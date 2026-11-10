@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ChevronUp, Mail, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Mail, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { ResponseOf } from '@saunaklar/shared';
 import { api } from '../../api/client.ts';
 import { CustomerLinkMaker } from './CustomerLink.tsx';
@@ -107,6 +107,8 @@ export function ContactDetail() {
   const navigate = useNavigate();
   const contact = useQuery({ queryKey: ['admin', 'contact', id], queryFn: () => api('adminContact', { params: { id } }) });
   const offers = useQuery({ queryKey: ['admin', 'offers', { contactId: id }], queryFn: () => api('adminOffers', { query: { contactId: id } }) });
+  // The contact shows as a short summary; the form opens only when David asks to edit.
+  const [editing, setEditing] = useState(false);
   const update = useAdminMutation((body: Parameters<typeof ContactForm>[0] extends { onSubmit: (v: infer V) => void } ? V : never) => api('adminUpdateContact', { params: { id }, body }), {
     success: 'admin.contacts.saved', invalidate: [['admin', 'contact', id], ['admin', 'contacts']],
   });
@@ -131,11 +133,21 @@ export function ContactDetail() {
   return (
     <>
       <PageHead crumbs={[{ label: t('admin.nav.contacts'), to: '/admin/contacts' }, { label: c.personName }]} title={c.personName} lede={c.organisation ?? undefined} />
-      <Panel title={t('admin.contacts.contact')}>
-        <ContactForm key={c.updatedAt} initial={c} submitLabel={t('admin.contacts.saveChanges')} busy={update.isPending} onSubmit={v => update.mutate(v)} />
-      </Panel>
       <Panel title={t('admin.contacts.quotes')} action={<ButtonLink to={`/admin/contacts/${id}/quote`} icon={Plus} size="sm">{t('admin.contacts.newQuote')}</ButtonLink>}>
         <Table columns={columns} rows={offers.data?.items ?? []} rowKey={o => o.id} loading={offers.isPending} caption={t('admin.contacts.quotes')} empty={t('admin.contacts.noQuotes')} onRowClick={o => navigate(`/admin/offers/${o.id}`)} />
+      </Panel>
+      {/* Last on the page and closed until asked for: the details are rarely edited. */}
+      <Panel
+        title={t('admin.contacts.contact')}
+        action={
+          <Button variant="quiet" size="sm" icon={editing ? ChevronUp : Pencil} aria-expanded={editing} onClick={() => setEditing(e => !e)}>
+            {editing ? t('staff.cancel') : t('admin.contacts.edit')}
+          </Button>
+        }
+      >
+        {editing && (
+          <ContactForm key={c.updatedAt} initial={c} submitLabel={t('admin.contacts.saveChanges')} busy={update.isPending} onSubmit={v => update.mutate(v, { onSuccess: () => setEditing(false) })} />
+        )}
       </Panel>
     </>
   );
@@ -384,7 +396,7 @@ export function OfferDetail() {
         {o.versions[0]?.id === o.id && <SendOffer offerId={o.id} contactId={o.contact.id} status={o.status} />}
         <p className="staff-muted">{t('admin.contacts.markAs')}</p>
         <div className="staff-form__actions">
-          {(o.versions[0]?.id === o.id ? STATUSES.filter(s => s !== o.status && (o.status === 'DRAFT' || o.status === 'SENT')) : []).map(s => (
+          {(o.versions[0]?.id === o.id ? STATUSES.filter(s => s !== 'DRAFT' && s !== o.status && (o.status === 'DRAFT' || o.status === 'SENT')) : []).map(s => (
             <Button key={s} size="sm" variant="ghost" loading={status.isPending && status.variables === s} onClick={() => status.mutate(s)}>
               {t(`admin.contacts.status.${s}` as TKey)}
             </Button>

@@ -694,6 +694,7 @@ export const fr: Messages = {
       contact: 'Contact',
       since: 'Ajouté',
       saveChanges: 'Enregistrer',
+      edit: "Modifier le contact",
       saved: 'Enregistré.',
       created: 'Contact ajouté.',
       quotes: 'Offres',

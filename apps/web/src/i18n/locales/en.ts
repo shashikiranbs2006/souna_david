@@ -682,6 +682,7 @@ const messages = {
       contact: 'Contact',
       since: 'Added',
       saveChanges: 'Save changes',
+      edit: "Edit contact",
       saved: 'Saved.',
       created: 'Contact added.',
       quotes: 'Offers',

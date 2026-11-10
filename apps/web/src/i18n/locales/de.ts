@@ -693,6 +693,7 @@ export const de: Messages = {
       contact: 'Kontakt',
       since: 'Hinzugefügt',
       saveChanges: 'Änderungen speichern',
+      edit: "Kontakt bearbeiten",
       saved: 'Gespeichert.',
       created: 'Kontakt hinzugefügt.',
       quotes: 'Offerten',

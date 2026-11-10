@@ -690,6 +690,7 @@ export const it: Messages = {
       contact: 'Contatto',
       since: 'Aggiunto',
       saveChanges: 'Salva modifiche',
+      edit: "Modifica contatto",
       saved: 'Salvato.',
       created: 'Contatto aggiunto.',
       quotes: 'Offerte',
