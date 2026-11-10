@@ -25,12 +25,12 @@ interface QuoteRow {
 }
 
 const CONTACT_SQL = `select c.*, (select count(*) from quotes q where q.contact_id = c.id) as quotes from contacts c`;
-// opens / lastOpenedAt count the views of the newest customer link of the quote's configuration.
+// opens / lastOpenedAt count the views of every customer link of the quote's configuration: the shop may
+// have re-sent the link, and the customer may open an older one.
 const QUOTE_SQL = `select q.*, c.person_name, c.organisation, cf.name as configuration_name,
-    (select count(*) from share_link_views v where v.share_link_id = l.id) as opens,
-    (select max(v.viewed_at) from share_link_views v where v.share_link_id = l.id) as last_opened_at
-  from quotes q join contacts c on c.id = q.contact_id join configurations cf on cf.id = q.configuration_id
-  left join lateral (select s.id from share_links s where s.configuration_id = q.configuration_id order by s.created_at desc limit 1) l on true`;
+    (select count(*) from share_link_views v join share_links s on s.id = v.share_link_id where s.configuration_id = q.configuration_id) as opens,
+    (select max(v.viewed_at) from share_link_views v join share_links s on s.id = v.share_link_id where s.configuration_id = q.configuration_id) as last_opened_at
+  from quotes q join contacts c on c.id = q.contact_id join configurations cf on cf.id = q.configuration_id`;
 
 const contactDto = (r: ContactRow) => ({
   id: r.id, personName: r.person_name, organisation: r.organisation, email: r.email, mobile: r.mobile, notes: r.notes,
@@ -173,11 +173,11 @@ export function registerQuotes(app: Hono<AppEnv>): void {
                   (select count(*) from share_link_activity a where a.share_link_id in (select id from ql) and a.inside_view) as inside`, [now]),
         db.query<{ id: string; number: number; person_name: string; expires_at: Date; opened: boolean }>(
           `select q.id, q.number, c.person_name, l.expires_at,
-                  exists (select 1 from share_link_views v where v.share_link_id = l.id) as opened
+                  exists (select 1 from share_link_views v join share_links s on s.id = v.share_link_id where s.configuration_id = q.configuration_id) as opened
              from quotes q join contacts c on c.id = q.contact_id join share_links l on l.configuration_id = q.configuration_id
             where ${newest} and ${newestLink} and q.status in ('DRAFT', 'SENT')
               and l.revoked_at is null and l.expires_at > $1::timestamptz
-              and (l.expires_at < $1::timestamptz + interval '7 days' or not exists (select 1 from share_link_views v where v.share_link_id = l.id))
+              and (l.expires_at < $1::timestamptz + interval '7 days' or not exists (select 1 from share_link_views v join share_links s on s.id = v.share_link_id where s.configuration_id = q.configuration_id))
             order by l.expires_at limit 20`, [now]),
       ]);
       const count = (st: QuoteRow['status']) => Number(status.rows.find(r => r.status === st)?.n ?? 0);
@@ -263,9 +263,9 @@ export function registerQuotes(app: Hono<AppEnv>): void {
       if (!link) return { link: null, ...empty, score: { points: 0, level: 'NONE' as const, reasons: [] } };
       const [views, activity, total] = await Promise.all([
         db.query<{ viewed_at: Date; device_class: 'MOBILE' | 'TABLET' | 'DESKTOP' | 'OTHER'; ip_prefix: string | null; user_agent: string | null }>(
-          'select viewed_at, device_class, ip_prefix, user_agent from share_link_views where share_link_id = $1 order by viewed_at desc limit 500', [link.id]),
-        db.query<{ inside_view: boolean; seconds: number }>('select inside_view, seconds from share_link_activity where share_link_id = $1', [link.id]),
-        db.query<{ n: string }>('select count(*) as n from share_link_views where share_link_id = $1', [link.id]),
+          'select viewed_at, device_class, ip_prefix, user_agent from share_link_views where share_link_id in (select id from share_links where configuration_id = $1) order by viewed_at desc limit 500', [q.rows[0].configuration_id]),
+        db.query<{ inside_view: boolean; seconds: number }>('select inside_view, seconds from share_link_activity where share_link_id in (select id from share_links where configuration_id = $1)', [q.rows[0].configuration_id]),
+        db.query<{ n: string }>('select count(*) as n from share_link_views where share_link_id in (select id from share_links where configuration_id = $1)', [q.rows[0].configuration_id]),
       ]);
       const visitorOf = (v: { ip_prefix: string | null; user_agent: string | null }) => (v.ip_prefix || v.user_agent ? `${v.ip_prefix ?? ''}|${v.user_agent ?? ''}` : null);
       const score = scoreShare({

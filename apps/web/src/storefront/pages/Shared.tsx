@@ -135,7 +135,7 @@ export default function Shared() {
       <p className="eyebrow">{t('shared.eyebrow')}</p>
       <div className="detail">
         <div className="detail__stage">
-          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptions} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views onViewChange={onViewChange} watermark />
+          <ViewerSlot name={d.sauna.name} specs={specs} options={viewerOptions} lowUrl={d.sauna.assets.lowGlbUrl} highUrl={d.sauna.assets.highGlbUrl} allowHigh thumbnailUrl={d.sauna.assets.thumbnailUrl} shareToken={token} views onViewChange={onViewChange} />
           {specs.source === 'kit' ? (
             // The exact configured sauna, exported from the same kit scene as the 3D view.
             <div className="detail__ar">

@@ -24,7 +24,6 @@ function webglAvailable(): boolean {
   }
 }
 
-import { WATERMARK_TEXT } from '@saunaklar/shared';
 
 interface Props {
   name: string;
@@ -44,8 +43,6 @@ interface Props {
   onViewChange?: (view: 'exterior' | 'interior') => void;
   /** Gets a function that takes a picture of the 3D view (see SaunaViewer). */
   captureRef?: { current: (() => Promise<Blob | null>) | null };
-  /** Lay the shop watermark over the view (a deterrent; downloads are stamped on the server). */
-  watermark?: boolean;
 }
 
 /**
@@ -54,7 +51,7 @@ interface Props {
  * progress, and the 3D chunk is requested only when the slot is near the
  * viewport (or on demand with data saver).
  */
-export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: assetHigh, allowHigh, thumbnailUrl, eager, shareToken, views, onViewChange, captureRef, watermark }: Props) {
+export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: assetHigh, allowHigh, thumbnailUrl, eager, shareToken, views, onViewChange, captureRef }: Props) {
   // Kit-built saunas follow the selected options; an uploaded GLB is used only when the model asks for it.
   const lowUrl = specs.source === 'asset' ? assetLow : null;
   const highUrl = specs.source === 'asset' ? assetHigh : null;
@@ -155,13 +152,6 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
             {saveData && <p className="vslot__note">{t('detail.saveDataHint')}</p>}
           </div>
         )}
-        {watermark && (
-          <div className="vslot__mark" aria-hidden="true">
-            {Array.from({ length: 12 }, (_, i) => (
-              <span key={i}>{WATERMARK_TEXT}</span>
-            ))}
-          </div>
-        )}
         {load && views && !hasGlb && (
           <div className="vslot__views" role="group" aria-label={t('three.viewLabel')}>
             {(['exterior', 'interior'] as const).map(v => (
@@ -169,7 +159,6 @@ export function ViewerSlot({ name, specs, options, lowUrl: assetLow, highUrl: as
                 {t(`three.${v}`)}
               </button>
             ))}
-            <span className="vslot__views-sep" aria-hidden="true" />
             <button type="button" className="vslot__door" aria-pressed={doorOpen} onClick={() => setDoorOpen(o => !o)}>
               {doorOpen ? <DoorClosed size={15} aria-hidden="true" /> : <DoorOpen size={15} aria-hidden="true" />}
               {doorOpen ? t('three.closeDoor') : t('three.openDoor')}

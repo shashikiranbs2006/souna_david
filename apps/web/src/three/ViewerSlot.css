@@ -110,42 +110,34 @@
   pointer-events: none;
 }
 
-/* Exterior / Interior switch, as in the studio: a small white segmented tab at the top. */
+/* Exterior / Interior / Open door: three separate white cards along the top of the stage. */
 .vslot__views {
   position: absolute;
   top: 0.9rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  background: #fff;
-  border: 1px solid #e5e3de;
-  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: calc(100% - 9rem);
 }
 
 .vslot__views button {
-  padding: 7px 16px;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1c1c1c;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.vslot__views-sep {
-  width: 1px;
-  margin: 4px 3px;
-  background: #e5e3de;
-}
-
-.vslot__views .vslot__door {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #e5e3de;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(28, 28, 28, 0.06);
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1c1c;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 .vslot__views button:hover:not(.is-active) {
@@ -154,22 +146,30 @@
 
 .vslot__views button.is-active {
   background: #1c1c1c;
+  border-color: #1c1c1c;
   color: #fff;
 }
 
 @media (pointer: coarse) {
   .vslot__views button {
-    padding: 9px 18px;
+    padding: 10px 16px;
   }
 }
 
+/* Phones: the cards stay at the top, left-aligned, clear of the reset / fullscreen icons. */
 @media (max-width: 860px) {
   .vslot__views {
-    top: auto;
-    bottom: 0.9rem;
+    left: 0.75rem;
+    right: 5rem;
+    top: 0.75rem;
+    max-width: none;
+    transform: none;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  .vslot__views button {
+    padding: 8px 11px;
+    font-size: 12.5px;
   }
 }
 
-/* Shop watermark over the live view: a deterrent only, never blocks the pointer. */
-.vslot__mark { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; justify-items: center; pointer-events: none; overflow: hidden; z-index: 2; }
-.vslot__mark span { font-weight: 700; font-size: clamp(1.1rem, 3vw, 2rem); letter-spacing: 0.08em; color: #fff; opacity: 0.22; text-shadow: 0 0 2px rgba(16, 22, 28, 0.5); transform: rotate(-24deg); user-select: none; }

@@ -96,7 +96,7 @@ describe('contacts and quotes', () => {
     const cfg = await c.post('/api/admin/configurations', { saunaModelId: SEED.models('fjord-panorama'), name: 'Counted' });
     const offer = await c.post('/api/admin/offers', { contactId: contact.body.id, configurationId: cfg.body.id });
     const link = await c.post(`/api/admin/configurations/${cfg.body.id}/share-links`, { expiresInDays: 14 });
-    const token = /\/s\/([A-Za-z0-9_-]{20,})$/.exec(link.body.url)![1]!;
+    const token = /\/s\/([A-Za-z0-9_-]{10,})$/.exec(link.body.url)![1]!;
     const opens = async () => (await c.get(`/api/admin/offers/${offer.body.id}/tracking`)).body;
 
     const bot = { 'user-agent': 'WhatsApp/2.23.20.0 A', 'x-forwarded-for': '198.51.100.9' };
