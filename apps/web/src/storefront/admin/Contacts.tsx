@@ -309,8 +309,8 @@ function SendOffer({ offerId, contactId, status }: { offerId: string; contactId:
   return (
     <>
       <div className="staff-form__actions">
-        <Button icon={Mail} onClick={() => setOpen(true)} disabled={!email}>
-          {t('admin.contacts.sendQuote')}
+        <Button icon={Mail} variant={status === 'DRAFT' ? 'primary' : 'ghost'} onClick={() => setOpen(true)} disabled={!email}>
+          {status === 'DRAFT' ? t('admin.contacts.sendQuote') : t('admin.contacts.resend')}
         </Button>
         {contact.data && !email && <span className="staff-muted">{t('admin.contacts.noEmail')}</span>}
         {status === 'SENT' && <Badge tone="soft">{t('admin.contacts.status.SENT')}</Badge>}
@@ -318,8 +318,8 @@ function SendOffer({ offerId, contactId, status }: { offerId: string; contactId:
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={t('admin.contacts.sendQuoteTitle')}
-        description={t('admin.contacts.sendQuoteBody', { email: email ?? '' })}
+        title={status === 'DRAFT' ? t('admin.contacts.sendQuoteTitle') : t('admin.contacts.resendTitle')}
+        description={status === 'DRAFT' ? t('admin.contacts.sendQuoteBody', { email: email ?? '' }) : t('admin.contacts.resendBody', { email: email ?? '' })}
         footer={
           <>
             <Button variant="quiet" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>

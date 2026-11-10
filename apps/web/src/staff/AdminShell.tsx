@@ -1,7 +1,7 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import type { LucideIcon } from 'lucide-react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { useLogout } from '../api/queries.ts';
 import { useT, type TKey } from '../i18n/i18n.ts';
 import { Icon } from '../design/components/Icon.tsx';
@@ -32,6 +32,15 @@ export function AdminShell({ brand, area, nav, session, extra, children }: { bra
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const content = useRef<HTMLDivElement>(null);
+  // Phones and tablets: the navigation sits behind a menu button; it closes after every page change.
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenuOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   // A short rise on every page change; the global progress bar covers loading.
   useEffect(() => {
@@ -53,7 +62,11 @@ export function AdminShell({ brand, area, nav, session, extra, children }: { bra
           {brand}
           <p className="staff-shell__area mono">{area}</p>
         </div>
-        <nav className="staff-shell__nav" aria-label={area}>
+        <button type="button" className="staff-shell__menu" aria-expanded={menuOpen} aria-controls="staff-nav" onClick={() => setMenuOpen(o => !o)}>
+          <Icon icon={menuOpen ? X : Menu} size="sm" />
+          {t('staff.menu')}
+        </button>
+        <nav id="staff-nav" className={['staff-shell__nav', menuOpen && 'is-open'].filter(Boolean).join(' ')} aria-label={area}>
           <ul>
             {nav.map(item => (
               <li key={item.to}>
